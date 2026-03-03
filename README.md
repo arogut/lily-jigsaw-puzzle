@@ -1,5 +1,7 @@
 # Lily Jigsaw Puzzle
 
+> Built with [Claude Code](https://claude.ai/code)
+
 A jigsaw puzzle game for children, built with Flutter for Android. Designed to run on tablets, primarily targeting the Samsung Galaxy Tab S8+.
 
 ## Requirements
