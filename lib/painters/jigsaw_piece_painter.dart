@@ -24,42 +24,71 @@ class JigsawPiecePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final tabW = pieceWidth * tabFraction;
     final tabH = pieceHeight * tabFraction;
-
     final path = _buildPath(tabW, tabH);
+    final bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
+    // 1. Drop shadow — drawn before clipping so it appears behind the piece
+    canvas.save();
+    canvas.translate(3, 5);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.55)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+    );
+    canvas.restore();
+
+    // 2. Image fill, clipped to piece shape
     canvas.save();
     canvas.clipPath(path);
 
-    // Map the full canvas (including tab margins) to the corresponding
-    // region of the source image, so tab bumps show correct image content.
+    // srcRect covers the full canvas area (including tab margins) so tabs
+    // always show correct image content from the neighboring cell regions.
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
     final cellW = imgW / piece.gridSize;
     final cellH = imgH / piece.gridSize;
-
-    // Image-space equivalent of the tab padding
     final srcTabW = cellW * tabFraction;
     final srcTabH = cellH * tabFraction;
 
-    final srcRect = Rect.fromLTWH(
-      piece.col * cellW - srcTabW,
-      piece.row * cellH - srcTabH,
-      cellW + 2 * srcTabW,
-      cellH + 2 * srcTabH,
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(
+        piece.col * cellW - srcTabW,
+        piece.row * cellH - srcTabH,
+        cellW + 2 * srcTabW,
+        cellH + 2 * srcTabH,
+      ),
+      bounds,
+      Paint(),
     );
 
-    // Destination is the entire canvas (including tab margin areas)
-    final dstRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    // 3. Lighting gradient overlay — simulates light from top-left
+    canvas.drawRect(
+      bounds,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0x30FFFFFF), // subtle white highlight top-left
+            Color(0x00000000), // transparent centre
+            Color(0x28000000), // subtle dark shadow bottom-right
+          ],
+          stops: [0.0, 0.5, 1.0],
+        ).createShader(bounds),
+    );
 
-    canvas.drawImageRect(image, srcRect, dstRect, Paint());
     canvas.restore();
 
-    // Subtle border
-    final borderPaint = Paint()
-      ..color = Colors.black38
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-    canvas.drawPath(path, borderPaint);
+    // 4. Bright border — stands out against dark panel backgrounds
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.65)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
   }
 
   Path _buildPath(double tabW, double tabH) {
@@ -124,9 +153,8 @@ class JigsawPiecePainter extends CustomPainter {
   ///
   /// [tab] — max protrusion distance (= tabW or tabH, the canvas margin).
   /// [isHorizontal] — true for top/bottom edges, false for left/right.
-  /// [tabSign] — perpendicular direction of a TAB protrusion:
-  ///   horizontal: -1 = up, +1 = down
-  ///   vertical:   +1 = right, -1 = left
+  /// [tabSign] — perpendicular direction of a TAB: horizontal: -1=up, +1=down;
+  ///             vertical: +1=right, -1=left.
   void _drawEdge(
     Path path, {
     required Offset from,
@@ -145,7 +173,7 @@ class JigsawPiecePainter extends CustomPainter {
     final sign = edgeType == EdgeType.tab ? tabSign : -tabSign;
 
     // pt(along, perp): point at fraction [along] along the edge,
-    // offset [perp] in the perpendicular direction (scaled by sign).
+    // offset [perp] perpendicularly in the direction determined by sign.
     Offset pt(double along, double perp) {
       if (isHorizontal) {
         return Offset(
@@ -163,34 +191,34 @@ class JigsawPiecePainter extends CustomPainter {
     final t = tab;
 
     // Classic jigsaw knob shape:
-    //   flat  ─── shoulder rise ─── neck ──── round head ──── neck ─── shoulder fall ─── flat
-    //   0%         20%              30%    32%          68%  70%             80%          100%
+    //   flat ── shoulder rise ── neck ── round head ── neck ── shoulder fall ── flat
+    //   0%        20%          30% 32%              68% 70%       80%          100%
 
-    // 1. Flat section to shoulder start
+    // Flat to shoulder start
     path.lineTo(pt(0.20, 0).dx, pt(0.20, 0).dy);
 
-    // 2. Shoulder / neck rise: gentle curve up to neck level (0.3t)
+    // Shoulder / neck rise (gentle curve up to neck level ≈ 30% of tab)
     path.cubicTo(
       pt(0.22, 0.00 * t).dx, pt(0.22, 0.00 * t).dy,
       pt(0.28, 0.30 * t).dx, pt(0.28, 0.30 * t).dy,
       pt(0.32, 0.30 * t).dx, pt(0.32, 0.30 * t).dy,
     );
 
-    // 3. Round head dome: sweeps up to full tab height and back down
+    // Round head dome (sweeps up to full tab height and back down)
     path.cubicTo(
       pt(0.36, 1.00 * t).dx, pt(0.36, 1.00 * t).dy,
       pt(0.64, 1.00 * t).dx, pt(0.64, 1.00 * t).dy,
       pt(0.68, 0.30 * t).dx, pt(0.68, 0.30 * t).dy,
     );
 
-    // 4. Shoulder / neck fall: back to edge level
+    // Shoulder / neck fall (back to edge level)
     path.cubicTo(
       pt(0.72, 0.30 * t).dx, pt(0.72, 0.30 * t).dy,
       pt(0.78, 0.00 * t).dx, pt(0.78, 0.00 * t).dy,
       pt(0.80, 0.00 * t).dx, pt(0.80, 0.00 * t).dy,
     );
 
-    // 5. Flat section to edge end
+    // Flat to edge end
     path.lineTo(to.dx, to.dy);
   }
 

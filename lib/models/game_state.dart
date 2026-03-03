@@ -119,16 +119,17 @@ class GameState extends ChangeNotifier {
     pieces[index].currentPosition = position;
   }
 
-  /// Sets scatter random target positions and returns them for the animation.
+  /// Sets scatter random target positions in the right-half tray area.
   List<Offset> computeScatterTargets(Size screenSize) {
     final rng = Random();
-    final margin = 20.0;
+    const margin = 16.0;
+    final trayLeft = screenSize.width / 2 + margin;
+    final trayRight = screenSize.width - margin - pieceWidth;
+    final trayBottom = screenSize.height - margin - pieceHeight;
     return List.generate(pieces.length, (i) {
-      final maxX = screenSize.width - pieceWidth - margin;
-      final maxY = screenSize.height - pieceHeight - margin;
       return Offset(
-        margin + rng.nextDouble() * maxX,
-        margin + rng.nextDouble() * maxY,
+        trayLeft + rng.nextDouble() * (trayRight - trayLeft).clamp(0, double.infinity),
+        margin + rng.nextDouble() * (trayBottom - margin).clamp(0, double.infinity),
       );
     });
   }

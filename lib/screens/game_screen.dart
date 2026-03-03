@@ -22,7 +22,8 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateMixin {
+class _GameScreenState extends State<GameScreen>
+    with SingleTickerProviderStateMixin {
   GameState? _gameState;
   ui.Image? _uiImage;
 
@@ -60,7 +61,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   void _initGame() {
     final size = MediaQuery.of(context).size;
-    final boardSize = Size(size.width, size.height);
+    // Board occupies the left half; tray occupies the right half.
+    final boardSize = Size(size.width / 2, size.height);
 
     _gameState = GameState(
       puzzleImage: _uiImage!,
@@ -68,10 +70,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       boardSize: boardSize,
     );
 
-    // Store assembled positions
-    _assembledPositions = _gameState!.pieces.map((p) => p.targetPosition).toList();
+    _assembledPositions =
+        _gameState!.pieces.map((p) => p.targetPosition).toList();
 
-    // Start assembled phase: show image intact for 1 second, then scatter
+    // Show assembled image on the board for 1 second, then scatter to tray.
     Future.delayed(const Duration(seconds: 1), _startScatter);
   }
 
@@ -88,7 +90,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   void _onScatterTick() {
-    if (_gameState == null || _scatterTargets == null || _assembledPositions == null) return;
+    if (_gameState == null ||
+        _scatterTargets == null ||
+        _assembledPositions == null) {
+      return;
+    }
     final t = _scatterController.value;
     final n = _gameState!.pieces.length;
 
@@ -96,11 +102,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       final slotWidth = 1.0 / n;
       final startI = i * slotWidth;
       final endI = (startI + slotWidth * 1.5).clamp(0.0, 1.0);
-      final localT = endI == startI
-          ? 1.0
-          : ((t - startI) / (endI - startI)).clamp(0.0, 1.0);
+      final localT =
+          endI == startI ? 1.0 : ((t - startI) / (endI - startI)).clamp(0.0, 1.0);
       final curved = Curves.easeInOut.transform(localT);
-      final pos = Offset.lerp(_assembledPositions![i], _scatterTargets![i], curved)!;
+      final pos =
+          Offset.lerp(_assembledPositions![i], _scatterTargets![i], curved)!;
       _gameState!.setPiecePosition(i, pos);
     }
     setState(() {});
@@ -124,25 +130,85 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0D0B14),
       body: _uiImage == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _buildGame(),
     );
   }
 
   Widget _buildGame() {
-    // Trigger game init on first build after image loads
     if (_gameState == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _gameState == null) _initGame();
       });
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.white));
     }
+
+    final gs = _gameState!;
+    final boardW = gs.boardSize.width;
 
     return Stack(
       children: [
-        _buildPuzzleStack(),
-        if (_gameState!.phase == GamePhase.won) _buildWinOverlay(),
+        // ── Panel backgrounds ──────────────────────────────────────────────
+        Positioned.fill(
+          child: Row(
+            children: [
+              // Left: puzzle board with subtle grid ghost
+              Expanded(
+                child: CustomPaint(
+                  painter: _BoardGridPainter(gs.gridSize),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF1A1F35), Color(0xFF0F1320)],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Right: piece tray
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF2A1A10), Color(0xFF180D06)],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Vertical divider ───────────────────────────────────────────────
+        Positioned(
+          left: boardW - 1,
+          top: 0,
+          bottom: 0,
+          width: 2,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Colors.white38, Colors.transparent],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
+        ),
+
+        // ── Puzzle pieces (full-screen layer so dragging crosses the divider)
+        Positioned.fill(child: _buildPuzzleStack()),
+
+        // ── Win overlay ────────────────────────────────────────────────────
+        if (gs.phase == GamePhase.won) _buildWinOverlay(),
       ],
     );
   }
@@ -153,6 +219,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     final tabH = gs.pieceHeight * JigsawPiecePainter.tabFraction;
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         for (int i = 0; i < gs.pieces.length; i++)
           Builder(builder: (context) {
@@ -190,9 +257,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       color: Colors.black54,
       child: Center(
         child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 36),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 48, vertical: 36),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -200,7 +269,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 12),
                 const Text(
                   'Puzzle Complete!',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 26, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -210,7 +280,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.of(context)
+                        .popUntil((route) => route.isFirst);
                   },
                   child: const Text('Choose Another Puzzle'),
                 ),
@@ -234,4 +305,46 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       if (mounted) _initGame();
     });
   }
+}
+
+// ── Board grid ghost painter ──────────────────────────────────────────────────
+
+class _BoardGridPainter extends CustomPainter {
+  final int gridSize;
+
+  const _BoardGridPainter(this.gridSize);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cellW = size.width / gridSize;
+    final cellH = size.height / gridSize;
+
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.10)
+      ..strokeWidth = 0.8;
+
+    final dotPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.20)
+      ..strokeWidth = 0;
+
+    // Grid lines
+    for (int r = 0; r <= gridSize; r++) {
+      final y = r * cellH;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+    for (int c = 0; c <= gridSize; c++) {
+      final x = c * cellW;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+
+    // Corner dots at each cell intersection for extra visual clarity
+    for (int r = 0; r <= gridSize; r++) {
+      for (int c = 0; c <= gridSize; c++) {
+        canvas.drawCircle(Offset(c * cellW, r * cellH), 2.0, dotPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BoardGridPainter old) => old.gridSize != gridSize;
 }
