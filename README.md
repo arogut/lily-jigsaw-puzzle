@@ -36,48 +36,67 @@ flutter pub get
 
 ## Emulated Device Setup
 
-### Prerequisites
+The emulator runs on the **Windows host** to avoid WSL2 QEMU memory crashes caused by
+`lavapipe` software rendering at the Pixel Tablet's 2560×1600 resolution. Flutter in WSL2
+connects to it via the Windows ADB server.
 
-The following SDK components are required (install via `sdkmanager` if missing):
+### Windows: install SDK command-line tools
 
-```bash
-$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-  "emulator" \
-  "platform-tools" \
-  "platforms;android-35" \
-  "system-images;android-35;google_apis;x86_64"
+Download the command-line tools zip from https://developer.android.com/studio#command-line-tools-only
+and extract to `%LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest\`. Then install the required
+components from PowerShell:
+
+```powershell
+$sdk = "$env:LOCALAPPDATA\Android\Sdk"
+$sdkmanager = "$sdk\cmdline-tools\latest\bin\sdkmanager.bat"
+& $sdkmanager --sdk_root=$sdk --licenses
+& $sdkmanager --sdk_root=$sdk "emulator" "platform-tools" "system-images;android-35;google_apis;x86_64"
 ```
 
-### Create the AVD
+### Windows: create the Pixel Tablet AVD
 
-```bash
-echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-  --name "Pixel_Tablet_API_35" \
-  --package "system-images;android-35;google_apis;x86_64" \
+```powershell
+$avdmanager = "$env:LOCALAPPDATA\Android\Sdk\cmdline-tools\latest\bin\avdmanager.bat"
+echo "no" | & $avdmanager --sdk_root="$env:LOCALAPPDATA\Android\Sdk" create avd `
+  --name "Pixel_Tablet_API_35" `
+  --package "system-images;android-35;google_apis;x86_64" `
   --device "pixel_tablet"
 ```
 
-This creates a Pixel Tablet AVD (10.95", 2560×1600) — the closest available profile to the Galaxy Tab S8+.
+### Windows: start the emulator and ADB server
 
-### Display (WSL2 only)
+```powershell
+$sdk = "$env:LOCALAPPDATA\Android\Sdk"
 
-If running on WSL2, enable the display via WSLg:
+# Start the emulator
+& "$sdk\emulator\emulator.exe" -avd Pixel_Tablet_API_35 -no-metrics
 
-```bash
-export DISPLAY=:0
+# In a separate PowerShell window, start the ADB server listening on all interfaces
+# so WSL2 can reach it (ensure port 5037 is allowed in Windows Firewall)
+$adb = "$sdk\platform-tools\adb.exe"
+& $adb kill-server
+Start-Process -FilePath $adb -ArgumentList "-a -P 5037 nodaemon server" -WindowStyle Hidden
 ```
 
-Add this to `~/.bashrc` to make it permanent.
+> **Note:** Windows Firewall must allow inbound TCP on port 5037. The ADB server and the
+> WSL2 ADB client must be the same version — if they differ, update platform-tools via
+> `sdkmanager "platform-tools"` on both sides.
 
-### Start the emulator
+### WSL2: connect to the Windows ADB server
+
+`~/.bashrc` is already configured to point ADB at the Windows host:
 
 ```bash
-~/Android/Sdk/emulator/emulator -avd Pixel_Tablet_API_35 -no-metrics &
+export ANDROID_ADB_SERVER_ADDRESS=$(ip route | grep default | awk '{print $3}')
+export ANDROID_ADB_SERVER_PORT=5037
 ```
 
-Wait ~1–2 minutes for the device to fully boot, then verify it's online:
+The Windows host IP is read from the default gateway at shell startup (it changes on WSL restart).
+After sourcing, verify the emulator is visible:
 
 ```bash
+source ~/.bashrc
+adb devices   # should list the Windows emulator
 flutter devices
 ```
 
