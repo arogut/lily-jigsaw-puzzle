@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/puzzle_image.dart';
+import '../widgets/game_button.dart';
 import 'difficulty_screen.dart';
 
 class ImageSelectionScreen extends StatelessWidget {
@@ -25,9 +27,27 @@ class ImageSelectionScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              const SizedBox(height: 28),
-              _buildTitle(),
-              const SizedBox(height: 22),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  children: [
+                    GameButton(
+                      label: 'Quit',
+                      icon: Icons.exit_to_app_rounded,
+                      color: const Color(0xFFFF6B6B),
+                      shadowColor: const Color(0xFFCC2222),
+                      width: 110,
+                      height: 44,
+                      fontSize: 15,
+                      onPressed: () => SystemNavigator.pop(),
+                    ),
+                    Expanded(child: Center(child: _buildTitle())),
+                    const SizedBox(width: 110),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -139,6 +159,8 @@ class _ImageCardState extends State<_ImageCard>
         builder: (_, child) =>
             Transform.scale(scale: _scale.value, child: child),
         child: Container(
+          width: double.infinity,
+          height: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             boxShadow: [

@@ -5,10 +5,14 @@ class PuzzleImageData {
   const PuzzleImageData({required this.assetPath, required this.name});
 
   static const List<PuzzleImageData> all = [
-    PuzzleImageData(assetPath: 'assets/images/puzzle1.jpg', name: 'Garden'),
-    PuzzleImageData(assetPath: 'assets/images/puzzle2.jpg', name: 'Animals'),
-    PuzzleImageData(assetPath: 'assets/images/puzzle3.jpg', name: 'Ocean'),
-    PuzzleImageData(assetPath: 'assets/images/puzzle4.jpg', name: 'Space'),
-    PuzzleImageData(assetPath: 'assets/images/puzzle5.jpg', name: 'Castle'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-1.jpg', name: 'Cat'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-2.jpg', name: 'Dog'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-3.jpg', name: 'Forrest'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-4.jpg', name: 'City'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-5.jpg', name: 'Lion'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-6.jpg', name: 'Sea'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-7.jpg', name: 'Elephant'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-8.jpg', name: 'Squirrel'),
+    PuzzleImageData(assetPath: 'assets/images/puzzle-9.jpg', name: 'Hedgehog'),
   ];
 }

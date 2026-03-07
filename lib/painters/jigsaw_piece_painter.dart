@@ -1,3 +1,4 @@
+import 'dart:math' show max;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import '../models/puzzle_piece.dart';
 
 class JigsawPiecePainter extends CustomPainter {
   // Tab margin as a fraction of piece dimension (also used outside for canvas sizing)
-  static const double tabFraction = 0.28;
+  static const double tabFraction = 0.35;
 
   final PuzzlePiece piece;
   final ui.Image image;
@@ -36,22 +37,37 @@ class JigsawPiecePainter extends CustomPainter {
     canvas.drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22));
     canvas.restore();
 
-    // 2. Image fill, clipped to piece shape
+    // 2. Image fill, clipped to piece shape — BoxFit.cover: scale the image so
+    //    it fully covers the board without distortion, then crop to board area.
     canvas.save();
     canvas.clipPath(path);
 
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
-    final cellW = imgW / piece.gridSize;
-    final cellH = imgH / piece.gridSize;
+    final boardW = pieceWidth * piece.gridSize;
+    final boardH = pieceHeight * piece.gridSize;
+
+    // Scale to cover: use the larger of the two scale factors so the image
+    // fills the board on both axes.
+    final scale = max(boardW / imgW, boardH / imgH);
+
+    // The visible sub-rect of the image that maps to the board (centered crop).
+    final visW = boardW / scale;
+    final visH = boardH / scale;
+    final srcOriginX = (imgW - visW) / 2.0;
+    final srcOriginY = (imgH - visH) / 2.0;
+
+    // Per-cell source dimensions and tab extension in image coordinates.
+    final cellW = visW / piece.gridSize;
+    final cellH = visH / piece.gridSize;
     final srcTabW = cellW * tabFraction;
     final srcTabH = cellH * tabFraction;
 
     canvas.drawImageRect(
       image,
       Rect.fromLTWH(
-        piece.col * cellW - srcTabW,
-        piece.row * cellH - srcTabH,
+        srcOriginX + piece.col * cellW - srcTabW,
+        srcOriginY + piece.row * cellH - srcTabH,
         cellW + 2 * srcTabW,
         cellH + 2 * srcTabH,
       ),
@@ -153,10 +169,14 @@ class JigsawPiecePainter extends CustomPainter {
     return path;
   }
 
-  /// Draws one edge from [from] to [to] with a jigsaw tab or blank.
+  /// Draws one edge from [from] to [to] with a classic jigsaw tab or blank.
   ///
-  /// Improved knob shape:
-  ///   flat ── shoulder ── narrow neck (22% tab) ── circular dome (2 beziers) ── narrow neck ── shoulder ── flat
+  /// Shape:  flat ── shoulder ── narrow neck ── round knob dome ── narrow neck ── shoulder ── flat
+  ///
+  /// The knob is formed by two cubic beziers that flare outward from the narrow
+  /// neck, creating a visually circular bump (classic kids-puzzle style).
+  ///   • Left arc:  neck-base → apex  (flares out left, then sweeps to apex)
+  ///   • Right arc: apex → neck-base  (mirror of left)
   static void _drawEdge(
     Path path, {
     required Offset from,
@@ -190,38 +210,39 @@ class JigsawPiecePainter extends CustomPainter {
 
     final t = tab;
 
-    // Flat to shoulder start
-    path.lineTo(pt(0.17, 0).dx, pt(0.17, 0).dy);
+    // 1. Flat to shoulder
+    path.lineTo(pt(0.32, 0).dx, pt(0.32, 0).dy);
 
-    // Shoulder rise to narrow neck
+    // 2. Shoulder → narrow neck base (smooth entry)
     path.cubicTo(
-      pt(0.20, 0.00 * t).dx, pt(0.20, 0.00 * t).dy,
-      pt(0.25, 0.22 * t).dx, pt(0.25, 0.22 * t).dy,
-      pt(0.29, 0.22 * t).dx, pt(0.29, 0.22 * t).dy,
+      pt(0.37, 0.00 * t).dx, pt(0.37, 0.00 * t).dy,
+      pt(0.40, 0.08 * t).dx, pt(0.40, 0.08 * t).dy,
+      pt(0.40, 0.20 * t).dx, pt(0.40, 0.20 * t).dy,
     );
 
-    // Left dome arc (neck → apex) — creates near-circular shape
+    // 3. Left dome arc: neck base → apex
+    // Flares outward (beyond the neck) to create a round knob.
     path.cubicTo(
-      pt(0.33, 0.22 * t).dx, pt(0.33, 0.22 * t).dy,
-      pt(0.36, 1.00 * t).dx, pt(0.36, 1.00 * t).dy,
+      pt(0.30, 0.42 * t).dx, pt(0.30, 0.42 * t).dy,
+      pt(0.34, 0.94 * t).dx, pt(0.34, 0.94 * t).dy,
       pt(0.50, 1.00 * t).dx, pt(0.50, 1.00 * t).dy,
     );
 
-    // Right dome arc (apex → neck)
+    // 4. Right dome arc: apex → neck base (mirror of left)
     path.cubicTo(
-      pt(0.64, 1.00 * t).dx, pt(0.64, 1.00 * t).dy,
-      pt(0.67, 0.22 * t).dx, pt(0.67, 0.22 * t).dy,
-      pt(0.71, 0.22 * t).dx, pt(0.71, 0.22 * t).dy,
+      pt(0.66, 0.94 * t).dx, pt(0.66, 0.94 * t).dy,
+      pt(0.70, 0.42 * t).dx, pt(0.70, 0.42 * t).dy,
+      pt(0.60, 0.20 * t).dx, pt(0.60, 0.20 * t).dy,
     );
 
-    // Shoulder fall back to edge
+    // 5. Neck base → shoulder (smooth exit)
     path.cubicTo(
-      pt(0.75, 0.22 * t).dx, pt(0.75, 0.22 * t).dy,
-      pt(0.80, 0.00 * t).dx, pt(0.80, 0.00 * t).dy,
-      pt(0.83, 0.00 * t).dx, pt(0.83, 0.00 * t).dy,
+      pt(0.60, 0.08 * t).dx, pt(0.60, 0.08 * t).dy,
+      pt(0.63, 0.00 * t).dx, pt(0.63, 0.00 * t).dy,
+      pt(0.68, 0.00 * t).dx, pt(0.68, 0.00 * t).dy,
     );
 
-    // Flat to edge end
+    // 6. Flat to edge end
     path.lineTo(to.dx, to.dy);
   }
 

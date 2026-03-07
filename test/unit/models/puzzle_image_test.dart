@@ -3,8 +3,8 @@ import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 
 void main() {
   group('PuzzleImageData', () {
-    test('all list has exactly 5 items', () {
-      expect(PuzzleImageData.all.length, 5);
+    test('all list has exactly 9 items', () {
+      expect(PuzzleImageData.all.length, 9);
     });
 
     test('all items have non-empty names', () {
@@ -31,7 +31,7 @@ void main() {
 
     test('contains expected puzzle names', () {
       final names = PuzzleImageData.all.map((e) => e.name).toSet();
-      expect(names, containsAll(['Garden', 'Animals', 'Ocean', 'Space', 'Castle']));
+      expect(names, containsAll(['Cat', 'Dog', 'Lion']));
     });
 
     test('constructor stores values correctly', () {

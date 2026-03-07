@@ -4,6 +4,8 @@
 
 A jigsaw puzzle game for children, built with Flutter for Android. Designed to run on tablets, primarily targeting the Samsung Galaxy Tab S8+.
 
+> Images generated with [DeepAI](https://deepai.org/)
+
 ## Requirements
 
 - Flutter 3.41.3

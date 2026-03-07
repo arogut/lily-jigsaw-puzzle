@@ -45,7 +45,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: DifficultyScreen(
-          selectedImage: PuzzleImageData(assetPath: 'assets/images/puzzle1.jpg', name: 'Garden'),
+          selectedImage: PuzzleImageData(assetPath: 'assets/images/puzzle-1.jpg', name: 'Cat'),
         ),
       ),
     );
@@ -59,7 +59,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: DifficultyScreen(
-          selectedImage: PuzzleImageData(assetPath: 'assets/images/puzzle1.jpg', name: 'Garden'),
+          selectedImage: PuzzleImageData(assetPath: 'assets/images/puzzle-1.jpg', name: 'Cat'),
         ),
       ),
     );
@@ -71,7 +71,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: DifficultyScreen(
-          selectedImage: PuzzleImageData(assetPath: 'assets/images/puzzle1.jpg', name: 'Garden'),
+          selectedImage: PuzzleImageData(assetPath: 'assets/images/puzzle-1.jpg', name: 'Cat'),
         ),
       ),
     );
@@ -84,7 +84,7 @@ void main() {
       const MaterialApp(home: ImageSelectionScreen()),
     );
     await tester.pump();
-    await tester.tap(find.text('Garden'));
+    await tester.tap(find.text('Cat'));
     await tester.pumpAndSettle();
     expect(find.text('Pick Difficulty'), findsWidgets);
   });

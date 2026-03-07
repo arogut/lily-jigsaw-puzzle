@@ -1,3 +1,4 @@
+import 'dart:math' show Random, sin, cos, pi;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import '../models/puzzle_image.dart';
 import '../models/puzzle_piece.dart';
 import '../painters/jigsaw_piece_painter.dart';
 import '../widgets/game_button.dart';
+
+const _kEdgePad = 20.0;
 
 class GameScreen extends StatefulWidget {
   final PuzzleImageData selectedImage;
@@ -24,18 +27,29 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   GameState? _gameState;
   ui.Image? _uiImage;
 
   late AnimationController _scatterController;
+  late AnimationController _returnController;
   List<Offset>? _assembledPositions;
   List<Offset>? _scatterTargets;
+
+  // Return-animation state — set when a piece is dropped in the wrong spot.
+  PuzzlePiece? _returningPiece;
+  Offset _returnFromPos = Offset.zero;
+  Offset _returnToPos = Offset.zero;
 
   // Incrementing this repaint notifier repaints only the piece canvas without
   // triggering a full widget-tree rebuild. This is the key to avoiding 90
   // setState() calls per second during the scatter and drag animations.
   final _paintTick = ValueNotifier<int>(0);
+
+  // Confetti
+  late AnimationController _confettiController;
+  List<_ConfettiParticle> _confettiParticles = const [];
+  bool _showWinOverlay = false;
 
 
   @override
@@ -44,6 +58,15 @@ class _GameScreenState extends State<GameScreen>
     _scatterController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
+    );
+    _returnController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    );
+    _returnController.addListener(_onReturnTick);
+    _confettiController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
     );
   }
 
@@ -56,17 +79,14 @@ class _GameScreenState extends State<GameScreen>
 
   Future<void> _loadImage() async {
     final size = MediaQuery.of(context).size;
-    // Decode at board size only — keeps the ui.Image small so each of the
-    // 49 piece draws in the single-canvas painter doesn't reference a huge
-    // source texture.
-    final targetW = (size.width / 2).round().clamp(64, 2048);
-    final targetH = size.height.round().clamp(64, 2048);
+    // Decode at board width only — no targetHeight so the image aspect ratio is
+    // preserved. The painter uses BoxFit.cover to crop to the board area.
+    final targetW = ((size.width / 2) - 2 * _kEdgePad).round().clamp(64, 2048);
 
     final data = await rootBundle.load(widget.selectedImage.assetPath);
     final codec = await ui.instantiateImageCodec(
       data.buffer.asUint8List(),
       targetWidth: targetW,
-      targetHeight: targetH,
     );
     final frame = await codec.getNextFrame();
     if (!mounted) return;
@@ -75,12 +95,17 @@ class _GameScreenState extends State<GameScreen>
 
   void _initGame() {
     final size = MediaQuery.of(context).size;
-    final boardSize = Size(size.width / 2, size.height);
+    const boardOffset = Offset(_kEdgePad, _kEdgePad);
+    final boardSize = Size(
+      size.width / 2 - 2 * _kEdgePad,
+      size.height - 2 * _kEdgePad,
+    );
 
     _gameState = GameState(
       puzzleImage: _uiImage!,
       gridSize: widget.gridSize,
       boardSize: boardSize,
+      boardOffset: boardOffset,
     );
     _assembledPositions =
         _gameState!.pieces.map((p) => p.targetPosition).toList();
@@ -145,6 +170,7 @@ class _GameScreenState extends State<GameScreen>
     for (int i = gs.pieces.length - 1; i >= 0; i--) {
       final piece = gs.pieces[i];
       if (piece.isPlaced) continue;
+      if (piece == _returningPiece) continue; // untouchable during fly-back
       final origin = Offset(
         piece.currentPosition.dx - tabW,
         piece.currentPosition.dy - tabH,
@@ -157,11 +183,59 @@ class _GameScreenState extends State<GameScreen>
     return null;
   }
 
+  // ── Return animation ──────────────────────────────────────────────────────
+
+  /// Tick handler: 0→0.40 shake, 0.40→1.0 fly back to tray.
+  void _onReturnTick() {
+    final piece = _returningPiece;
+    if (piece == null) return;
+    final t = _returnController.value;
+
+    if (t <= 0.40) {
+      // Shake phase — sinusoidal horizontal wiggle
+      final st = t / 0.40;
+      final shake = sin(st * pi * 4) * 14.0;
+      piece.currentPosition = Offset(_returnFromPos.dx + shake, _returnFromPos.dy);
+    } else {
+      // Fly-back phase — easeOut curve to tray target
+      final rt = Curves.easeOut.transform((t - 0.40) / 0.60);
+      piece.currentPosition = Offset.lerp(_returnFromPos, _returnToPos, rt)!;
+    }
+    _paintTick.value++;
+  }
+
+  void _startReturnAnimation(PuzzlePiece piece) {
+    final size = MediaQuery.of(context).size;
+    final gs = _gameState!;
+    const margin = _kEdgePad;
+    final rng = Random();
+    final trayX = (size.width / 2 + margin) +
+        rng.nextDouble() *
+            (size.width / 2 - margin * 2 - gs.pieceWidth)
+                .clamp(0, double.infinity);
+    final trayY = margin +
+        rng.nextDouble() *
+            (size.height - margin * 2 - gs.pieceHeight)
+                .clamp(0, double.infinity);
+
+    _returningPiece = piece;
+    _returnFromPos = piece.currentPosition;
+    _returnToPos = Offset(trayX, trayY);
+
+    _returnController.reset();
+    _returnController.forward().then((_) {
+      if (mounted) setState(() => _returningPiece = null);
+    });
+  }
+
   @override
   void dispose() {
     _scatterController.removeListener(_onScatterTick);
     _scatterController.removeStatusListener(_onScatterStatus);
     _scatterController.dispose();
+    _returnController.removeListener(_onReturnTick);
+    _returnController.dispose();
+    _confettiController.dispose();
     _paintTick.dispose();
     super.dispose();
   }
@@ -200,6 +274,10 @@ class _GameScreenState extends State<GameScreen>
 
     final gs = _gameState!;
     final boardW = gs.boardSize.width;
+    final boardH = gs.boardSize.height;
+    final boardOffX = gs.boardOffset.dx;
+    final boardOffY = gs.boardOffset.dy;
+    final dividerX = boardOffX + boardW + _kEdgePad; // = screenW/2
 
     return Stack(
       children: [
@@ -235,14 +313,15 @@ class _GameScreenState extends State<GameScreen>
 
         // ── Board grid ghost ────────────────────────────────────────────────
         Positioned(
-          left: 0, top: 0, width: boardW, bottom: 0,
+          left: boardOffX, top: boardOffY, width: boardW, height: boardH,
           child: CustomPaint(painter: _BoardGridPainter(gs.gridSize)),
         ),
 
         // ── Shadow hints ────────────────────────────────────────────────────
+        // Uses Positioned.fill (full-screen canvas) so piece.targetPosition
+        // (which is in screen coords) maps directly to canvas coords.
         if (gs.phase == GamePhase.scattering || gs.phase == GamePhase.playing)
-          Positioned(
-            left: 0, top: 0, width: boardW, bottom: 0,
+          Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
                 painter: _BoardShadowPainter(
@@ -256,7 +335,7 @@ class _GameScreenState extends State<GameScreen>
 
         // ── Divider ─────────────────────────────────────────────────────────
         Positioned(
-          left: boardW - 3, top: 0, bottom: 0, width: 6,
+          left: dividerX - 3, top: 0, bottom: 0, width: 6,
           child: Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -312,8 +391,22 @@ class _GameScreenState extends State<GameScreen>
             onPanEnd: gs.phase == GamePhase.playing
                 ? (_) {
                     if (gs.draggingIndex == null) return;
-                    gs.endDrag();
-                    setState(() {}); // update tray label and win phase
+                    final piece = gs.pieces[gs.draggingIndex!];
+                    const snapThreshold = 40.0;
+                    if ((piece.currentPosition - piece.targetPosition)
+                            .distance <=
+                        snapThreshold) {
+                      gs.endDrag();
+                      if (gs.phase == GamePhase.won) {
+                        _startConfetti();
+                      } else {
+                        setState(() {}); // update tray label
+                      }
+                    } else {
+                      HapticFeedback.mediumImpact();
+                      gs.endDragNoPlace();
+                      _startReturnAnimation(piece);
+                    }
                   }
                 : null,
             child: CustomPaint(
@@ -330,7 +423,7 @@ class _GameScreenState extends State<GameScreen>
 
         // ── Tray label ──────────────────────────────────────────────────────
         Positioned(
-          right: 8, top: 8,
+          right: _kEdgePad, top: _kEdgePad,
           child: _TrayLabel(
             placed: gs.pieces.where((p) => p.isPlaced).length,
             total: gs.pieces.length,
@@ -352,8 +445,21 @@ class _GameScreenState extends State<GameScreen>
           ),
         ),
 
+        // ── Confetti ────────────────────────────────────────────────────────
+        if (gs.phase == GamePhase.won && !_showWinOverlay)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _ConfettiPainter(
+                  particles: _confettiParticles,
+                  animation: _confettiController,
+                ),
+              ),
+            ),
+          ),
+
         // ── Win overlay ─────────────────────────────────────────────────────
-        if (gs.phase == GamePhase.won) _buildWinOverlay(),
+        if (gs.phase == GamePhase.won && _showWinOverlay) _buildWinOverlay(),
       ],
     );
   }
@@ -472,14 +578,46 @@ class _GameScreenState extends State<GameScreen>
   void _restartGame() {
     _scatterController.removeListener(_onScatterTick);
     _scatterController.removeStatusListener(_onScatterStatus);
+    _confettiController.stop();
     setState(() {
       _gameState = null;
       _assembledPositions = null;
       _scatterTargets = null;
+      _showWinOverlay = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _initGame();
     });
+  }
+
+  // ── Confetti helpers ───────────────────────────────────────────────────────
+
+  void _startConfetti() {
+    _confettiParticles = _generateConfetti(120);
+    setState(() {}); // show confetti layer
+    _confettiController.reset();
+    _confettiController.forward().then((_) {
+      if (mounted) setState(() => _showWinOverlay = true);
+    });
+  }
+
+  List<_ConfettiParticle> _generateConfetti(int count) {
+    final rng = Random();
+    const colors = [
+      Color(0xFFFF6B6B), Color(0xFFFFD93D), Color(0xFF6BCB77),
+      Color(0xFF4D96FF), Color(0xFFFF6B9D), Color(0xFFB39DDB),
+      Color(0xFFFFAB40), Color(0xFF00E5FF), Color(0xFFFFFFFF),
+    ];
+    return List.generate(count, (_) => _ConfettiParticle(
+      x: rng.nextDouble(),
+      speed: 0.50 + rng.nextDouble() * 0.75,
+      startDelay: rng.nextDouble() * 0.30,
+      color: colors[rng.nextInt(colors.length)],
+      size: 5.0 + rng.nextDouble() * 9.0,
+      rotSpeed: 2.0 + rng.nextDouble() * 6.0,
+      wobblePhase: rng.nextDouble() * 2 * pi,
+      isRect: rng.nextBool(),
+    ));
   }
 }
 
@@ -650,4 +788,74 @@ class _TrayLabel extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Confetti ──────────────────────────────────────────────────────────────────
+
+class _ConfettiParticle {
+  final double x;           // 0–1 horizontal start fraction
+  final double speed;       // fall-speed multiplier
+  final double startDelay;  // 0–1 fraction of total duration before appearing
+  final Color color;
+  final double size;
+  final double rotSpeed;    // full rotations over the animation
+  final double wobblePhase; // horizontal wobble phase offset (radians)
+  final bool isRect;        // rectangle (true) or oval (false)
+
+  const _ConfettiParticle({
+    required this.x,
+    required this.speed,
+    required this.startDelay,
+    required this.color,
+    required this.size,
+    required this.rotSpeed,
+    required this.wobblePhase,
+    required this.isRect,
+  });
+}
+
+class _ConfettiPainter extends CustomPainter {
+  final List<_ConfettiParticle> particles;
+  final Animation<double> animation;
+
+  _ConfettiPainter({required this.particles, required this.animation})
+      : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = animation.value; // 0.0 → 1.0 over 5 s
+    for (final p in particles) {
+      if (t < p.startDelay) continue;
+      final pt = ((t - p.startDelay) / (1.0 - p.startDelay)).clamp(0.0, 1.0);
+
+      // Fade out in the last 25 % of the animation.
+      final alpha = pt > 0.75 ? (1.0 - pt) / 0.25 : 1.0;
+
+      final px = p.x * size.width +
+          sin(pt * 4 * pi + p.wobblePhase) * 28 +
+          cos(pt * 2.5 * pi + p.wobblePhase * 0.7) * 14;
+      final py = -28.0 + pt * p.speed * (size.height + 56);
+      final rot = pt * 2 * pi * p.rotSpeed;
+
+      canvas.save();
+      canvas.translate(px, py);
+      canvas.rotate(rot);
+      final paint = Paint()..color = p.color.withValues(alpha: alpha);
+      if (p.isRect) {
+        canvas.drawRect(
+          Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.45),
+          paint,
+        );
+      } else {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.55),
+          paint,
+        );
+      }
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ConfettiPainter old) => true;
 }

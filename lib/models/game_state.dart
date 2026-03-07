@@ -12,6 +12,7 @@ class GameState extends ChangeNotifier {
   final ui.Image puzzleImage;
   final int gridSize;
   final Size boardSize;
+  final Offset boardOffset;
 
   late List<PuzzlePiece> pieces;
   GamePhase phase = GamePhase.loading;
@@ -29,6 +30,7 @@ class GameState extends ChangeNotifier {
     required this.puzzleImage,
     required this.gridSize,
     required this.boardSize,
+    this.boardOffset = Offset.zero,
   }) {
     _initialize();
   }
@@ -61,7 +63,7 @@ class GameState extends ChangeNotifier {
     pieces = [];
     for (int r = 0; r < gridSize; r++) {
       for (int c = 0; c < gridSize; c++) {
-        final target = Offset(c * pieceWidth, r * pieceHeight);
+        final target = boardOffset + Offset(c * pieceWidth, r * pieceHeight);
         pieces.add(
           PuzzlePiece(
             row: r,
@@ -122,14 +124,15 @@ class GameState extends ChangeNotifier {
   /// Sets scatter random target positions in the right-half tray area.
   List<Offset> computeScatterTargets(Size screenSize) {
     final rng = Random();
-    const margin = 16.0;
+    const margin = 20.0;
     final trayLeft = screenSize.width / 2 + margin;
     final trayRight = screenSize.width - margin - pieceWidth;
+    final trayTop = margin;
     final trayBottom = screenSize.height - margin - pieceHeight;
     return List.generate(pieces.length, (i) {
       return Offset(
         trayLeft + rng.nextDouble() * (trayRight - trayLeft).clamp(0, double.infinity),
-        margin + rng.nextDouble() * (trayBottom - margin).clamp(0, double.infinity),
+        trayTop + rng.nextDouble() * (trayBottom - trayTop).clamp(0, double.infinity),
       );
     });
   }
@@ -153,6 +156,14 @@ class GameState extends ChangeNotifier {
     final piece = pieces[draggingIndex!];
     piece.currentPosition = piece.currentPosition + delta;
     notifyListeners();
+  }
+
+  /// Ends the drag without snapping/placing — used when the piece was dropped
+  /// in the wrong position and the view will animate it back to the tray.
+  void endDragNoPlace() {
+    if (draggingIndex == null) return;
+    pieces[draggingIndex!].isDragging = false;
+    draggingIndex = null;
   }
 
   void endDrag() {
