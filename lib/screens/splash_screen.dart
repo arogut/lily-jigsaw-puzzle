@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../main.dart';
 import '../painters/logo_painter.dart';
 import 'image_selection_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final LocaleNotifier localeNotifier;
+
+  const SplashScreen({super.key, required this.localeNotifier});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -50,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen>
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              const ImageSelectionScreen(),
+              ImageSelectionScreen(localeNotifier: widget.localeNotifier),
           transitionsBuilder: (context, anim, secondaryAnimation, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
@@ -119,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
                       const SizedBox(height: 32),
 
                       // Title with gradient + outline
-                      _Title(),
+                      const _Title(),
 
                       const SizedBox(height: 14),
 
@@ -144,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen>
                       const SizedBox(height: 48),
 
                       // Loading dots
-                      _LoadingDots(),
+                      const _LoadingDots(),
                     ],
                   ),
                 ),

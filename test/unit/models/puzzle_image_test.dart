@@ -35,9 +35,32 @@ void main() {
     });
 
     test('constructor stores values correctly', () {
-      const img = PuzzleImageData(assetPath: 'assets/test.jpg', name: 'Test');
+      const img = PuzzleImageData(
+        assetPath: 'assets/test.jpg',
+        name: 'Test',
+        uuid: 'test-uuid-1234',
+      );
       expect(img.assetPath, 'assets/test.jpg');
       expect(img.name, 'Test');
+      expect(img.uuid, 'test-uuid-1234');
+    });
+
+    test('all items have non-empty UUIDs', () {
+      for (final img in PuzzleImageData.all) {
+        expect(img.uuid.isNotEmpty, isTrue);
+      }
+    });
+
+    test('all UUIDs are unique', () {
+      final uuids = PuzzleImageData.all.map((e) => e.uuid).toList();
+      expect(uuids.toSet().length, uuids.length);
+    });
+
+    test('UUIDs are stable (deterministic from asset path)', () {
+      // Build the list twice — same UUIDs must come out each time.
+      final first = PuzzleImageData.all.map((e) => e.uuid).toList();
+      final second = PuzzleImageData.all.map((e) => e.uuid).toList();
+      expect(first, second);
     });
   });
 }

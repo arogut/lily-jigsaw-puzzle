@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import '../models/puzzle_image.dart';
+import '../services/completion_service.dart';
 import '../widgets/game_button.dart';
 import 'difficulty_screen.dart';
+import 'settings_screen.dart';
 
 class ImageSelectionScreen extends StatelessWidget {
-  const ImageSelectionScreen({super.key});
+  final LocaleNotifier localeNotifier;
+
+  const ImageSelectionScreen({super.key, required this.localeNotifier});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -33,7 +41,7 @@ class ImageSelectionScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     GameButton(
-                      label: 'Quit',
+                      label: l10n.quit,
                       icon: Icons.exit_to_app_rounded,
                       color: const Color(0xFFFF6B6B),
                       shadowColor: const Color(0xFFCC2222),
@@ -42,8 +50,23 @@ class ImageSelectionScreen extends StatelessWidget {
                       fontSize: 15,
                       onPressed: () => SystemNavigator.pop(),
                     ),
-                    Expanded(child: Center(child: _buildTitle())),
-                    const SizedBox(width: 110),
+                    Expanded(child: Center(child: _buildTitle(l10n.choosePuzzle))),
+                    GameButton(
+                      label: l10n.settings,
+                      icon: Icons.settings_rounded,
+                      color: const Color(0xFF9B59B6),
+                      shadowColor: const Color(0xFF6A1B9A),
+                      width: 110,
+                      height: 44,
+                      fontSize: 15,
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => SettingsScreen(
+                            localeNotifier: localeNotifier,
+                          ),
+                        ));
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -61,7 +84,10 @@ class ImageSelectionScreen extends StatelessWidget {
                     ),
                     itemCount: PuzzleImageData.all.length,
                     itemBuilder: (context, index) {
-                      return _ImageCard(image: PuzzleImageData.all[index]);
+                      return _ImageCard(
+                        image: PuzzleImageData.all[index],
+                        localeNotifier: localeNotifier,
+                      );
                     },
                   ),
                 ),
@@ -74,8 +100,7 @@ class ImageSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle() {
-    const text = 'Choose a Puzzle!';
+  Widget _buildTitle(String text) {
     const sz = 30.0;
     return Stack(
       alignment: Alignment.center,
@@ -96,9 +121,9 @@ class ImageSelectionScreen extends StatelessWidget {
           shaderCallback: (b) => const LinearGradient(
             colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
           ).createShader(b),
-          child: const Text(
+          child: Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: sz,
               fontWeight: FontWeight.w900,
               color: Colors.white,
@@ -111,11 +136,28 @@ class ImageSelectionScreen extends StatelessWidget {
   }
 }
 
+/// Returns the localized image name for a given asset path.
+String localizedImageName(AppLocalizations l10n, String assetPath) {
+  switch (assetPath) {
+    case 'assets/images/puzzle-1.jpg': return l10n.imageCat;
+    case 'assets/images/puzzle-2.jpg': return l10n.imageDog;
+    case 'assets/images/puzzle-3.jpg': return l10n.imageForest;
+    case 'assets/images/puzzle-4.jpg': return l10n.imageCity;
+    case 'assets/images/puzzle-5.jpg': return l10n.imageLion;
+    case 'assets/images/puzzle-6.jpg': return l10n.imageSea;
+    case 'assets/images/puzzle-7.jpg': return l10n.imageElephant;
+    case 'assets/images/puzzle-8.jpg': return l10n.imageSquirrel;
+    case 'assets/images/puzzle-9.jpg': return l10n.imageHedgehog;
+    default: return '';
+  }
+}
+
 // ── Image card ───────────────────────────────────────────────────────────────
 
 class _ImageCard extends StatefulWidget {
   final PuzzleImageData image;
-  const _ImageCard({required this.image});
+  final LocaleNotifier localeNotifier;
+  const _ImageCard({required this.image, required this.localeNotifier});
 
   @override
   State<_ImageCard> createState() => _ImageCardState();
@@ -144,12 +186,18 @@ class _ImageCardState extends State<_ImageCard>
   void _onTap() {
     _ctrl.reverse();
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => DifficultyScreen(selectedImage: widget.image),
+      builder: (_) => DifficultyScreen(
+        selectedImage: widget.image,
+        localeNotifier: widget.localeNotifier,
+      ),
     ));
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final imageName = localizedImageName(l10n, widget.image.assetPath);
+
     return GestureDetector(
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) => _onTap(),
@@ -220,7 +268,7 @@ class _ImageCardState extends State<_ImageCard>
                     ),
                     padding: const EdgeInsets.fromLTRB(6, 14, 6, 6),
                     child: Text(
-                      widget.image.name,
+                      imageName,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
@@ -235,6 +283,37 @@ class _ImageCardState extends State<_ImageCard>
                         ],
                       ),
                     ),
+                  ),
+                ),
+
+                // Stars overlay (top-right)
+                Positioned(
+                  top: 5,
+                  right: 5,
+                  child: FutureBuilder<int>(
+                    future: CompletionService().getStars(widget.image.uuid),
+                    builder: (context, snap) {
+                      final stars = snap.data ?? 0;
+                      if (stars == 0) return const SizedBox.shrink();
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(
+                          stars,
+                          (_) => const Icon(
+                            Icons.star_rounded,
+                            color: Color(0xFFFFD700),
+                            size: 45,
+                            shadows: [
+                              Shadow(
+                                color: Color(0x88000000),
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
 

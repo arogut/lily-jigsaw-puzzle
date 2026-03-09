@@ -4,10 +4,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import '../models/game_state.dart';
 import '../models/puzzle_image.dart';
 import '../models/puzzle_piece.dart';
 import '../painters/jigsaw_piece_painter.dart';
+import '../services/completion_service.dart';
 import '../widgets/game_button.dart';
 
 const _kEdgePad = 20.0;
@@ -15,11 +18,13 @@ const _kEdgePad = 20.0;
 class GameScreen extends StatefulWidget {
   final PuzzleImageData selectedImage;
   final int gridSize;
+  final LocaleNotifier localeNotifier;
 
   const GameScreen({
     super.key,
     required this.selectedImage,
     required this.gridSize,
+    required this.localeNotifier,
   });
 
   @override
@@ -41,16 +46,17 @@ class _GameScreenState extends State<GameScreen>
   Offset _returnFromPos = Offset.zero;
   Offset _returnToPos = Offset.zero;
 
+  // Drag tracking: did the piece cross to the left (board) side during drag?
+  bool _dragCrossedLeft = false;
+
   // Incrementing this repaint notifier repaints only the piece canvas without
-  // triggering a full widget-tree rebuild. This is the key to avoiding 90
-  // setState() calls per second during the scatter and drag animations.
+  // triggering a full widget-tree rebuild.
   final _paintTick = ValueNotifier<int>(0);
 
   // Confetti
   late AnimationController _confettiController;
   List<_ConfettiParticle> _confettiParticles = const [];
   bool _showWinOverlay = false;
-
 
   @override
   void initState() {
@@ -79,8 +85,6 @@ class _GameScreenState extends State<GameScreen>
 
   Future<void> _loadImage() async {
     final size = MediaQuery.of(context).size;
-    // Decode at board width only — no targetHeight so the image aspect ratio is
-    // preserved. The painter uses BoxFit.cover to crop to the board area.
     final targetW = ((size.width / 2) - 2 * _kEdgePad).round().clamp(64, 2048);
 
     final data = await rootBundle.load(widget.selectedImage.assetPath);
@@ -118,7 +122,6 @@ class _GameScreenState extends State<GameScreen>
     final size = MediaQuery.of(context).size;
     _scatterTargets = _gameState!.computeScatterTargets(size);
 
-    // setState only for the phase change (hides/shows shadow layer).
     setState(() => _gameState!.phase = GamePhase.scattering);
 
     _scatterController.reset();
@@ -148,7 +151,6 @@ class _GameScreenState extends State<GameScreen>
         Offset.lerp(_assembledPositions![i], _scatterTargets![i], curved)!,
       );
     }
-    // Repaint the canvas without rebuilding the widget tree.
     _paintTick.value++;
   }
 
@@ -160,7 +162,6 @@ class _GameScreenState extends State<GameScreen>
   }
 
   // Hit-test which unplaced piece (if any) is under [localPos].
-  // Tests in reverse list order so the topmost-drawn piece wins.
   int? _hitTestPiece(Offset localPos) {
     final gs = _gameState;
     if (gs == null) return null;
@@ -185,19 +186,16 @@ class _GameScreenState extends State<GameScreen>
 
   // ── Return animation ──────────────────────────────────────────────────────
 
-  /// Tick handler: 0→0.40 shake, 0.40→1.0 fly back to tray.
   void _onReturnTick() {
     final piece = _returningPiece;
     if (piece == null) return;
     final t = _returnController.value;
 
     if (t <= 0.40) {
-      // Shake phase — sinusoidal horizontal wiggle
       final st = t / 0.40;
       final shake = sin(st * pi * 4) * 14.0;
       piece.currentPosition = Offset(_returnFromPos.dx + shake, _returnFromPos.dy);
     } else {
-      // Fly-back phase — easeOut curve to tray target
       final rt = Curves.easeOut.transform((t - 0.40) / 0.60);
       piece.currentPosition = Offset.lerp(_returnFromPos, _returnToPos, rt)!;
     }
@@ -273,11 +271,13 @@ class _GameScreenState extends State<GameScreen>
     }
 
     final gs = _gameState!;
+    final l10n = AppLocalizations.of(context)!;
     final boardW = gs.boardSize.width;
     final boardH = gs.boardSize.height;
     final boardOffX = gs.boardOffset.dx;
     final boardOffY = gs.boardOffset.dy;
-    final dividerX = boardOffX + boardW + _kEdgePad; // = screenW/2
+    final dividerX = boardOffX + boardW + _kEdgePad;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Stack(
       children: [
@@ -318,8 +318,6 @@ class _GameScreenState extends State<GameScreen>
         ),
 
         // ── Shadow hints ────────────────────────────────────────────────────
-        // Uses Positioned.fill (full-screen canvas) so piece.targetPosition
-        // (which is in screen coords) maps directly to canvas coords.
         if (gs.phase == GamePhase.scattering || gs.phase == GamePhase.playing)
           Positioned.fill(
             child: IgnorePointer(
@@ -359,15 +357,6 @@ class _GameScreenState extends State<GameScreen>
         ),
 
         // ── ALL PIECES — single CustomPaint + single GestureDetector ────────
-        //
-        // Previously: 49 PuzzlePieceWidget instances each with their own
-        // CustomPaint → Flutter promoted each to a separate compositor layer
-        // → 49 texture allocations in SwiftShader → QEMU ran out of memory.
-        //
-        // Now: one CustomPaint draws all pieces in a single pass. The
-        // ValueNotifier repaint signal updates only the canvas without
-        // rebuilding the widget tree, which also eliminates 90 setState()
-        // calls per second during scatter.
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
@@ -377,6 +366,7 @@ class _GameScreenState extends State<GameScreen>
                     if (idx != null) {
                       HapticFeedback.lightImpact();
                       gs.startDrag(idx);
+                      _dragCrossedLeft = false;
                       _paintTick.value++;
                     }
                   }
@@ -385,6 +375,11 @@ class _GameScreenState extends State<GameScreen>
                 ? (d) {
                     if (gs.draggingIndex == null) return;
                     gs.updateDrag(d.delta);
+                    // Track whether the piece ever crossed to the board (left) side
+                    final piece = gs.pieces[gs.draggingIndex!];
+                    if (piece.currentPosition.dx < screenWidth / 2) {
+                      _dragCrossedLeft = true;
+                    }
                     _paintTick.value++;
                   }
                 : null,
@@ -396,16 +391,27 @@ class _GameScreenState extends State<GameScreen>
                     if ((piece.currentPosition - piece.targetPosition)
                             .distance <=
                         snapThreshold) {
+                      // Snapped into place
                       gs.endDrag();
                       if (gs.phase == GamePhase.won) {
+                        _recordCompletion();
                         _startConfetti();
                       } else {
                         setState(() {}); // update tray label
                       }
-                    } else {
+                    } else if (_dragCrossedLeft) {
+                      // Piece was dragged to the board side but not placed — shake + fly-back
                       HapticFeedback.mediumImpact();
                       gs.endDragNoPlace();
                       _startReturnAnimation(piece);
+                    } else {
+                      // Piece never left the tray — drop where it is, but
+                      // snap back if it was dragged outside the screen.
+                      final droppedPiece = gs.pieces[gs.draggingIndex!];
+                      gs.endDragNoPlace();
+                      _snapToTrayIfOutside(
+                          droppedPiece, MediaQuery.of(context).size);
+                      _paintTick.value++;
                     }
                   }
                 : null,
@@ -434,7 +440,7 @@ class _GameScreenState extends State<GameScreen>
         Positioned(
           left: 8, top: 8,
           child: GameButton(
-            label: 'Back',
+            label: l10n.back,
             icon: Icons.arrow_back_rounded,
             color: const Color(0xFF9B59B6),
             width: 120,
@@ -459,14 +465,13 @@ class _GameScreenState extends State<GameScreen>
           ),
 
         // ── Win overlay ─────────────────────────────────────────────────────
-        if (gs.phase == GamePhase.won && _showWinOverlay) _buildWinOverlay(),
+        if (gs.phase == GamePhase.won && _showWinOverlay) _buildWinOverlay(l10n),
       ],
     );
   }
 
-  Widget _buildWinOverlay() {
+  Widget _buildWinOverlay(AppLocalizations l10n) {
     return GestureDetector(
-      // Absorb touches so the game canvas doesn't receive them while won.
       behavior: HitTestBehavior.opaque,
       onTap: () {},
       child: Container(
@@ -508,7 +513,7 @@ class _GameScreenState extends State<GameScreen>
                   alignment: Alignment.center,
                   children: [
                     Text(
-                      'You Did It!',
+                      l10n.youDidIt,
                       style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w900,
@@ -523,9 +528,9 @@ class _GameScreenState extends State<GameScreen>
                       shaderCallback: (b) => const LinearGradient(
                         colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
                       ).createShader(b),
-                      child: const Text(
-                        'You Did It!',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.youDidIt,
+                        style: const TextStyle(
                           fontSize: 34,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
@@ -537,7 +542,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Puzzle complete!',
+                  l10n.puzzleComplete,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -546,7 +551,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
                 const SizedBox(height: 28),
                 GameButton(
-                  label: 'Play Again',
+                  label: l10n.playAgain,
                   icon: Icons.replay_rounded,
                   color: const Color(0xFF6BCB77),
                   shadowColor: const Color(0xFF3A9E48),
@@ -557,7 +562,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
                 const SizedBox(height: 12),
                 GameButton(
-                  label: 'New Puzzle',
+                  label: l10n.newPuzzle,
                   icon: Icons.home_rounded,
                   color: const Color(0xFF4D96FF),
                   shadowColor: const Color(0xFF2460CC),
@@ -590,10 +595,39 @@ class _GameScreenState extends State<GameScreen>
     });
   }
 
+  Future<void> _recordCompletion() async {
+    await CompletionService().recordCompletion(
+      widget.selectedImage.uuid,
+      widget.gridSize,
+    );
+  }
+
+  /// If the piece center has gone outside the visible screen bounds,
+  /// teleport it to a random position in the right-side tray.
+  void _snapToTrayIfOutside(PuzzlePiece piece, Size screenSize) {
+    final gs = _gameState!;
+    final cx = piece.currentPosition.dx + gs.pieceWidth / 2;
+    final cy = piece.currentPosition.dy + gs.pieceHeight / 2;
+    if (cx <= screenSize.width && cy >= 0 && cy <= screenSize.height) return;
+
+    const margin = _kEdgePad;
+    final rng = Random();
+    piece.currentPosition = Offset(
+      (screenSize.width / 2 + margin) +
+          rng.nextDouble() *
+              (screenSize.width / 2 - margin * 2 - gs.pieceWidth)
+                  .clamp(0, double.infinity),
+      margin +
+          rng.nextDouble() *
+              (screenSize.height - margin * 2 - gs.pieceHeight)
+                  .clamp(0, double.infinity),
+    );
+  }
+
   // ── Confetti helpers ───────────────────────────────────────────────────────
 
   void _startConfetti() {
-    _confettiParticles = _generateConfetti(120);
+    _confettiParticles = _generateConfetti(250);
     setState(() {}); // show confetti layer
     _confettiController.reset();
     _confettiController.forward().then((_) {
@@ -610,10 +644,10 @@ class _GameScreenState extends State<GameScreen>
     ];
     return List.generate(count, (_) => _ConfettiParticle(
       x: rng.nextDouble(),
-      speed: 0.50 + rng.nextDouble() * 0.75,
+      speed: 0.40 + rng.nextDouble() * 0.90,
       startDelay: rng.nextDouble() * 0.30,
       color: colors[rng.nextInt(colors.length)],
-      size: 5.0 + rng.nextDouble() * 9.0,
+      size: 6.0 + rng.nextDouble() * 16.0,
       rotSpeed: 2.0 + rng.nextDouble() * 6.0,
       wobblePhase: rng.nextDouble() * 2 * pi,
       isRect: rng.nextBool(),
@@ -622,10 +656,6 @@ class _GameScreenState extends State<GameScreen>
 }
 
 // ── Single-canvas painter for ALL puzzle pieces ────────────────────────────────
-//
-// Drawing all N pieces in one CustomPaint pass means Flutter sees ONE layer
-// instead of N layers. With software rendering (SwiftShader), N separate layers
-// meant N × screen-sized texture allocations in CPU RAM, which crashed QEMU.
 
 class _AllPiecesPainter extends CustomPainter {
   final List<PuzzlePiece> pieces;
@@ -653,7 +683,6 @@ class _AllPiecesPainter extends CustomPainter {
         piece.currentPosition.dx - tabW,
         piece.currentPosition.dy - tabH,
       );
-      // Reuse JigsawPiecePainter's paint() logic in the translated canvas.
       JigsawPiecePainter(
         piece: piece,
         image: image,
@@ -794,7 +823,7 @@ class _TrayLabel extends StatelessWidget {
 
 class _ConfettiParticle {
   final double x;           // 0–1 horizontal start fraction
-  final double speed;       // fall-speed multiplier
+  final double speed;       // rise-speed multiplier
   final double startDelay;  // 0–1 fraction of total duration before appearing
   final Color color;
   final double size;
@@ -834,7 +863,8 @@ class _ConfettiPainter extends CustomPainter {
       final px = p.x * size.width +
           sin(pt * 4 * pi + p.wobblePhase) * 28 +
           cos(pt * 2.5 * pi + p.wobblePhase * 0.7) * 14;
-      final py = -28.0 + pt * p.speed * (size.height + 56);
+      // Shoot UP from the bottom
+      final py = size.height + 28.0 - pt * p.speed * (size.height + 56);
       final rot = pt * 2 * pi * p.rotSpeed;
 
       canvas.save();

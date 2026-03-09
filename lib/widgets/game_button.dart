@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 /// A glossy, 3-D cartoon-style button inspired by the pzuh.itch.io free-game-GUI pack.
 /// Features: raised shadow base, gloss highlight, press-down animation, haptic feedback.
+/// The button auto-expands its width when the label text is longer than [width].
 class GameButton extends StatefulWidget {
   final String label;
   final VoidCallback onPressed;
@@ -39,11 +40,32 @@ class _GameButtonState extends State<GameButton> {
         .toColor();
   }
 
+  /// Measures how wide the button content needs to be and returns the
+  /// greater of that value and [widget.width], ensuring text never clips.
+  double _computeWidth() {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: widget.label,
+        style: TextStyle(
+          fontSize: widget.fontSize,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    const hPad = 28.0; // 14 px on each side
+    final iconW = widget.icon != null ? (widget.fontSize + 6 + 8) : 0.0;
+    final contentW = tp.width + iconW + hPad;
+    return contentW > widget.width ? contentW : widget.width;
+  }
+
   @override
   Widget build(BuildContext context) {
     final shadowColor = widget.shadowColor ?? _darken(widget.color);
     const bottomPad = 6.0;
     final shift = _pressed ? bottomPad : 0.0;
+    final actualWidth = _computeWidth();
 
     return GestureDetector(
       onTapDown: (_) {
@@ -56,7 +78,7 @@ class _GameButtonState extends State<GameButton> {
       },
       onTapCancel: () => setState(() => _pressed = false),
       child: SizedBox(
-        width: widget.width,
+        width: actualWidth,
         height: widget.height + bottomPad,
         child: Stack(
           children: [
@@ -113,43 +135,48 @@ class _GameButtonState extends State<GameButton> {
                         ),
                       ),
 
-                      // Label + optional icon
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (widget.icon != null) ...[
-                              Icon(
-                                widget.icon,
-                                color: Colors.white,
-                                size: widget.fontSize + 6,
-                                shadows: const [
-                                  Shadow(
-                                    color: Color(0x55000000),
-                                    offset: Offset(0, 2),
-                                    blurRadius: 4,
-                                  ),
-                                ],
+                      // Label + optional icon — centered vertically and horizontally
+                      Align(
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.icon != null) ...[
+                                Icon(
+                                  widget.icon,
+                                  color: Colors.white,
+                                  size: widget.fontSize + 6,
+                                  shadows: const [
+                                    Shadow(
+                                      color: Color(0x55000000),
+                                      offset: Offset(0, 2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Text(
+                                widget.label,
+                                style: TextStyle(
+                                  fontSize: widget.fontSize,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                  shadows: const [
+                                    Shadow(
+                                      color: Color(0x55000000),
+                                      offset: Offset(0, 2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 8),
                             ],
-                            Text(
-                              widget.label,
-                              style: TextStyle(
-                                fontSize: widget.fontSize,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                                shadows: const [
-                                  Shadow(
-                                    color: Color(0x55000000),
-                                    offset: Offset(0, 2),
-                                    blurRadius: 4,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ],
