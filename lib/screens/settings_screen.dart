@@ -7,6 +7,7 @@ import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
+import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
 class SettingsScreen extends StatefulWidget {
 
@@ -104,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
-                      child: Center(child: _buildTitle(l10n.settingsTitle)),
+                      child: Center(child: GradientTitle(text: l10n.settingsTitle)),
                     ),
                     const SizedBox(width: 120),
                   ],
@@ -120,41 +121,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTitle(String text) {
-    const sz = 28.0;
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: sz,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 5
-              ..color = const Color(0xFF6A1B9A),
-          ),
-        ),
-        ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
-          ).createShader(b),
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: sz,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
