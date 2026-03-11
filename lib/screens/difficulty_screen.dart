@@ -1,20 +1,19 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-import '../l10n/app_localizations.dart';
-import '../main.dart';
-import '../models/puzzle_image.dart';
-import '../widgets/game_button.dart';
-import 'game_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
+import 'package:lily_jigsaw_puzzle/screens/game_screen.dart';
+import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 
 class DifficultyScreen extends StatelessWidget {
-  final PuzzleImageData selectedImage;
-  final LocaleNotifier localeNotifier;
 
   const DifficultyScreen({
-    super.key,
-    required this.selectedImage,
-    required this.localeNotifier,
+    required this.selectedImage, required this.localeNotifier, super.key,
   });
+  final PuzzleImageData selectedImage;
+  final LocaleNotifier localeNotifier;
 
   @override
   Widget build(BuildContext context) {
@@ -246,12 +245,12 @@ class DifficultyScreen extends StatelessWidget {
   }
 
   void _go(BuildContext context, int gridSize) {
-    Navigator.of(context).push(MaterialPageRoute(
+    unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => GameScreen(
         selectedImage: selectedImage,
         gridSize: gridSize,
         localeNotifier: localeNotifier,
       ),
-    ));
+    )));
   }
 }

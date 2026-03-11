@@ -3,9 +3,16 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../models/puzzle_piece.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
 class JigsawPiecePainter extends CustomPainter {
+
+  JigsawPiecePainter({
+    required this.piece,
+    required this.image,
+    required this.pieceWidth,
+    required this.pieceHeight,
+  });
   // Tab margin as a fraction of piece dimension (also used outside for canvas sizing)
   static const double tabFraction = 0.35;
 
@@ -14,34 +21,12 @@ class JigsawPiecePainter extends CustomPainter {
   final double pieceWidth;
   final double pieceHeight;
 
-  JigsawPiecePainter({
-    required this.piece,
-    required this.image,
-    required this.pieceWidth,
-    required this.pieceHeight,
-  });
-
   @override
   void paint(Canvas canvas, Size size) {
     final path = buildPiecePath(piece.edges, pieceWidth, pieceHeight);
     final bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
-    // 1. Drop shadow — layered offset fill, no blur (blur is too expensive for
-    //    software rendering and kills performance on the emulator with 49 pieces).
-    canvas.save();
-    canvas.translate(4, 7);
-    canvas.drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.18));
-    canvas.restore();
-    canvas.save();
-    canvas.translate(2, 4);
-    canvas.drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22));
-    canvas.restore();
-
-    // 2. Image fill, clipped to piece shape — BoxFit.cover: scale the image so
-    //    it fully covers the board without distortion, then crop to board area.
-    canvas.save();
-    canvas.clipPath(path);
-
+    // Pre-compute image variables so they can be used inside the single canvas cascade.
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
     final boardW = pieceWidth * piece.gridSize;
@@ -63,44 +48,75 @@ class JigsawPiecePainter extends CustomPainter {
     final srcTabW = cellW * tabFraction;
     final srcTabH = cellH * tabFraction;
 
-    canvas.drawImageRect(
-      image,
-      Rect.fromLTWH(
-        srcOriginX + piece.col * cellW - srcTabW,
-        srcOriginY + piece.row * cellH - srcTabH,
-        cellW + 2 * srcTabW,
-        cellH + 2 * srcTabH,
-      ),
-      bounds,
-      Paint(),
-    );
+    // Single canvas cascade: 1. shadows, 2. image fill (clipped), 3. lighting, 4. bevel.
+    canvas
+      // 1. Drop shadow — three layered offset fills (no blur for software render
+      //    performance). Three layers give a softer, deeper shadow.
+      ..save()
+      ..translate(6, 10)
+      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.11))
+      ..restore()
+      ..save()
+      ..translate(4, 7)
+      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.18))
+      ..restore()
+      ..save()
+      ..translate(2, 4)
+      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
+      ..restore()
 
-    // 3. Lighting gradient overlay — simulates light from top-left
-    canvas.drawRect(
-      bounds,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0x38FFFFFF),
-            Color(0x00000000),
-            Color(0x30000000),
-          ],
-          stops: [0.0, 0.45, 1.0],
-        ).createShader(bounds),
-    );
+      // 2. Image fill, clipped to piece shape — BoxFit.cover: scale the image so
+      //    it fully covers the board without distortion, then crop to board area.
+      ..save()
+      ..clipPath(path)
+      ..drawImageRect(
+        image,
+        Rect.fromLTWH(
+          srcOriginX + piece.col * cellW - srcTabW,
+          srcOriginY + piece.row * cellH - srcTabH,
+          cellW + 2 * srcTabW,
+          cellH + 2 * srcTabH,
+        ),
+        bounds,
+        Paint(),
+      )
 
-    canvas.restore();
+      // 3. Lighting gradient overlay — simulates diffuse light from top-left.
+      //    Stronger than before for a more pronounced 3-D impression.
+      ..drawRect(
+        bounds,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0x55FFFFFF), // bright highlight (top-left)
+              Color(0x00000000), // transparent mid
+              Color(0x44000000), // dark shadow (bottom-right)
+            ],
+            stops: [0.0, 0.40, 1.0],
+          ).createShader(bounds),
+      )
+      ..restore()
 
-    // 4. White border — childish, visible against any background
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
+      // 4. Bevel edge — gradient stroke: bright on top-left, dark on
+      //    bottom-right, giving a raised-tile 3-D look.
+      ..drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.0
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: 0.95),
+              Colors.white.withValues(alpha: 0.30),
+              Colors.black.withValues(alpha: 0.40),
+            ],
+            stops: const [0.0, 0.50, 1.0],
+          ).createShader(bounds),
+      );
   }
 
   /// Builds the full jigsaw piece path. Origin is (0,0); the piece body starts
@@ -210,40 +226,41 @@ class JigsawPiecePainter extends CustomPainter {
 
     final t = tab;
 
-    // 1. Flat to shoulder
-    path.lineTo(pt(0.32, 0).dx, pt(0.32, 0).dy);
+    path
+      // 1. Flat to shoulder
+      ..lineTo(pt(0.32, 0).dx, pt(0.32, 0).dy)
 
-    // 2. Shoulder → narrow neck base (smooth entry)
-    path.cubicTo(
-      pt(0.37, 0.00 * t).dx, pt(0.37, 0.00 * t).dy,
-      pt(0.40, 0.08 * t).dx, pt(0.40, 0.08 * t).dy,
-      pt(0.40, 0.20 * t).dx, pt(0.40, 0.20 * t).dy,
-    );
+      // 2. Shoulder → narrow neck base (smooth entry)
+      ..cubicTo(
+        pt(0.37, 0.00 * t).dx, pt(0.37, 0.00 * t).dy,
+        pt(0.40, 0.08 * t).dx, pt(0.40, 0.08 * t).dy,
+        pt(0.40, 0.20 * t).dx, pt(0.40, 0.20 * t).dy,
+      )
 
-    // 3. Left dome arc: neck base → apex
-    // Flares outward (beyond the neck) to create a round knob.
-    path.cubicTo(
-      pt(0.30, 0.42 * t).dx, pt(0.30, 0.42 * t).dy,
-      pt(0.34, 0.94 * t).dx, pt(0.34, 0.94 * t).dy,
-      pt(0.50, 1.00 * t).dx, pt(0.50, 1.00 * t).dy,
-    );
+      // 3. Left dome arc: neck base → apex
+      // Flares outward (beyond the neck) to create a round knob.
+      ..cubicTo(
+        pt(0.30, 0.42 * t).dx, pt(0.30, 0.42 * t).dy,
+        pt(0.34, 0.94 * t).dx, pt(0.34, 0.94 * t).dy,
+        pt(0.50, 1.00 * t).dx, pt(0.50, 1.00 * t).dy,
+      )
 
-    // 4. Right dome arc: apex → neck base (mirror of left)
-    path.cubicTo(
-      pt(0.66, 0.94 * t).dx, pt(0.66, 0.94 * t).dy,
-      pt(0.70, 0.42 * t).dx, pt(0.70, 0.42 * t).dy,
-      pt(0.60, 0.20 * t).dx, pt(0.60, 0.20 * t).dy,
-    );
+      // 4. Right dome arc: apex → neck base (mirror of left)
+      ..cubicTo(
+        pt(0.66, 0.94 * t).dx, pt(0.66, 0.94 * t).dy,
+        pt(0.70, 0.42 * t).dx, pt(0.70, 0.42 * t).dy,
+        pt(0.60, 0.20 * t).dx, pt(0.60, 0.20 * t).dy,
+      )
 
-    // 5. Neck base → shoulder (smooth exit)
-    path.cubicTo(
-      pt(0.60, 0.08 * t).dx, pt(0.60, 0.08 * t).dy,
-      pt(0.63, 0.00 * t).dx, pt(0.63, 0.00 * t).dy,
-      pt(0.68, 0.00 * t).dx, pt(0.68, 0.00 * t).dy,
-    );
+      // 5. Neck base → shoulder (smooth exit)
+      ..cubicTo(
+        pt(0.60, 0.08 * t).dx, pt(0.60, 0.08 * t).dy,
+        pt(0.63, 0.00 * t).dx, pt(0.63, 0.00 * t).dy,
+        pt(0.68, 0.00 * t).dx, pt(0.68, 0.00 * t).dy,
+      )
 
-    // 6. Flat to edge end
-    path.lineTo(to.dx, to.dy);
+      // 6. Flat to edge end
+      ..lineTo(to.dx, to.dy);
   }
 
   @override

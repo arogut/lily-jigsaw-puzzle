@@ -59,8 +59,9 @@ void main() {
     });
 
     test('isPlaced and isDragging are mutable', () {
-      piece.isPlaced = true;
-      piece.isDragging = true;
+      piece
+        ..isPlaced = true
+        ..isDragging = true;
       expect(piece.isPlaced, isTrue);
       expect(piece.isDragging, isTrue);
     });

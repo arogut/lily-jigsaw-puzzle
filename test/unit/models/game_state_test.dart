@@ -8,8 +8,7 @@ import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 /// Creates a small solid-colour ui.Image for testing without asset loading.
 Future<ui.Image> _createTestImage({int width = 64, int height = 64}) async {
   final recorder = ui.PictureRecorder();
-  final canvas = Canvas(recorder);
-  canvas.drawRect(
+  Canvas(recorder).drawRect(
     Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
     Paint()..color = const Color(0xFFFF0000),
   );
@@ -36,7 +35,7 @@ void main() {
 
   group('GameState initialisation', () {
     test('creates gridSize² pieces', () {
-      final gs = makeState(gridSize: 3);
+      final gs = makeState();
       expect(gs.pieces.length, 9);
     });
 
@@ -56,12 +55,12 @@ void main() {
     });
 
     test('pieceWidth equals boardSize.width / gridSize', () {
-      final gs = makeState(gridSize: 3, boardSize: const Size(300, 300));
+      final gs = makeState();
       expect(gs.pieceWidth, closeTo(100.0, 0.001));
     });
 
     test('pieceHeight equals boardSize.height / gridSize', () {
-      final gs = makeState(gridSize: 3, boardSize: const Size(300, 600));
+      final gs = makeState(boardSize: const Size(300, 600));
       expect(gs.pieceHeight, closeTo(200.0, 0.001));
     });
 
@@ -84,10 +83,10 @@ void main() {
 
     test('pieces cover all grid positions', () {
       const gridSize = 3;
-      final gs = makeState(gridSize: gridSize);
+      final gs = makeState();
       final positions = gs.pieces.map((p) => (p.row, p.col)).toSet();
-      for (int r = 0; r < gridSize; r++) {
-        for (int c = 0; c < gridSize; c++) {
+      for (var r = 0; r < gridSize; r++) {
+        for (var c = 0; c < gridSize; c++) {
           expect(positions.contains((r, c)), isTrue);
         }
       }
@@ -97,7 +96,7 @@ void main() {
   group('GameState connectors complementarity', () {
     // Adjacent pieces must have complementary edges so they fit together.
     test('top edge of (r,c) complements bottom edge of (r-1,c)', () {
-      final gs = makeState(gridSize: 3);
+      final gs = makeState();
       for (final piece in gs.pieces) {
         if (piece.row == 0) continue;
         final above = gs.pieces.firstWhere(
@@ -115,7 +114,7 @@ void main() {
     });
 
     test('left edge of (r,c) complements right edge of (r,c-1)', () {
-      final gs = makeState(gridSize: 3);
+      final gs = makeState();
       for (final piece in gs.pieces) {
         if (piece.col == 0) continue;
         final leftNeighbour = gs.pieces.firstWhere(
@@ -133,7 +132,7 @@ void main() {
 
     test('border pieces have flat outer edges', () {
       const gridSize = 3;
-      final gs = makeState(gridSize: gridSize);
+      final gs = makeState();
       for (final piece in gs.pieces) {
         if (piece.row == 0) expect(piece.edges.top, EdgeType.flat);
         if (piece.row == gridSize - 1) expect(piece.edges.bottom, EdgeType.flat);
@@ -145,14 +144,14 @@ void main() {
 
   group('computeScatterTargets', () {
     test('returns one target per piece', () {
-      final gs = makeState(gridSize: 3);
+      final gs = makeState();
       final targets = gs.computeScatterTargets(const Size(600, 300));
       expect(targets.length, gs.pieces.length);
     });
 
     test('scatter targets are in the right-half tray region', () {
       const screenSize = Size(600, 300);
-      final gs = makeState(gridSize: 3, boardSize: const Size(300, 300));
+      final gs = makeState();
       final targets = gs.computeScatterTargets(screenSize);
       for (final t in targets) {
         // All targets should be in the right half (tray area x > screen.width/2)
@@ -163,7 +162,7 @@ void main() {
 
   group('drag lifecycle', () {
     test('startDrag moves piece to end of list and marks isDragging', () {
-      final gs = makeState(gridSize: 3);
+      final gs = makeState();
       final firstPiece = gs.pieces[0];
       gs.startDrag(0);
       expect(gs.pieces.last, firstPiece);
@@ -172,17 +171,16 @@ void main() {
     });
 
     test('updateDrag moves the dragged piece by delta', () {
-      final gs = makeState(gridSize: 3);
-      gs.startDrag(0);
+      final gs = makeState()..startDrag(0);
       final before = gs.pieces[gs.draggingIndex!].currentPosition;
       gs.updateDrag(const Offset(10, 20));
       expect(gs.pieces[gs.draggingIndex!].currentPosition, before + const Offset(10, 20));
     });
 
     test('endDrag clears isDragging and draggingIndex', () {
-      final gs = makeState(gridSize: 3);
-      gs.startDrag(0);
-      gs.endDrag();
+      final gs = makeState()
+        ..startDrag(0)
+        ..endDrag();
       expect(gs.draggingIndex, isNull);
       expect(gs.pieces.every((p) => !p.isDragging), isTrue);
     });
@@ -190,8 +188,7 @@ void main() {
 
   group('snap on endDrag', () {
     test('piece snaps to target when within 40px threshold', () {
-      final gs = makeState(gridSize: 3, boardSize: const Size(300, 300));
-      gs.startDrag(0);
+      final gs = makeState()..startDrag(0);
       final piece = gs.pieces.last;
       // Move to just within snap threshold (< 40 px from target)
       piece.currentPosition = piece.targetPosition + const Offset(20, 0);
@@ -201,8 +198,7 @@ void main() {
     });
 
     test('piece does not snap when beyond 40px threshold', () {
-      final gs = makeState(gridSize: 3, boardSize: const Size(300, 300));
-      gs.startDrag(0);
+      final gs = makeState()..startDrag(0);
       final piece = gs.pieces.last;
       // Move well beyond snap threshold
       piece.currentPosition = piece.targetPosition + const Offset(100, 100);
@@ -214,10 +210,10 @@ void main() {
 
   group('win condition', () {
     test('phase becomes won when all pieces are placed', () {
-      final gs = makeState(gridSize: 3, boardSize: const Size(300, 300));
-      gs.phase = GamePhase.playing;
+      final gs = makeState()
+        ..phase = GamePhase.playing;
       // Mark all pieces except the first as already placed.
-      for (int i = 1; i < gs.pieces.length; i++) {
+      for (var i = 1; i < gs.pieces.length; i++) {
         gs.pieces[i].isPlaced = true;
       }
       // Drag the remaining unplaced piece (index 0) to its target position.
@@ -229,9 +225,9 @@ void main() {
     });
 
     test('phase does not become won when pieces remain unplaced', () {
-      final gs = makeState(gridSize: 3, boardSize: const Size(300, 300));
-      gs.phase = GamePhase.playing;
-      gs.startDrag(0);
+      final gs = makeState()
+        ..phase = GamePhase.playing
+        ..startDrag(0);
       final piece = gs.pieces.last;
       piece.currentPosition = piece.targetPosition + const Offset(200, 200);
       gs.endDrag();
@@ -241,10 +237,11 @@ void main() {
 
   group('setPiecePosition', () {
     test('updates currentPosition without notifying (used by scatter tick)', () {
-      final gs = makeState(gridSize: 3);
-      int notifyCount = 0;
-      gs.addListener(() => notifyCount++);
-      gs.setPiecePosition(0, const Offset(99, 88));
+      final gs = makeState();
+      var notifyCount = 0;
+      gs
+        ..addListener(() => notifyCount++)
+        ..setPiecePosition(0, const Offset(99, 88));
       expect(gs.pieces[0].currentPosition, const Offset(99, 88));
       expect(notifyCount, 0); // no notification
       gs.removeListener(() {});

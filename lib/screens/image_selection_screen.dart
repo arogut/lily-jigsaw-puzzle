@@ -1,18 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../l10n/app_localizations.dart';
-import '../main.dart';
-import '../models/puzzle_image.dart';
-import '../services/completion_service.dart';
-import '../widgets/game_button.dart';
-import 'difficulty_screen.dart';
-import 'settings_screen.dart';
+import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
+import 'package:lily_jigsaw_puzzle/screens/difficulty_screen.dart';
+import 'package:lily_jigsaw_puzzle/screens/settings_screen.dart';
+import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 
 class ImageSelectionScreen extends StatelessWidget {
-  final LocaleNotifier localeNotifier;
 
-  const ImageSelectionScreen({super.key, required this.localeNotifier});
+  const ImageSelectionScreen({required this.localeNotifier, super.key});
+  final LocaleNotifier localeNotifier;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +49,7 @@ class ImageSelectionScreen extends StatelessWidget {
                       width: 110,
                       height: 44,
                       fontSize: 15,
-                      onPressed: () => SystemNavigator.pop(),
+                      onPressed: SystemNavigator.pop,
                     ),
                     Expanded(child: Center(child: _buildTitle(l10n.choosePuzzle))),
                     GameButton(
@@ -60,11 +61,11 @@ class ImageSelectionScreen extends StatelessWidget {
                       height: 44,
                       fontSize: 15,
                       onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
+                        unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
                           builder: (_) => SettingsScreen(
                             localeNotifier: localeNotifier,
                           ),
-                        ));
+                        )));
                       },
                     ),
                   ],
@@ -155,9 +156,9 @@ String localizedImageName(AppLocalizations l10n, String assetPath) {
 // ── Image card ───────────────────────────────────────────────────────────────
 
 class _ImageCard extends StatefulWidget {
+  const _ImageCard({required this.image, required this.localeNotifier});
   final PuzzleImageData image;
   final LocaleNotifier localeNotifier;
-  const _ImageCard({required this.image, required this.localeNotifier});
 
   @override
   State<_ImageCard> createState() => _ImageCardState();
@@ -173,7 +174,7 @@ class _ImageCardState extends State<_ImageCard>
     super.initState();
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 110));
-    _scale = Tween(begin: 1.0, end: 0.93)
+    _scale = Tween<double>(begin: 1, end: 0.93)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
@@ -184,13 +185,16 @@ class _ImageCardState extends State<_ImageCard>
   }
 
   void _onTap() {
-    _ctrl.reverse();
-    Navigator.of(context).push(MaterialPageRoute(
+    unawaited(_ctrl.reverse());
+    unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => DifficultyScreen(
         selectedImage: widget.image,
         localeNotifier: widget.localeNotifier,
       ),
-    ));
+    )).then((_) {
+      // Refresh star display when returning from the game.
+      if (mounted) setState(() {});
+    }));
   }
 
   @override

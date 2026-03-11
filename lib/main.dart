@@ -1,22 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/screens/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'l10n/app_localizations.dart';
-import 'screens/splash_screen.dart';
-
 class LocaleNotifier extends ChangeNotifier {
-  Locale _locale;
 
   LocaleNotifier(this._locale);
+  Locale _locale;
 
   Locale get locale => _locale;
 
   void setLocale(Locale locale) {
     _locale = locale;
     notifyListeners();
-    _save(locale.languageCode);
+    unawaited(_save(locale.languageCode));
   }
 
   Future<void> _save(String code) async {
@@ -33,15 +34,15 @@ class LocaleNotifier extends ChangeNotifier {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   final localeNotifier = await LocaleNotifier.load();
   runApp(JigsawApp(localeNotifier: localeNotifier));
 }
 
 class JigsawApp extends StatelessWidget {
-  final LocaleNotifier localeNotifier;
 
-  const JigsawApp({super.key, required this.localeNotifier});
+  const JigsawApp({required this.localeNotifier, super.key});
+  final LocaleNotifier localeNotifier;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +58,6 @@ class JigsawApp extends StatelessWidget {
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xFFFF6B9D),
-              brightness: Brightness.light,
             ),
             useMaterial3: true,
             textTheme: GoogleFonts.nunitoTextTheme(),

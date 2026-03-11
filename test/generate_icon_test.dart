@@ -41,9 +41,9 @@ void main() {
     final byteData =
         await image.toByteData(format: ui.ImageByteFormat.png);
 
-    final file = File('assets/icons/app_icon.png');
-    file.createSync(recursive: true);
-    file.writeAsBytesSync(byteData!.buffer.asUint8List());
+    final file = File('assets/icons/app_icon.png')
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(byteData!.buffer.asUint8List());
 
     expect(file.existsSync(), isTrue);
     expect(file.lengthSync(), greaterThan(0));

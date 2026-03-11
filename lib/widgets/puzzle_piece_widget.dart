@@ -1,11 +1,16 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../models/puzzle_piece.dart';
-import '../painters/jigsaw_piece_painter.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
+import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
 
 class PuzzlePieceWidget extends StatefulWidget {
+
+  const PuzzlePieceWidget({
+    required this.piece, required this.image, required this.pieceWidth, required this.pieceHeight, required this.onDragStart, required this.onDragUpdate, required this.onDragEnd, super.key,
+  });
   final PuzzlePiece piece;
   final ui.Image image;
   final double pieceWidth;
@@ -13,17 +18,6 @@ class PuzzlePieceWidget extends StatefulWidget {
   final VoidCallback onDragStart;
   final void Function(Offset delta) onDragUpdate;
   final VoidCallback onDragEnd;
-
-  const PuzzlePieceWidget({
-    super.key,
-    required this.piece,
-    required this.image,
-    required this.pieceWidth,
-    required this.pieceHeight,
-    required this.onDragStart,
-    required this.onDragUpdate,
-    required this.onDragEnd,
-  });
 
   @override
   State<PuzzlePieceWidget> createState() => _PuzzlePieceWidgetState();
@@ -42,9 +36,9 @@ class _PuzzlePieceWidgetState extends State<PuzzlePieceWidget>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _scaleAnim = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.12), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 1.12, end: 1.0), weight: 1),
+    _scaleAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 1, end: 1.12), weight: 1),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.12, end: 1), weight: 1),
     ]).animate(CurvedAnimation(parent: _snapController, curve: Curves.easeInOut));
   }
 
@@ -52,7 +46,7 @@ class _PuzzlePieceWidgetState extends State<PuzzlePieceWidget>
   void didUpdateWidget(PuzzlePieceWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_wasPlaced && widget.piece.isPlaced) {
-      _snapController.forward(from: 0);
+      unawaited(_snapController.forward(from: 0));
     }
     _wasPlaced = widget.piece.isPlaced;
   }

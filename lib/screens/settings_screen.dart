@@ -3,16 +3,15 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../l10n/app_localizations.dart';
-import '../services/completion_service.dart';
-import '../widgets/game_button.dart';
-import '../main.dart';
+import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final LocaleNotifier localeNotifier;
 
-  const SettingsScreen({super.key, required this.localeNotifier});
+  const SettingsScreen({required this.localeNotifier, super.key});
+  final LocaleNotifier localeNotifier;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -258,7 +257,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Language section
           _buildSectionLabel(l10n.language),
@@ -316,10 +314,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.delete_sweep_rounded,
             color: const Color(0xFFFF6B6B),
             shadowColor: const Color(0xFFCC2222),
-            width: 240,
             height: 56,
             fontSize: 18,
-            onPressed: _resetProgress,
+            onPressed: () => unawaited(_resetProgress()),
           ),
           if (_resetDone) ...[
             const SizedBox(height: 14),

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../models/puzzle_piece.dart';
-import 'jigsaw_piece_painter.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
+import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
 
 /// Draws a 2×2 jigsaw puzzle logo with solid color fills.
 /// Used on the splash screen.
 class LogoPainter extends CustomPainter {
-  final double size;
 
   const LogoPainter({required this.size});
+  final double size;
 
   static const List<Color> _pieceColors = [
     Color(0xFFFF6B9D), // pink   — top-left
@@ -53,7 +53,7 @@ class LogoPainter extends CustomPainter {
     final tabH = ph * JigsawPiecePainter.tabFraction;
 
     final gridPositions = [
-      Offset(0, 0), // TL
+      Offset.zero, // TL
       Offset(pw, 0), // TR
       Offset(0, ph), // BL
       Offset(pw, ph), // BR
@@ -63,52 +63,53 @@ class LogoPainter extends CustomPainter {
     final originX = (canvasSize.width - size) / 2;
     final originY = (canvasSize.height - size) / 2;
 
-    canvas.save();
-    canvas.translate(originX, originY);
+    canvas
+      ..save()
+      ..translate(originX, originY);
 
-    for (int i = 0; i < 4; i++) {
+    for (var i = 0; i < 4; i++) {
       final pos = gridPositions[i];
       final path =
           JigsawPiecePainter.buildPiecePath(_logoEdges[i], pw, ph);
-
-      canvas.save();
-      canvas.translate(pos.dx - tabW, pos.dy - tabH);
-
-      // Shadow — offset fill without blur for performance
-      canvas.save();
-      canvas.translate(3, 5);
-      canvas.drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.28));
-      canvas.restore();
-
-      // Solid colour fill
-      canvas.drawPath(path, Paint()..color = _pieceColors[i]);
-
-      // Gloss overlay (top-left highlight)
-      canvas.save();
-      canvas.clipPath(path);
       final bounds = Rect.fromLTWH(0, 0, pw + 2 * tabW, ph + 2 * tabH);
-      canvas.drawRect(
-        bounds,
-        Paint()
-          ..shader = const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0x60FFFFFF), Color(0x00FFFFFF)],
-            stops: [0.0, 0.55],
-          ).createShader(bounds),
-      );
-      canvas.restore();
 
-      // White border
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.90)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3,
-      );
+      canvas
+        ..save()
+        ..translate(pos.dx - tabW, pos.dy - tabH)
 
-      canvas.restore();
+        // Shadow — offset fill without blur for performance
+        ..save()
+        ..translate(3, 5)
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.28))
+        ..restore()
+
+        // Solid colour fill
+        ..drawPath(path, Paint()..color = _pieceColors[i])
+
+        // Gloss overlay (top-left highlight)
+        ..save()
+        ..clipPath(path)
+        ..drawRect(
+          bounds,
+          Paint()
+            ..shader = const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0x60FFFFFF), Color(0x00FFFFFF)],
+              stops: [0.0, 0.55],
+            ).createShader(bounds),
+        )
+        ..restore()
+
+        // White border
+        ..drawPath(
+          path,
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.90)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3,
+        )
+        ..restore();
     }
 
     canvas.restore();

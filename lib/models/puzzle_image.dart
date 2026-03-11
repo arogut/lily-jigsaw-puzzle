@@ -1,15 +1,15 @@
 import 'package:uuid/uuid.dart';
 
-class PuzzleImageData {
-  final String assetPath;
-  final String name; // fallback English name
-  final String uuid; // deterministic UUID generated from asset path
+class PuzzleImageData { // deterministic UUID generated from asset path
 
   const PuzzleImageData({
     required this.assetPath,
     required this.name,
     required this.uuid,
   });
+  final String assetPath;
+  final String name; // fallback English name
+  final String uuid;
 
   // Private namespace UUID used for v5 generation (arbitrary, stable).
   static const _ns = '3c3d63d7-0de7-4b57-8e7f-a9a1b9c2d7e5';

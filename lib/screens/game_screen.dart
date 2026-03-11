@@ -1,31 +1,29 @@
-import 'dart:math' show Random, sin, cos, pi;
+import 'dart:async';
+import 'dart:math' show Random, cos, pi, sin;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../l10n/app_localizations.dart';
-import '../main.dart';
-import '../models/game_state.dart';
-import '../models/puzzle_image.dart';
-import '../models/puzzle_piece.dart';
-import '../painters/jigsaw_piece_painter.dart';
-import '../services/completion_service.dart';
-import '../widgets/game_button.dart';
+import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/models/game_state.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
+import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
+import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 
 const _kEdgePad = 20.0;
 
 class GameScreen extends StatefulWidget {
+
+  const GameScreen({
+    required this.selectedImage, required this.gridSize, required this.localeNotifier, super.key,
+  });
   final PuzzleImageData selectedImage;
   final int gridSize;
   final LocaleNotifier localeNotifier;
-
-  const GameScreen({
-    super.key,
-    required this.selectedImage,
-    required this.gridSize,
-    required this.localeNotifier,
-  });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -79,7 +77,7 @@ class _GameScreenState extends State<GameScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_uiImage == null) _loadImage();
+    if (_uiImage == null) unawaited(_loadImage());
     if (_uiImage != null && _gameState == null) _initGame();
   }
 
@@ -124,10 +122,11 @@ class _GameScreenState extends State<GameScreen>
 
     setState(() => _gameState!.phase = GamePhase.scattering);
 
-    _scatterController.reset();
-    _scatterController.addListener(_onScatterTick);
-    _scatterController.addStatusListener(_onScatterStatus);
-    _scatterController.forward();
+    _scatterController
+      ..reset()
+      ..addListener(_onScatterTick)
+      ..addStatusListener(_onScatterStatus);
+    unawaited(_scatterController.forward());
   }
 
   void _onScatterTick() {
@@ -139,7 +138,7 @@ class _GameScreenState extends State<GameScreen>
     final t = _scatterController.value;
     final n = _gameState!.pieces.length;
 
-    for (int i = 0; i < n; i++) {
+    for (var i = 0; i < n; i++) {
       final slotWidth = 1.0 / n;
       final startI = i * slotWidth;
       final endI = (startI + slotWidth * 1.5).clamp(0.0, 1.0);
@@ -168,7 +167,7 @@ class _GameScreenState extends State<GameScreen>
     final tabW = gs.pieceWidth * JigsawPiecePainter.tabFraction;
     final tabH = gs.pieceHeight * JigsawPiecePainter.tabFraction;
 
-    for (int i = gs.pieces.length - 1; i >= 0; i--) {
+    for (var i = gs.pieces.length - 1; i >= 0; i--) {
       final piece = gs.pieces[i];
       if (piece.isPlaced) continue;
       if (piece == _returningPiece) continue; // untouchable during fly-back
@@ -221,18 +220,20 @@ class _GameScreenState extends State<GameScreen>
     _returnToPos = Offset(trayX, trayY);
 
     _returnController.reset();
-    _returnController.forward().then((_) {
+    unawaited(_returnController.forward().then((_) {
       if (mounted) setState(() => _returningPiece = null);
-    });
+    }));
   }
 
   @override
   void dispose() {
-    _scatterController.removeListener(_onScatterTick);
-    _scatterController.removeStatusListener(_onScatterStatus);
-    _scatterController.dispose();
-    _returnController.removeListener(_onReturnTick);
-    _returnController.dispose();
+    _scatterController
+      ..removeListener(_onScatterTick)
+      ..removeStatusListener(_onScatterStatus)
+      ..dispose();
+    _returnController
+      ..removeListener(_onReturnTick)
+      ..dispose();
     _confettiController.dispose();
     _paintTick.dispose();
     super.dispose();
@@ -364,7 +365,7 @@ class _GameScreenState extends State<GameScreen>
                 ? (d) {
                     final idx = _hitTestPiece(d.localPosition);
                     if (idx != null) {
-                      HapticFeedback.lightImpact();
+                      unawaited(HapticFeedback.lightImpact());
                       gs.startDrag(idx);
                       _dragCrossedLeft = false;
                       _paintTick.value++;
@@ -394,24 +395,25 @@ class _GameScreenState extends State<GameScreen>
                       // Snapped into place
                       gs.endDrag();
                       if (gs.phase == GamePhase.won) {
-                        _recordCompletion();
+                        unawaited(_recordCompletion());
                         _startConfetti();
                       } else {
                         setState(() {}); // update tray label
                       }
                     } else if (_dragCrossedLeft) {
                       // Piece was dragged to the board side but not placed — shake + fly-back
-                      HapticFeedback.mediumImpact();
+                      unawaited(HapticFeedback.mediumImpact());
                       gs.endDragNoPlace();
                       _startReturnAnimation(piece);
                     } else {
                       // Piece never left the tray — drop where it is, but
-                      // snap back if it was dragged outside the screen.
+                      // animate back if it was dragged outside the screen.
                       final droppedPiece = gs.pieces[gs.draggingIndex!];
                       gs.endDragNoPlace();
-                      _snapToTrayIfOutside(
-                          droppedPiece, MediaQuery.of(context).size);
-                      _paintTick.value++;
+                      if (!_snapToTrayIfOutside(
+                          droppedPiece, MediaQuery.of(context).size)) {
+                        _paintTick.value++;
+                      }
                     }
                   }
                 : null,
@@ -557,7 +559,6 @@ class _GameScreenState extends State<GameScreen>
                   shadowColor: const Color(0xFF3A9E48),
                   width: 220,
                   height: 56,
-                  fontSize: 20,
                   onPressed: _restartGame,
                 ),
                 const SizedBox(height: 12),
@@ -568,7 +569,6 @@ class _GameScreenState extends State<GameScreen>
                   shadowColor: const Color(0xFF2460CC),
                   width: 220,
                   height: 56,
-                  fontSize: 20,
                   onPressed: () =>
                       Navigator.of(context).popUntil((r) => r.isFirst),
                 ),
@@ -581,8 +581,9 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _restartGame() {
-    _scatterController.removeListener(_onScatterTick);
-    _scatterController.removeStatusListener(_onScatterStatus);
+    _scatterController
+      ..removeListener(_onScatterTick)
+      ..removeStatusListener(_onScatterStatus);
     _confettiController.stop();
     setState(() {
       _gameState = null;
@@ -603,25 +604,17 @@ class _GameScreenState extends State<GameScreen>
   }
 
   /// If the piece center has gone outside the visible screen bounds,
-  /// teleport it to a random position in the right-side tray.
-  void _snapToTrayIfOutside(PuzzlePiece piece, Size screenSize) {
+  /// animates it back to a random position in the right-side tray.
+  /// Returns true if an animation was started, false if no action was needed.
+  bool _snapToTrayIfOutside(PuzzlePiece piece, Size screenSize) {
     final gs = _gameState!;
     final cx = piece.currentPosition.dx + gs.pieceWidth / 2;
     final cy = piece.currentPosition.dy + gs.pieceHeight / 2;
-    if (cx <= screenSize.width && cy >= 0 && cy <= screenSize.height) return;
-
-    const margin = _kEdgePad;
-    final rng = Random();
-    piece.currentPosition = Offset(
-      (screenSize.width / 2 + margin) +
-          rng.nextDouble() *
-              (screenSize.width / 2 - margin * 2 - gs.pieceWidth)
-                  .clamp(0, double.infinity),
-      margin +
-          rng.nextDouble() *
-              (screenSize.height - margin * 2 - gs.pieceHeight)
-                  .clamp(0, double.infinity),
-    );
+    if (cx <= screenSize.width && cy >= 0 && cy <= screenSize.height) {
+      return false;
+    }
+    _startReturnAnimation(piece);
+    return true;
   }
 
   // ── Confetti helpers ───────────────────────────────────────────────────────
@@ -630,9 +623,9 @@ class _GameScreenState extends State<GameScreen>
     _confettiParticles = _generateConfetti(250);
     setState(() {}); // show confetti layer
     _confettiController.reset();
-    _confettiController.forward().then((_) {
+    unawaited(_confettiController.forward().then((_) {
       if (mounted) setState(() => _showWinOverlay = true);
-    });
+    }));
   }
 
   List<_ConfettiParticle> _generateConfetti(int count) {
@@ -658,10 +651,6 @@ class _GameScreenState extends State<GameScreen>
 // ── Single-canvas painter for ALL puzzle pieces ────────────────────────────────
 
 class _AllPiecesPainter extends CustomPainter {
-  final List<PuzzlePiece> pieces;
-  final ui.Image image;
-  final double pieceWidth;
-  final double pieceHeight;
 
   _AllPiecesPainter({
     required this.pieces,
@@ -670,6 +659,10 @@ class _AllPiecesPainter extends CustomPainter {
     required this.pieceHeight,
     required ValueNotifier<int> repaintNotifier,
   }) : super(repaint: repaintNotifier);
+  final List<PuzzlePiece> pieces;
+  final ui.Image image;
+  final double pieceWidth;
+  final double pieceHeight;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -678,11 +671,12 @@ class _AllPiecesPainter extends CustomPainter {
     final pieceCanvasSize = Size(pieceWidth + 2 * tabW, pieceHeight + 2 * tabH);
 
     for (final piece in pieces) {
-      canvas.save();
-      canvas.translate(
-        piece.currentPosition.dx - tabW,
-        piece.currentPosition.dy - tabH,
-      );
+      canvas
+        ..save()
+        ..translate(
+          piece.currentPosition.dx - tabW,
+          piece.currentPosition.dy - tabH,
+        );
       JigsawPiecePainter(
         piece: piece,
         image: image,
@@ -700,8 +694,8 @@ class _AllPiecesPainter extends CustomPainter {
 // ── Board grid ghost painter ──────────────────────────────────────────────────
 
 class _BoardGridPainter extends CustomPainter {
-  final int gridSize;
   const _BoardGridPainter(this.gridSize);
+  final int gridSize;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -715,16 +709,16 @@ class _BoardGridPainter extends CustomPainter {
       ..color = Colors.white.withValues(alpha: 0.50)
       ..strokeWidth = 0;
 
-    for (int r = 0; r <= gridSize; r++) {
+    for (var r = 0; r <= gridSize; r++) {
       final y = r * cellH;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
     }
-    for (int c = 0; c <= gridSize; c++) {
+    for (var c = 0; c <= gridSize; c++) {
       final x = c * cellW;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
     }
-    for (int r = 0; r <= gridSize; r++) {
-      for (int c = 0; c <= gridSize; c++) {
+    for (var r = 0; r <= gridSize; r++) {
+      for (var c = 0; c <= gridSize; c++) {
         canvas.drawCircle(Offset(c * cellW, r * cellH), 2.5, dotPaint);
       }
     }
@@ -737,15 +731,15 @@ class _BoardGridPainter extends CustomPainter {
 // ── Board shadow hints painter ────────────────────────────────────────────────
 
 class _BoardShadowPainter extends CustomPainter {
-  final List<PuzzlePiece> pieces;
-  final double pieceWidth;
-  final double pieceHeight;
 
   const _BoardShadowPainter({
     required this.pieces,
     required this.pieceWidth,
     required this.pieceHeight,
   });
+  final List<PuzzlePiece> pieces;
+  final double pieceWidth;
+  final double pieceHeight;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -754,30 +748,32 @@ class _BoardShadowPainter extends CustomPainter {
 
     for (final piece in pieces) {
       if (piece.isPlaced) continue;
-      canvas.save();
-      canvas.translate(
-        piece.targetPosition.dx - tabW,
-        piece.targetPosition.dy - tabH,
-      );
+      canvas
+        ..save()
+        ..translate(
+          piece.targetPosition.dx - tabW,
+          piece.targetPosition.dy - tabH,
+        );
       final path = JigsawPiecePainter.buildPiecePath(
         piece.edges, pieceWidth, pieceHeight,
       );
-      canvas.drawPath(path, Paint()..color = const Color(0x40000000));
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.55)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.8,
-      );
-      canvas.restore();
+      canvas
+        ..drawPath(path, Paint()..color = const Color(0x40000000))
+        ..drawPath(
+          path,
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.55)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.8,
+        )
+        ..restore();
     }
   }
 
   @override
   bool shouldRepaint(_BoardShadowPainter old) {
     if (old.pieces.length != pieces.length) return true;
-    for (int i = 0; i < pieces.length; i++) {
+    for (var i = 0; i < pieces.length; i++) {
       if (old.pieces[i].isPlaced != pieces[i].isPlaced) return true;
     }
     return false;
@@ -787,9 +783,9 @@ class _BoardShadowPainter extends CustomPainter {
 // ── Tray piece counter label ──────────────────────────────────────────────────
 
 class _TrayLabel extends StatelessWidget {
+  const _TrayLabel({required this.placed, required this.total});
   final int placed;
   final int total;
-  const _TrayLabel({required this.placed, required this.total});
 
   @override
   Widget build(BuildContext context) {
@@ -821,15 +817,7 @@ class _TrayLabel extends StatelessWidget {
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
 
-class _ConfettiParticle {
-  final double x;           // 0–1 horizontal start fraction
-  final double speed;       // rise-speed multiplier
-  final double startDelay;  // 0–1 fraction of total duration before appearing
-  final Color color;
-  final double size;
-  final double rotSpeed;    // full rotations over the animation
-  final double wobblePhase; // horizontal wobble phase offset (radians)
-  final bool isRect;        // rectangle (true) or oval (false)
+class _ConfettiParticle {        // rectangle (true) or oval (false)
 
   const _ConfettiParticle({
     required this.x,
@@ -841,14 +829,22 @@ class _ConfettiParticle {
     required this.wobblePhase,
     required this.isRect,
   });
+  final double x;           // 0–1 horizontal start fraction
+  final double speed;       // rise-speed multiplier
+  final double startDelay;  // 0–1 fraction of total duration before appearing
+  final Color color;
+  final double size;
+  final double rotSpeed;    // full rotations over the animation
+  final double wobblePhase; // horizontal wobble phase offset (radians)
+  final bool isRect;
 }
 
 class _ConfettiPainter extends CustomPainter {
-  final List<_ConfettiParticle> particles;
-  final Animation<double> animation;
 
   _ConfettiPainter({required this.particles, required this.animation})
       : super(repaint: animation);
+  final List<_ConfettiParticle> particles;
+  final Animation<double> animation;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -867,9 +863,10 @@ class _ConfettiPainter extends CustomPainter {
       final py = size.height + 28.0 - pt * p.speed * (size.height + 56);
       final rot = pt * 2 * pi * p.rotSpeed;
 
-      canvas.save();
-      canvas.translate(px, py);
-      canvas.rotate(rot);
+      canvas
+        ..save()
+        ..translate(px, py)
+        ..rotate(rot);
       final paint = Paint()..color = p.color.withValues(alpha: alpha);
       if (p.isRect) {
         canvas.drawRect(

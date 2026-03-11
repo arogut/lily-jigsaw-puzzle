@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-import '../main.dart';
-import '../painters/logo_painter.dart';
-import 'image_selection_screen.dart';
+import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/painters/logo_painter.dart';
+import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  final LocaleNotifier localeNotifier;
 
-  const SplashScreen({super.key, required this.localeNotifier});
+  const SplashScreen({required this.localeNotifier, super.key});
+  final LocaleNotifier localeNotifier;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -36,30 +38,30 @@ class _SplashScreenState extends State<SplashScreen>
 
     _fadeIn =
         CurvedAnimation(parent: _inController, curve: Curves.easeOut);
-    _scaleIn = Tween(begin: 0.65, end: 1.0).animate(
+    _scaleIn = Tween<double>(begin: 0.65, end: 1).animate(
       CurvedAnimation(parent: _inController, curve: Curves.elasticOut),
     );
     _fadeOut =
         CurvedAnimation(parent: _outController, curve: Curves.easeIn);
 
-    _inController.forward();
+    unawaited(_inController.forward());
 
     // Start fade-out at 4.4 s, navigate at 5 s
-    Future.delayed(const Duration(milliseconds: 4400), () {
-      if (mounted) _outController.forward();
-    });
-    Future.delayed(const Duration(milliseconds: 5000), () {
+    unawaited(Future.delayed(const Duration(milliseconds: 4400), () {
+      if (mounted) unawaited(_outController.forward());
+    }));
+    unawaited(Future.delayed(const Duration(milliseconds: 5000), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
+      unawaited(Navigator.of(context).pushReplacement(
+        PageRouteBuilder<void>(
           pageBuilder: (context, animation, secondaryAnimation) =>
               ImageSelectionScreen(localeNotifier: widget.localeNotifier),
           transitionsBuilder: (context, anim, secondaryAnimation, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
         ),
-      );
-    });
+      ));
+    }));
   }
 
   @override
@@ -110,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen>
                       // Logo
                       Transform.scale(
                         scale: _scaleIn.value,
-                        child: SizedBox(
+                        child: const SizedBox(
                           width: 230,
                           height: 230,
                           child: CustomPaint(
@@ -184,7 +186,6 @@ class _SplashScreenState extends State<SplashScreen>
             color: color,
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.20),
-              width: 1,
             ),
           ),
         ),
@@ -259,7 +260,8 @@ class _LoadingDotsState extends State<_LoadingDots>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..repeat();
+    );
+    unawaited(_ctrl.repeat());
   }
 
   @override

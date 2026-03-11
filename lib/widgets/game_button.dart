@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -5,6 +7,15 @@ import 'package:flutter/services.dart';
 /// Features: raised shadow base, gloss highlight, press-down animation, haptic feedback.
 /// The button auto-expands its width when the label text is longer than [width].
 class GameButton extends StatefulWidget {
+
+  const GameButton({
+    required this.label, required this.onPressed, required this.color, super.key,
+    this.shadowColor,
+    this.width = 240,
+    this.height = 60,
+    this.fontSize = 20,
+    this.icon,
+  });
   final String label;
   final VoidCallback onPressed;
   final Color color;
@@ -13,18 +24,6 @@ class GameButton extends StatefulWidget {
   final double height;
   final double fontSize;
   final IconData? icon;
-
-  const GameButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    required this.color,
-    this.shadowColor,
-    this.width = 240,
-    this.height = 60,
-    this.fontSize = 20,
-    this.icon,
-  });
 
   @override
   State<GameButton> createState() => _GameButtonState();
@@ -41,7 +40,7 @@ class _GameButtonState extends State<GameButton> {
   }
 
   /// Measures how wide the button content needs to be and returns the
-  /// greater of that value and [widget.width], ensuring text never clips.
+  /// greater of that value and `widget.width`, ensuring text never clips.
   double _computeWidth() {
     final tp = TextPainter(
       text: TextSpan(
@@ -69,7 +68,7 @@ class _GameButtonState extends State<GameButton> {
 
     return GestureDetector(
       onTapDown: (_) {
-        HapticFeedback.lightImpact();
+        unawaited(HapticFeedback.lightImpact());
         setState(() => _pressed = true);
       },
       onTapUp: (_) {
@@ -137,7 +136,6 @@ class _GameButtonState extends State<GameButton> {
 
                       // Label + optional icon — centered vertically and horizontally
                       Align(
-                        alignment: Alignment.center,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           child: Row(

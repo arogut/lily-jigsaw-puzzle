@@ -4,11 +4,20 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
-import 'puzzle_piece.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
 enum GamePhase { loading, assembled, scattering, playing, won }
 
 class GameState extends ChangeNotifier {
+
+  GameState({
+    required this.puzzleImage,
+    required this.gridSize,
+    required this.boardSize,
+    this.boardOffset = Offset.zero,
+  }) {
+    _initialize();
+  }
   final ui.Image puzzleImage;
   final int gridSize;
   final Size boardSize;
@@ -25,15 +34,6 @@ class GameState extends ChangeNotifier {
   late List<List<EdgeType>> _hConnectors;
   // vConnectors[r][c]: edge between col c and col c+1, row r
   late List<List<EdgeType>> _vConnectors;
-
-  GameState({
-    required this.puzzleImage,
-    required this.gridSize,
-    required this.boardSize,
-    this.boardOffset = Offset.zero,
-  }) {
-    _initialize();
-  }
 
   void _initialize() {
     pieceWidth = boardSize.width / gridSize;
@@ -61,8 +61,8 @@ class GameState extends ChangeNotifier {
 
   void _buildPieces() {
     pieces = [];
-    for (int r = 0; r < gridSize; r++) {
-      for (int c = 0; c < gridSize; c++) {
+    for (var r = 0; r < gridSize; r++) {
+      for (var c = 0; c < gridSize; c++) {
         final target = boardOffset + Offset(c * pieceWidth, r * pieceHeight);
         pieces.add(
           PuzzlePiece(
@@ -127,7 +127,7 @@ class GameState extends ChangeNotifier {
     const margin = 20.0;
     final trayLeft = screenSize.width / 2 + margin;
     final trayRight = screenSize.width - margin - pieceWidth;
-    final trayTop = margin;
+    const trayTop = margin;
     final trayBottom = screenSize.height - margin - pieceHeight;
     return List.generate(pieces.length, (i) {
       return Offset(
@@ -144,8 +144,8 @@ class GameState extends ChangeNotifier {
 
   void startDrag(int index) {
     // Move piece to end of list so it renders on top
-    final piece = pieces.removeAt(index);
-    piece.isDragging = true;
+    final piece = pieces.removeAt(index)
+      ..isDragging = true;
     pieces.add(piece);
     draggingIndex = pieces.length - 1;
     notifyListeners();
@@ -168,13 +168,14 @@ class GameState extends ChangeNotifier {
 
   void endDrag() {
     if (draggingIndex == null) return;
-    final piece = pieces[draggingIndex!];
-    piece.isDragging = false;
+    final piece = pieces[draggingIndex!]
+      ..isDragging = false;
 
     const snapThreshold = 40.0;
     if ((piece.currentPosition - piece.targetPosition).distance <= snapThreshold) {
-      piece.currentPosition = piece.targetPosition;
-      piece.isPlaced = true;
+      piece
+        ..currentPosition = piece.targetPosition
+        ..isPlaced = true;
     }
 
     draggingIndex = null;

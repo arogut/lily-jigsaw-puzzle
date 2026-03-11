@@ -34,8 +34,8 @@ void main() {
       );
       final bounds = path.getBounds();
       // The body sits at (tabW, tabH) and the canvas is (pw+2*tabW, ph+2*tabH)
-      final tabW = pw * JigsawPiecePainter.tabFraction;
-      final tabH = ph * JigsawPiecePainter.tabFraction;
+      const tabW = pw * JigsawPiecePainter.tabFraction;
+      const tabH = ph * JigsawPiecePainter.tabFraction;
       expect(bounds.left, closeTo(tabW, 0.1));
       expect(bounds.top, closeTo(tabH, 0.1));
       expect(bounds.right, closeTo(tabW + pw, 0.1));
