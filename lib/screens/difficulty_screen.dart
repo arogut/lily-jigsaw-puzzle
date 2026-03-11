@@ -5,9 +5,11 @@ import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_screen.dart';
+import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
+import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
-class DifficultyScreen extends StatelessWidget {
+class DifficultyScreen extends StatefulWidget {
 
   const DifficultyScreen({
     required this.selectedImage, required this.localeNotifier, super.key,
@@ -16,8 +18,28 @@ class DifficultyScreen extends StatelessWidget {
   final LocaleNotifier localeNotifier;
 
   @override
+  State<DifficultyScreen> createState() => _DifficultyScreenState();
+}
+
+class _DifficultyScreenState extends State<DifficultyScreen> {
+  int _stars = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(
+      CompletionService().getStars(widget.selectedImage.uuid).then((s) {
+        if (mounted) setState(() => _stars = s);
+      }),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    final mediumLocked = _stars < 1;
+    final hardLocked = _stars < 2;
 
     return Scaffold(
       body: Container(
@@ -66,11 +88,11 @@ class DifficultyScreen extends StatelessWidget {
                 const SizedBox(height: 26),
 
                 // Section title
-                _buildTitle(l10n.pickDifficulty),
+                GradientTitle(text: l10n.pickDifficulty),
 
                 const SizedBox(height: 26),
 
-                // Easy
+                // Easy — always unlocked
                 Column(
                   children: [
                     GameButton(
@@ -96,17 +118,20 @@ class DifficultyScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Medium
+                // Medium — locked until ≥1 star
                 Column(
                   children: [
-                    GameButton(
-                      label: l10n.medium,
-                      color: const Color(0xFFFFAB40),
-                      shadowColor: const Color(0xFFCC7722),
-                      width: 260,
-                      height: 64,
-                      fontSize: 22,
-                      onPressed: () => _go(context, 5),
+                    _lockedOrButton(
+                      locked: mediumLocked,
+                      child: GameButton(
+                        label: l10n.medium,
+                        color: const Color(0xFFFFAB40),
+                        shadowColor: const Color(0xFFCC7722),
+                        width: 260,
+                        height: 64,
+                        fontSize: 22,
+                        onPressed: mediumLocked ? () {} : () => _go(context, 5),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -122,17 +147,20 @@ class DifficultyScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Hard
+                // Hard — locked until ≥2 stars
                 Column(
                   children: [
-                    GameButton(
-                      label: l10n.hard,
-                      color: const Color(0xFFFF6B6B),
-                      shadowColor: const Color(0xFFCC2222),
-                      width: 260,
-                      height: 64,
-                      fontSize: 22,
-                      onPressed: () => _go(context, 7),
+                    _lockedOrButton(
+                      locked: hardLocked,
+                      child: GameButton(
+                        label: l10n.hard,
+                        color: const Color(0xFFFF6B6B),
+                        shadowColor: const Color(0xFFCC2222),
+                        width: 260,
+                        height: 64,
+                        fontSize: 22,
+                        onPressed: hardLocked ? () {} : () => _go(context, 7),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -152,6 +180,25 @@ class DifficultyScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Wraps [child] in an opacity + lock icon overlay when [locked] is true.
+  Widget _lockedOrButton({required bool locked, required Widget child}) {
+    if (!locked) return child;
+    return Opacity(
+      opacity: 0.45,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          child,
+          const Icon(
+            Icons.lock_rounded,
+            color: Colors.white,
+            size: 32,
+          ),
+        ],
       ),
     );
   }
@@ -182,7 +229,7 @@ class DifficultyScreen extends StatelessWidget {
         child: Stack(
           children: [
             Image.asset(
-              selectedImage.assetPath,
+              widget.selectedImage.assetPath,
               width: 280,
               height: 200,
               fit: BoxFit.cover,
@@ -209,47 +256,12 @@ class DifficultyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(String text) {
-    const sz = 28.0;
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: sz,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 5
-              ..color = const Color(0xFF6A1B9A),
-          ),
-        ),
-        ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
-          ).createShader(b),
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: sz,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   void _go(BuildContext context, int gridSize) {
     unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => GameScreen(
-        selectedImage: selectedImage,
+        selectedImage: widget.selectedImage,
         gridSize: gridSize,
-        localeNotifier: localeNotifier,
+        localeNotifier: widget.localeNotifier,
       ),
     )));
   }

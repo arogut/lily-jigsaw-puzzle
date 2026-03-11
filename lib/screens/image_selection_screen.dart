@@ -9,12 +9,18 @@ import 'package:lily_jigsaw_puzzle/screens/difficulty_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/settings_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
+import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
-class ImageSelectionScreen extends StatelessWidget {
+class ImageSelectionScreen extends StatefulWidget {
 
   const ImageSelectionScreen({required this.localeNotifier, super.key});
   final LocaleNotifier localeNotifier;
 
+  @override
+  State<ImageSelectionScreen> createState() => _ImageSelectionScreenState();
+}
+
+class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -51,7 +57,7 @@ class ImageSelectionScreen extends StatelessWidget {
                       fontSize: 15,
                       onPressed: SystemNavigator.pop,
                     ),
-                    Expanded(child: Center(child: _buildTitle(l10n.choosePuzzle))),
+                    Expanded(child: Center(child: GradientTitle(text: l10n.choosePuzzle, fontSize: 30))),
                     GameButton(
                       label: l10n.settings,
                       icon: Icons.settings_rounded,
@@ -61,11 +67,15 @@ class ImageSelectionScreen extends StatelessWidget {
                       height: 44,
                       fontSize: 15,
                       onPressed: () {
-                        unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
-                          builder: (_) => SettingsScreen(
-                            localeNotifier: localeNotifier,
-                          ),
-                        )));
+                        unawaited(
+                          Navigator.of(context).push(MaterialPageRoute<void>(
+                            builder: (_) => SettingsScreen(
+                              localeNotifier: widget.localeNotifier,
+                            ),
+                          )).then((_) {
+                            if (mounted) setState(() {});
+                          }),
+                        );
                       },
                     ),
                   ],
@@ -87,7 +97,7 @@ class ImageSelectionScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       return _ImageCard(
                         image: PuzzleImageData.all[index],
-                        localeNotifier: localeNotifier,
+                        localeNotifier: widget.localeNotifier,
                       );
                     },
                   ),
@@ -101,40 +111,6 @@ class ImageSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(String text) {
-    const sz = 30.0;
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: sz,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 5
-              ..color = const Color(0xFF6A1B9A),
-          ),
-        ),
-        ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
-          ).createShader(b),
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: sz,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// Returns the localized image name for a given asset path.

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 
 /// A glossy, 3-D cartoon-style button inspired by the pzuh.itch.io free-game-GUI pack.
 /// Features: raised shadow base, gloss highlight, press-down animation, haptic feedback.
@@ -69,6 +70,7 @@ class _GameButtonState extends State<GameButton> {
     return GestureDetector(
       onTapDown: (_) {
         unawaited(HapticFeedback.lightImpact());
+        unawaited(SoundService().playClick());
         setState(() => _pressed = true);
       },
       onTapUp: (_) {

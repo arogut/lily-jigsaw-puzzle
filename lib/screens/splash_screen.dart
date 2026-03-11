@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/painters/logo_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
+import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
 class SplashScreen extends StatefulWidget {
 
@@ -124,7 +125,11 @@ class _SplashScreenState extends State<SplashScreen>
                       const SizedBox(height: 32),
 
                       // Title with gradient + outline
-                      const _Title(),
+                      const GradientTitle(
+                        text: "Lily's Puzzle",
+                        fontSize: 48,
+                        strokeWidth: 7,
+                      ),
 
                       const SizedBox(height: 14),
 
@@ -191,53 +196,6 @@ class _SplashScreenState extends State<SplashScreen>
         ),
       );
     }).toList();
-  }
-}
-
-// ── Title widget ────────────────────────────────────────────────────────────
-
-class _Title extends StatelessWidget {
-  const _Title();
-
-  @override
-  Widget build(BuildContext context) {
-    const text = "Lily's Puzzle";
-    const size = 48.0;
-    const spacing = 2.0;
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Purple stroke outline
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: size,
-            fontWeight: FontWeight.w900,
-            letterSpacing: spacing,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 7
-              ..color = const Color(0xFF6A1B9A),
-          ),
-        ),
-        // Gradient fill
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
-          ).createShader(bounds),
-          child: const Text(
-            text,
-            style: TextStyle(
-              fontSize: size,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: spacing,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }
 
