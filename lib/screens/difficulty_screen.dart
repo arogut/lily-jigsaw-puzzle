@@ -184,23 +184,10 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
     );
   }
 
-  /// Wraps [child] in an opacity + lock icon overlay when [locked] is true.
+  /// Wraps [child] in reduced opacity when [locked] is true.
   Widget _lockedOrButton({required bool locked, required Widget child}) {
     if (!locked) return child;
-    return Opacity(
-      opacity: 0.45,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          child,
-          const Icon(
-            Icons.lock_rounded,
-            color: Colors.white,
-            size: 32,
-          ),
-        ],
-      ),
-    );
+    return Opacity(opacity: 0.45, child: child);
   }
 
   Widget _buildPreview() {

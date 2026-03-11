@@ -8,6 +8,7 @@ import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/difficulty_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/settings_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
@@ -162,6 +163,7 @@ class _ImageCardState extends State<_ImageCard>
 
   void _onTap() {
     unawaited(_ctrl.reverse());
+    unawaited(SoundService().playClick());
     unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => DifficultyScreen(
         selectedImage: widget.image,
