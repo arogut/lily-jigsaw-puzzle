@@ -8,24 +8,21 @@ void main() {
     test('paints without error for 3x3 grid', () {
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
-      const painter = BoardGridPainter(3);
-      painter.paint(canvas, const Size(300, 300));
+      const BoardGridPainter(3).paint(canvas, const Size(300, 300));
       recorder.endRecording().dispose();
     });
 
     test('paints without error for 5x5 grid', () {
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
-      const painter = BoardGridPainter(5);
-      painter.paint(canvas, const Size(500, 500));
+      const BoardGridPainter(5).paint(canvas, const Size(500, 500));
       recorder.endRecording().dispose();
     });
 
     test('paints without error for 7x7 grid', () {
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
-      const painter = BoardGridPainter(7);
-      painter.paint(canvas, const Size(700, 700));
+      const BoardGridPainter(7).paint(canvas, const Size(700, 700));
       recorder.endRecording().dispose();
     });
 
@@ -44,10 +41,10 @@ void main() {
     test('non-const constructor is callable at runtime', () {
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
-      // Use a runtime value so const is not possible, exercising the constructor.
-      final gridSize = 3 + 1;
-      final painter = BoardGridPainter(gridSize);
-      painter.paint(canvas, const Size(400, 400));
+      // Use int.parse so the value is not a compile-time constant,
+      // exercising the constructor at runtime.
+      final gridSize = int.parse('4');
+      BoardGridPainter(gridSize).paint(canvas, const Size(400, 400));
       recorder.endRecording().dispose();
     });
   });

@@ -15,16 +15,16 @@ void main() {
     });
 
     test('setLocale updates the locale', () {
-      final notifier = LocaleNotifier(const Locale('en'));
-      notifier.setLocale(const Locale('pl'));
+      final notifier = LocaleNotifier(const Locale('en'))
+        ..setLocale(const Locale('pl'));
       expect(notifier.locale, const Locale('pl'));
     });
 
     test('setLocale notifies listeners', () {
-      final notifier = LocaleNotifier(const Locale('en'));
       var notified = false;
-      notifier.addListener(() => notified = true);
-      notifier.setLocale(const Locale('de'));
+      LocaleNotifier(const Locale('en'))
+        ..addListener(() => notified = true)
+        ..setLocale(const Locale('de'));
       expect(notified, isTrue);
     });
 
@@ -48,8 +48,7 @@ void main() {
 
     test('setLocale persists locale to shared preferences', () async {
       SharedPreferences.setMockInitialValues({});
-      final notifier = LocaleNotifier(const Locale('en'));
-      notifier.setLocale(const Locale('es'));
+      LocaleNotifier(const Locale('en')).setLocale(const Locale('es'));
       // Allow the async save to complete
       await Future<void>.delayed(Duration.zero);
       final prefs = await SharedPreferences.getInstance();
@@ -57,10 +56,10 @@ void main() {
     });
 
     test('can change locale multiple times', () {
-      final notifier = LocaleNotifier(const Locale('en'));
-      notifier.setLocale(const Locale('pl'));
-      notifier.setLocale(const Locale('de'));
-      notifier.setLocale(const Locale('es'));
+      final notifier = LocaleNotifier(const Locale('en'))
+        ..setLocale(const Locale('pl'))
+        ..setLocale(const Locale('de'))
+        ..setLocale(const Locale('es'));
       expect(notifier.locale, const Locale('es'));
     });
   });

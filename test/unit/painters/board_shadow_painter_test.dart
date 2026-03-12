@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_shadow_painter.dart';
@@ -36,7 +35,7 @@ void main() {
 
     test('paints without error with unplaced piece', () {
       final painter = BoardShadowPainter(
-        pieces: [_makePiece(isPlaced: false)],
+        pieces: [_makePiece()],
         pieceWidth: 100,
         pieceHeight: 100,
       );
@@ -50,7 +49,7 @@ void main() {
       final painter = BoardShadowPainter(
         pieces: [
           _makePiece(isPlaced: true),
-          _makePiece(isPlaced: false),
+          _makePiece(),
         ],
         pieceWidth: 100,
         pieceHeight: 100,
@@ -77,7 +76,7 @@ void main() {
 
     test('shouldRepaint returns true when isPlaced changes', () {
       final p1 = BoardShadowPainter(
-        pieces: [_makePiece(isPlaced: false)],
+        pieces: [_makePiece()],
         pieceWidth: 100,
         pieceHeight: 100,
       );
@@ -91,12 +90,12 @@ void main() {
 
     test('shouldRepaint returns false when placement is unchanged', () {
       final p1 = BoardShadowPainter(
-        pieces: [_makePiece(isPlaced: false)],
+        pieces: [_makePiece()],
         pieceWidth: 100,
         pieceHeight: 100,
       );
       final p2 = BoardShadowPainter(
-        pieces: [_makePiece(isPlaced: false)],
+        pieces: [_makePiece()],
         pieceWidth: 100,
         pieceHeight: 100,
       );

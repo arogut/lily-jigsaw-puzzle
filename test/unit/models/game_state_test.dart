@@ -239,8 +239,9 @@ void main() {
     test('sets phase to playing and notifies listeners', () {
       final gs = makeState();
       var notified = false;
-      gs.addListener(() => notified = true);
-      gs.beginPlaying();
+      gs
+        ..addListener(() => notified = true)
+        ..beginPlaying();
       expect(gs.phase, GamePhase.playing);
       expect(notified, isTrue);
     });
@@ -261,7 +262,7 @@ void main() {
 
     test('does nothing when no piece is being dragged', () {
       final gs = makeState();
-      expect(() => gs.endDragNoPlace(), returnsNormally);
+      expect(gs.endDragNoPlace, returnsNormally);
       expect(gs.draggingIndex, isNull);
     });
   });

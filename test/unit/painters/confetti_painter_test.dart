@@ -9,12 +9,12 @@ void main() {
     test('can be constructed with all fields', () {
       const particle = ConfettiParticle(
         x: 0.5,
-        speed: 1.0,
+        speed: 1,
         startDelay: 0.1,
         color: Color(0xFFFF0000),
-        size: 10.0,
-        rotSpeed: 2.0,
-        wobblePhase: 0.0,
+        size: 10,
+        rotSpeed: 2,
+        wobblePhase: 0,
         isRect: true,
       );
       expect(particle.x, 0.5);
@@ -22,16 +22,18 @@ void main() {
     });
 
     test('non-const constructor is callable at runtime', () {
-      // ignore: prefer_const_constructors
+      // Use a non-const initializer so the constructor call cannot be const,
+      // exercising it at runtime.
+      final isRect = [false].first;
       final particle = ConfettiParticle(
         x: 0.3,
         speed: 0.5,
-        startDelay: 0.0,
+        startDelay: 0,
         color: const Color(0xFF00FF00),
-        size: 8.0,
+        size: 8,
         rotSpeed: 1.5,
-        wobblePhase: 1.0,
-        isRect: false,
+        wobblePhase: 1,
+        isRect: isRect,
       );
       expect(particle.isRect, isFalse);
     });
@@ -43,12 +45,12 @@ void main() {
       final particles = [
         const ConfettiParticle(
           x: 0.5,
-          speed: 1.0,
-          startDelay: 0.0,
+          speed: 1,
+          startDelay: 0,
           color: Color(0xFFFF0000),
-          size: 10.0,
-          rotSpeed: 2.0,
-          wobblePhase: 0.0,
+          size: 10,
+          rotSpeed: 2,
+          wobblePhase: 0,
           isRect: true,
         ),
       ];
@@ -65,11 +67,11 @@ void main() {
         const ConfettiParticle(
           x: 0.3,
           speed: 0.8,
-          startDelay: 0.0,
+          startDelay: 0,
           color: Color(0xFF00FF00),
-          size: 8.0,
-          rotSpeed: 3.0,
-          wobblePhase: 1.0,
+          size: 8,
+          rotSpeed: 3,
+          wobblePhase: 1,
           isRect: false,
         ),
       ];
@@ -85,12 +87,12 @@ void main() {
       final particles = [
         const ConfettiParticle(
           x: 0.5,
-          speed: 1.0,
+          speed: 1,
           startDelay: 0.9,
           color: Color(0xFF0000FF),
-          size: 10.0,
-          rotSpeed: 1.0,
-          wobblePhase: 0.0,
+          size: 10,
+          rotSpeed: 1,
+          wobblePhase: 0,
           isRect: true,
         ),
       ];
@@ -106,12 +108,12 @@ void main() {
       final particles = [
         const ConfettiParticle(
           x: 0.5,
-          speed: 1.0,
-          startDelay: 0.0,
+          speed: 1,
+          startDelay: 0,
           color: Color(0xFFFFFF00),
-          size: 12.0,
-          rotSpeed: 2.0,
-          wobblePhase: 0.0,
+          size: 12,
+          rotSpeed: 2,
+          wobblePhase: 0,
           isRect: false,
         ),
       ];
@@ -143,10 +145,10 @@ void main() {
         const ConfettiParticle(
           x: 0.2,
           speed: 1.2,
-          startDelay: 0.0,
+          startDelay: 0,
           color: Color(0xFFFF6B6B),
-          size: 14.0,
-          rotSpeed: 4.0,
+          size: 14,
+          rotSpeed: 4,
           wobblePhase: 0.5,
           isRect: true,
         ),
@@ -155,7 +157,7 @@ void main() {
           speed: 0.9,
           startDelay: 0.1,
           color: Color(0xFF6BCB77),
-          size: 9.0,
+          size: 9,
           rotSpeed: 2.5,
           wobblePhase: 1.2,
           isRect: false,

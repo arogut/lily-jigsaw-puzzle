@@ -66,9 +66,9 @@ void main() {
     test('paints multiple pieces without error', () {
       final notifier = ValueNotifier<int>(0);
       final pieces = [
-        _makePiece(row: 0, col: 0),
-        _makePiece(row: 0, col: 1),
-        _makePiece(row: 1, col: 0),
+        _makePiece(),
+        _makePiece(col: 1),
+        _makePiece(row: 1),
       ];
       final painter = AllPiecesPainter(
         pieces: pieces,
