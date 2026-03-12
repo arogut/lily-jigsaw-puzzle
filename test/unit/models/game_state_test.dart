@@ -235,6 +235,38 @@ void main() {
     });
   });
 
+  group('beginPlaying', () {
+    test('sets phase to playing and notifies listeners', () {
+      final gs = makeState();
+      var notified = false;
+      gs
+        ..addListener(() => notified = true)
+        ..beginPlaying();
+      expect(gs.phase, GamePhase.playing);
+      expect(notified, isTrue);
+    });
+  });
+
+  group('endDragNoPlace', () {
+    test('clears isDragging and draggingIndex without placing piece', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last;
+      final posBefore = piece.currentPosition;
+      gs.endDragNoPlace();
+      expect(piece.isDragging, isFalse);
+      expect(gs.draggingIndex, isNull);
+      // Position unchanged (no snap)
+      expect(piece.currentPosition, posBefore);
+      expect(piece.isPlaced, isFalse);
+    });
+
+    test('does nothing when no piece is being dragged', () {
+      final gs = makeState();
+      expect(gs.endDragNoPlace, returnsNormally);
+      expect(gs.draggingIndex, isNull);
+    });
+  });
+
   group('setPiecePosition', () {
     test('updates currentPosition without notifying (used by scatter tick)', () {
       final gs = makeState();
