@@ -19,6 +19,13 @@
       "enabled": false
     },
     {
+      "description": "Dart SDK updates",
+      "matchPackageNames": [
+        "dart"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Group pub.dev dependency updates",
       "matchDatasources": [
         "pub"
