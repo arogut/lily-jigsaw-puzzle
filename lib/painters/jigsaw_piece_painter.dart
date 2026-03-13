@@ -68,9 +68,9 @@ class JigsawPiecePainter extends CustomPainter {
         ..restore();
     }
 
+    // 2. Image fill, clipped to piece shape — BoxFit.cover: scale the image so
+    //    it fully covers the board without distortion, then crop to board area.
     canvas
-      // 2. Image fill, clipped to piece shape — BoxFit.cover: scale the image so
-      //    it fully covers the board without distortion, then crop to board area.
       ..save()
       ..clipPath(path)
       ..drawImageRect(
@@ -83,11 +83,12 @@ class JigsawPiecePainter extends CustomPainter {
         ),
         bounds,
         Paint(),
-      )
+      );
 
-      // 3. Lighting gradient overlay — simulates diffuse light from top-left.
-      //    Stronger than before for a more pronounced 3-D impression.
-      ..drawRect(
+    // 3. Lighting gradient overlay — only for unplaced pieces.
+    //    Simulates diffuse light from top-left.
+    if (!piece.isPlaced) {
+      canvas.drawRect(
         bounds,
         Paint()
           ..shader = const LinearGradient(
@@ -100,27 +101,36 @@ class JigsawPiecePainter extends CustomPainter {
             ],
             stops: [0.0, 0.40, 1.0],
           ).createShader(bounds),
-      )
-      ..restore()
-
-      // 4. Bevel edge — gradient stroke: bright on top-left, dark on
-      //    bottom-right, giving a raised-tile 3-D look.
-      ..drawPath(
-        path,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3.0
-          ..shader = LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withValues(alpha: 0.95),
-              Colors.white.withValues(alpha: 0.30),
-              Colors.black.withValues(alpha: 0.40),
-            ],
-            stops: const [0.0, 0.50, 1.0],
-          ).createShader(bounds),
       );
+    }
+
+    canvas.restore();
+
+    // 4. Bevel edge — gradient stroke for 3-D look.
+    //    For placed pieces, only draw on flat (outer border) edges.
+    //    For unplaced pieces, draw on all edges.
+    final bevelPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: 0.95),
+          Colors.white.withValues(alpha: 0.30),
+          Colors.black.withValues(alpha: 0.40),
+        ],
+        stops: const [0.0, 0.50, 1.0],
+      ).createShader(bounds);
+
+    if (piece.isPlaced) {
+      final outerPath = buildOuterEdgePath(piece.edges, pieceWidth, pieceHeight);
+      if (outerPath != null) {
+        canvas.drawPath(outerPath, bevelPaint);
+      }
+    } else {
+      canvas.drawPath(path, bevelPaint);
+    }
   }
 
   /// Builds the full jigsaw piece path. Origin is (0,0); the piece body starts
@@ -187,6 +197,55 @@ class JigsawPiecePainter extends CustomPainter {
 
     path.close();
     return path;
+  }
+
+  /// Builds a path containing only the flat (outer border) edges of a piece.
+  /// Returns null if the piece has no flat edges.
+  static Path? buildOuterEdgePath(
+    PieceEdges edges,
+    double pieceWidth,
+    double pieceHeight,
+  ) {
+    final tabW = pieceWidth * tabFraction;
+    final tabH = pieceHeight * tabFraction;
+
+    final left = tabW;
+    final top = tabH;
+    final right = tabW + pieceWidth;
+    final bottom = tabH + pieceHeight;
+
+    final path = Path();
+    bool hasAnyEdge = false;
+
+    // Top edge (only if flat - on puzzle border)
+    if (edges.top == EdgeType.flat) {
+      path.moveTo(left, top);
+      path.lineTo(right, top);
+      hasAnyEdge = true;
+    }
+
+    // Right edge (only if flat - on puzzle border)
+    if (edges.right == EdgeType.flat) {
+      path.moveTo(right, top);
+      path.lineTo(right, bottom);
+      hasAnyEdge = true;
+    }
+
+    // Bottom edge (only if flat - on puzzle border)
+    if (edges.bottom == EdgeType.flat) {
+      path.moveTo(right, bottom);
+      path.lineTo(left, bottom);
+      hasAnyEdge = true;
+    }
+
+    // Left edge (only if flat - on puzzle border)
+    if (edges.left == EdgeType.flat) {
+      path.moveTo(left, bottom);
+      path.lineTo(left, top);
+      hasAnyEdge = true;
+    }
+
+    return hasAnyEdge ? path : null;
   }
 
   /// Draws one edge from [from] to [to] with a classic jigsaw tab or blank.
