@@ -5,6 +5,8 @@
     ":dependencyDashboard"
   ],
   "labels": ["dependencies"],
+  "stabilityDays": 7,
+  "ignoreUnstable": true,
   "rangeStrategy": "pin",
   "packageRules": [
     {
