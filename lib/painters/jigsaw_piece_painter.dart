@@ -48,8 +48,9 @@ class JigsawPiecePainter extends CustomPainter {
     final srcTabW = cellW * tabFraction;
     final srcTabH = cellH * tabFraction;
 
-    // Single canvas cascade: 1. shadows (unplaced only), 2. image fill (clipped), 3. lighting, 4. bevel.
-    // Skip shadows for placed pieces so they appear flat on the board.
+    // Single canvas cascade: 1. shadows, 2. image fill (clipped), 3. lighting, 4. bevel.
+    // For placed pieces, only draw shadow on outer/flat edges.
+    // For unplaced pieces, draw full shadow for floating effect.
     if (!piece.isPlaced) {
       canvas
         // 1. Drop shadow — three layered offset fills (no blur for software render
@@ -66,6 +67,25 @@ class JigsawPiecePainter extends CustomPainter {
         ..translate(2, 4)
         ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
         ..restore();
+    } else {
+      // For placed pieces, draw shadow only on outer (flat) edges
+      final outerPath = buildOuterEdgePath(piece.edges, pieceWidth, pieceHeight);
+      if (outerPath != null) {
+        final shadowPaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6.0
+          ..strokeCap = StrokeCap.square;
+
+        canvas
+          ..save()
+          ..translate(3, 5)
+          ..drawPath(outerPath, shadowPaint..color = Colors.black.withValues(alpha: 0.15))
+          ..restore()
+          ..save()
+          ..translate(2, 3)
+          ..drawPath(outerPath, shadowPaint..color = Colors.black.withValues(alpha: 0.20))
+          ..restore();
+      }
     }
 
     // 2. Image fill, clipped to piece shape — BoxFit.cover: scale the image so
@@ -106,9 +126,8 @@ class JigsawPiecePainter extends CustomPainter {
 
     canvas.restore();
 
-    // 4. Bevel edge — gradient stroke for 3-D look.
-    //    For placed pieces, only draw on flat (outer border) edges.
-    //    For unplaced pieces, draw on all edges.
+    // 4. Bevel edge — gradient stroke for 3-D look on ALL edges.
+    //    Same appearance for placed and unplaced pieces.
     final bevelPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
@@ -123,14 +142,7 @@ class JigsawPiecePainter extends CustomPainter {
         stops: const [0.0, 0.50, 1.0],
       ).createShader(bounds);
 
-    if (piece.isPlaced) {
-      final outerPath = buildOuterEdgePath(piece.edges, pieceWidth, pieceHeight);
-      if (outerPath != null) {
-        canvas.drawPath(outerPath, bevelPaint);
-      }
-    } else {
-      canvas.drawPath(path, bevelPaint);
-    }
+    canvas.drawPath(path, bevelPaint);
   }
 
   /// Builds the full jigsaw piece path. Origin is (0,0); the piece body starts
