@@ -227,33 +227,37 @@ class JigsawPiecePainter extends CustomPainter {
     final bottom = tabH + pieceHeight;
 
     final path = Path();
-    bool hasAnyEdge = false;
+    var hasAnyEdge = false;
 
     // Top edge (only if flat - on puzzle border)
     if (edges.top == EdgeType.flat) {
-      path.moveTo(left, top);
-      path.lineTo(right, top);
+      path
+        ..moveTo(left, top)
+        ..lineTo(right, top);
       hasAnyEdge = true;
     }
 
     // Right edge (only if flat - on puzzle border)
     if (edges.right == EdgeType.flat) {
-      path.moveTo(right, top);
-      path.lineTo(right, bottom);
+      path
+        ..moveTo(right, top)
+        ..lineTo(right, bottom);
       hasAnyEdge = true;
     }
 
     // Bottom edge (only if flat - on puzzle border)
     if (edges.bottom == EdgeType.flat) {
-      path.moveTo(right, bottom);
-      path.lineTo(left, bottom);
+      path
+        ..moveTo(right, bottom)
+        ..lineTo(left, bottom);
       hasAnyEdge = true;
     }
 
     // Left edge (only if flat - on puzzle border)
     if (edges.left == EdgeType.flat) {
-      path.moveTo(left, bottom);
-      path.lineTo(left, top);
+      path
+        ..moveTo(left, bottom)
+        ..lineTo(left, top);
       hasAnyEdge = true;
     }
 
