@@ -69,6 +69,19 @@ jobs:
             Fix the issues, commit the fix. The CI will automatically re-run.
            
             **OUTPUT RULES:**
+
+            ## Branch Name Requirements
+            Always name git branches using the following prefixes:
+            - feature/ – for new features (e.g. feature/user-auth)
+            - bugfix/ – for bug fixes (e.g. bugfix/login-redirect)
+            - chore/ – for maintenance tasks (e.g. chore/update-dependencies)
+            - refactor/ – for code refactoring (e.g. refactor/payment-module)
+            - test/ – for adding or fixing tests (e.g. test/checkout-flow)
+
+            Rules:
+
+            - Use lowercase and hyphens (no spaces or underscores)
+            - Keep names short but descriptive (2–5 words after the prefix)
           
             ## Commit Message Requirements (max 72 chars)
             - Imperative mood: "Add" not "Added"
