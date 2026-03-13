@@ -4,7 +4,21 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'android/**'
+      - '.github/workflows/ci.yml'
   pull_request:
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'android/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
   # ── Job 1: Static analysis (fast, no Android toolchain needed) ───────────────
