@@ -4,24 +4,32 @@
     "config:best-practices",
     ":dependencyDashboard"
   ],
-  "labels": ["dependencies"],
-  "stabilityDays": 7,
+  "labels": [
+    "dependencies"
+  ],
+  "minimumReleaseAge": "7 days",
   "ignoreUnstable": true,
   "rangeStrategy": "pin",
   "packageRules": [
     {
       "description": "Flutter SDK updates",
-      "matchPackageNames": ["flutter"],
+      "matchPackageNames": [
+        "flutter"
+      ],
       "enabled": false
     },
     {
       "description": "Group pub.dev dependency updates",
-      "matchDatasources": ["pub"],
+      "matchDatasources": [
+        "pub"
+      ],
       "groupName": "pub.dev dependencies"
     },
     {
       "description": "Group GitHub Actions updates",
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "GitHub Actions"
     }
   ]
