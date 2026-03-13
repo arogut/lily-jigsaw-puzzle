@@ -48,23 +48,27 @@ class JigsawPiecePainter extends CustomPainter {
     final srcTabW = cellW * tabFraction;
     final srcTabH = cellH * tabFraction;
 
-    // Single canvas cascade: 1. shadows, 2. image fill (clipped), 3. lighting, 4. bevel.
-    canvas
-      // 1. Drop shadow — three layered offset fills (no blur for software render
-      //    performance). Three layers give a softer, deeper shadow.
-      ..save()
-      ..translate(6, 10)
-      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.11))
-      ..restore()
-      ..save()
-      ..translate(4, 7)
-      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.18))
-      ..restore()
-      ..save()
-      ..translate(2, 4)
-      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
-      ..restore()
+    // Single canvas cascade: 1. shadows (unplaced only), 2. image fill (clipped), 3. lighting, 4. bevel.
+    // Skip shadows for placed pieces so they appear flat on the board.
+    if (!piece.isPlaced) {
+      canvas
+        // 1. Drop shadow — three layered offset fills (no blur for software render
+        //    performance). Three layers give a softer, deeper shadow.
+        ..save()
+        ..translate(6, 10)
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.11))
+        ..restore()
+        ..save()
+        ..translate(4, 7)
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.18))
+        ..restore()
+        ..save()
+        ..translate(2, 4)
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
+        ..restore();
+    }
 
+    canvas
       // 2. Image fill, clipped to piece shape — BoxFit.cover: scale the image so
       //    it fully covers the board without distortion, then crop to board area.
       ..save()
