@@ -120,4 +120,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get langSpanish => 'Español';
+
+  @override
+  String get hint => 'Hint';
 }
