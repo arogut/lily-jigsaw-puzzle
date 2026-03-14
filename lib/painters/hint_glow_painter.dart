@@ -23,7 +23,7 @@ class HintGlowPainter extends CustomPainter {
     final hintedPiece = pieces.where((p) => p.isHinted).firstOrNull;
     if (hintedPiece == null) return;
 
-    final pulse = (sin(animation.value * 2 * pi) * 0.5 + 0.5);
+    final pulse = sin(animation.value * 2 * pi) * 0.5 + 0.5;
     final tabW = pieceWidth * JigsawPiecePainter.tabFraction;
     final tabH = pieceHeight * JigsawPiecePainter.tabFraction;
 

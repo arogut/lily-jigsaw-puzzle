@@ -292,20 +292,18 @@ void main() {
     });
 
     test('activateHint marks one piece as hinted', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      gs.activateHint();
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
       expect(gs.pieces.where((p) => p.isHinted).length, 1);
     });
 
     test('activateHint decrements hintsRemaining', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      gs.activateHint();
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
       expect(gs.hintsRemaining, 2);
     });
 
     test('activateHint does not activate when hintsRemaining is 0', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      gs
+      final gs = makeState()
+        ..phase = GamePhase.playing
         ..activateHint()
         ..activateHint()
         ..activateHint();
@@ -316,26 +314,21 @@ void main() {
     });
 
     test('activateHint replaces existing hint with a new one', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      gs.activateHint();
-      final firstHinted = gs.pieces.firstWhere((p) => p.isHinted);
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
       gs.activateHint();
       // Only one piece should be hinted
       expect(gs.pieces.where((p) => p.isHinted).length, 1);
       // Could be same or different piece but only one at a time
       expect(gs.hintsRemaining, 1);
-      firstHinted; // suppress unused warning
     });
 
     test('hasActiveHint is true after activateHint', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      gs.activateHint();
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
       expect(gs.hasActiveHint, isTrue);
     });
 
     test('endDrag clears hint when hinted piece is placed', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      gs.activateHint();
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
       final hinted = gs.pieces.firstWhere((p) => p.isHinted);
       // Find hinted piece index and drag it to its target
       final idx = gs.pieces.indexOf(hinted);

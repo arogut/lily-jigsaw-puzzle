@@ -85,7 +85,8 @@ class _GameScreenState extends State<GameScreen>
     _hintController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat();
+    );
+    unawaited(_hintController.repeat());
   }
 
   @override
