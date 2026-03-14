@@ -323,6 +323,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Español'**
   String get langSpanish;
+
+  /// No description provided for @hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint'**
+  String get hint;
 }
 
 class _AppLocalizationsDelegate

@@ -26,6 +26,7 @@ class GameState extends ChangeNotifier {
   late List<PuzzlePiece> pieces;
   GamePhase phase = GamePhase.loading;
   int? draggingIndex;
+  int hintsRemaining = 3;
 
   late double pieceWidth;
   late double pieceHeight;
@@ -175,7 +176,8 @@ class GameState extends ChangeNotifier {
     if ((piece.currentPosition - piece.targetPosition).distance <= snapThreshold) {
       piece
         ..currentPosition = piece.targetPosition
-        ..isPlaced = true;
+        ..isPlaced = true
+        ..isHinted = false;
     }
 
     draggingIndex = null;
@@ -184,6 +186,25 @@ class GameState extends ChangeNotifier {
     if (pieces.every((p) => p.isPlaced)) {
       phase = GamePhase.won;
       notifyListeners();
+    }
+  }
+
+  bool get hasActiveHint => pieces.any((p) => p.isHinted);
+
+  void activateHint() {
+    if (hintsRemaining <= 0) return;
+    _clearHint();
+    final unplaced = pieces.where((p) => !p.isPlaced && !p.isDragging).toList();
+    if (unplaced.isEmpty) return;
+    final rng = Random();
+    unplaced[rng.nextInt(unplaced.length)].isHinted = true;
+    hintsRemaining--;
+    notifyListeners();
+  }
+
+  void _clearHint() {
+    for (final piece in pieces) {
+      piece.isHinted = false;
     }
   }
 }

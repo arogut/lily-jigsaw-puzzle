@@ -14,6 +14,7 @@ import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_grid_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_shadow_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
+import 'package:lily_jigsaw_puzzle/painters/hint_glow_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
@@ -62,6 +63,9 @@ class _GameScreenState extends State<GameScreen>
   List<ConfettiParticle> _confettiParticles = const [];
   bool _showWinOverlay = false;
 
+  // Hint glow animation
+  late AnimationController _hintController;
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +82,10 @@ class _GameScreenState extends State<GameScreen>
       vsync: this,
       duration: const Duration(seconds: 5),
     );
+    _hintController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
   }
 
   @override
@@ -241,6 +249,7 @@ class _GameScreenState extends State<GameScreen>
       ..removeListener(_onReturnTick)
       ..dispose();
     _confettiController.dispose();
+    _hintController.dispose();
     _paintTick.dispose();
     super.dispose();
   }
@@ -363,6 +372,21 @@ class _GameScreenState extends State<GameScreen>
           ),
         ),
 
+        // ── Hint glow overlay ───────────────────────────────────────────────
+        if (gs.phase == GamePhase.playing && gs.hasActiveHint)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: HintGlowPainter(
+                  pieces: gs.pieces,
+                  pieceWidth: gs.pieceWidth,
+                  pieceHeight: gs.pieceHeight,
+                  animation: _hintController,
+                ),
+              ),
+            ),
+          ),
+
         // ── ALL PIECES — single CustomPaint + single GestureDetector ────────
         Positioned.fill(
           child: GestureDetector(
@@ -461,6 +485,29 @@ class _GameScreenState extends State<GameScreen>
                 Navigator.of(context).popUntil((r) => r.isFirst),
           ),
         ),
+
+        // ── Hint button ──────────────────────────────────────────────────────
+        if (gs.phase == GamePhase.playing)
+          Positioned(
+            left: 136, top: 8,
+            child: Opacity(
+              opacity: gs.hintsRemaining > 0 ? 1.0 : 0.5,
+              child: GameButton(
+                label: '${l10n.hint} (${gs.hintsRemaining})',
+                icon: Icons.lightbulb_outline,
+                color: const Color(0xFFFFB300),
+                width: 120,
+                height: 44,
+                fontSize: 15,
+                onPressed: gs.hintsRemaining > 0
+                    ? () {
+                        gs.activateHint();
+                        setState(() {});
+                      }
+                    : () {},
+              ),
+            ),
+          ),
 
         // ── Confetti ────────────────────────────────────────────────────────
         if (gs.phase == GamePhase.won && !_showWinOverlay)

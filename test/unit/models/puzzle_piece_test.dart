@@ -66,6 +66,15 @@ void main() {
       expect(piece.isDragging, isTrue);
     });
 
+    test('default isHinted is false', () {
+      expect(piece.isHinted, isFalse);
+    });
+
+    test('isHinted is mutable', () {
+      piece.isHinted = true;
+      expect(piece.isHinted, isTrue);
+    });
+
     test('currentPosition is mutable', () {
       piece.currentPosition = const Offset(50, 75);
       expect(piece.currentPosition, const Offset(50, 75));
