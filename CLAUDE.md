@@ -33,6 +33,19 @@ flutter analyze                    # Run static analysis
 - `test/` — widget and unit tests
 - `pubspec.yaml` — dependencies and project metadata
 
+## Before Opening a PR — Required Steps
+
+1. Run the full test suite (e.g., `flutter test`) — do NOT raise a PR if tests fail
+2. Run static analysis (e.g., `flutter analyze`)
+3. Verify test coverage has not dropped
+4. Only open a PR once all of the above pass cleanly
+
+## CI/CD Context
+When running in GitHub Actions:
+- Always create a new branch for changes, never commit directly to main
+- Include test results summary in the PR description
+- If tests fail, fix the issues before creating the PR
+
 ## Notes
 
 - `flutter doctor` shows warnings for Chrome and Linux toolchain — these are not needed for Android development.
