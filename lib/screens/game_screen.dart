@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
@@ -20,6 +21,7 @@ import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/tray_label.dart';
+import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
 const _kEdgePad = 20.0;
 
@@ -265,14 +267,7 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _buildLoading() {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF87CEEB), Color(0xFFB39DDB), Color(0xFFFFABD0)],
-          stops: [0.0, 0.50, 1.0],
-        ),
-      ),
+      decoration: AppTheme.backgroundDecoration,
       child: const Center(
         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 4),
       ),
@@ -295,6 +290,9 @@ class _GameScreenState extends State<GameScreen>
     final boardOffY = gs.boardOffset.dy;
     final dividerX = boardOffX + boardW + _kEdgePad;
     final screenWidth = MediaQuery.of(context).size.width;
+    final canUseHint = gs.phase == GamePhase.playing &&
+        gs.hintsRemaining > 0 &&
+        !gs.hasActiveHint;
 
     return Stack(
       children: [
@@ -357,10 +355,10 @@ class _GameScreenState extends State<GameScreen>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFFF6B9D),
+                  AppColors.hotPink,
                   Color(0xFFFFD93D),
-                  Color(0xFF6BCB77),
-                  Color(0xFF4D96FF),
+                  AppColors.green,
+                  AppColors.blue,
                 ],
               ),
               boxShadow: [
@@ -472,7 +470,7 @@ class _GameScreenState extends State<GameScreen>
           child: GameButton(
             label: l10n.back,
             icon: Icons.arrow_back_rounded,
-            color: const Color(0xFF9B59B6),
+            color: AppColors.mediumPurple,
             width: 120,
             height: 44,
             fontSize: 15,
@@ -490,24 +488,16 @@ class _GameScreenState extends State<GameScreen>
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Opacity(
-                  opacity: (gs.phase == GamePhase.playing &&
-                          gs.hintsRemaining > 0 &&
-                          !gs.hasActiveHint)
-                      ? 1.0
-                      : 0.5,
+                  opacity: canUseHint ? 1.0 : 0.5,
                   child: GameButton(
                     label: '${l10n.hint} (${gs.hintsRemaining})',
                     icon: Icons.lightbulb_outline,
-                    color: const Color(0xFFFFB300),
+                    color: AppColors.amber,
                     width: 120,
                     height: 44,
                     fontSize: 15,
-                    enabled: gs.phase == GamePhase.playing &&
-                        gs.hintsRemaining > 0 &&
-                        !gs.hasActiveHint,
-                    onPressed: (gs.phase == GamePhase.playing &&
-                            gs.hintsRemaining > 0 &&
-                            !gs.hasActiveHint)
+                    enabled: canUseHint,
+                    onPressed: canUseHint
                         ? () {
                             gs.activateHint();
                             setState(() {});
@@ -538,116 +528,13 @@ class _GameScreenState extends State<GameScreen>
           ),
 
         // ── Win overlay ─────────────────────────────────────────────────────
-        if (gs.phase == GamePhase.won && _showWinOverlay) _buildWinOverlay(l10n),
+        if (gs.phase == GamePhase.won && _showWinOverlay)
+          WinOverlay(
+            onPlayAgain: _restartGame,
+            onNewPuzzle: () =>
+                Navigator.of(context).popUntil((r) => r.isFirst),
+          ),
       ],
-    );
-  }
-
-  Widget _buildWinOverlay(AppLocalizations l10n) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {},
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xBB000040), Color(0xBB000020)],
-          ),
-        ),
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 36),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFFFF8FF), Color(0xFFFFEEFF)],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFF6B9D).withValues(alpha: 0.50),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-              border: Border.all(
-                color: const Color(0xFFFF6B9D).withValues(alpha: 0.50),
-                width: 2.5,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('🎉', style: TextStyle(fontSize: 72)),
-                const SizedBox(height: 10),
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      l10n.youDidIt,
-                      style: TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                        foreground: Paint()
-                          ..style = PaintingStyle.stroke
-                          ..strokeWidth = 5
-                          ..color = const Color(0xFF6A1B9A),
-                      ),
-                    ),
-                    ShaderMask(
-                      shaderCallback: (b) => const LinearGradient(
-                        colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
-                      ).createShader(b),
-                      child: Text(
-                        l10n.youDidIt,
-                        style: const TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.puzzleComplete,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF6A1B9A).withValues(alpha: 0.70),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                GameButton(
-                  label: l10n.playAgain,
-                  icon: Icons.replay_rounded,
-                  color: const Color(0xFF6BCB77),
-                  shadowColor: const Color(0xFF3A9E48),
-                  width: 220,
-                  height: 56,
-                  onPressed: _restartGame,
-                ),
-                const SizedBox(height: 12),
-                GameButton(
-                  label: l10n.newPuzzle,
-                  icon: Icons.home_rounded,
-                  color: const Color(0xFF4D96FF),
-                  shadowColor: const Color(0xFF2460CC),
-                  width: 220,
-                  height: 56,
-                  onPressed: () =>
-                      Navigator.of(context).popUntil((r) => r.isFirst),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -702,9 +589,9 @@ class _GameScreenState extends State<GameScreen>
   List<ConfettiParticle> _generateConfetti(int count) {
     final rng = Random();
     const colors = [
-      Color(0xFFFF6B6B), Color(0xFFFFD93D), Color(0xFF6BCB77),
-      Color(0xFF4D96FF), Color(0xFFFF6B9D), Color(0xFFB39DDB),
-      Color(0xFFFFAB40), Color(0xFF00E5FF), Color(0xFFFFFFFF),
+      AppColors.red, Color(0xFFFFD93D), AppColors.green,
+      AppColors.blue, AppColors.hotPink, AppColors.lavender,
+      AppColors.orange, Color(0xFF00E5FF), Colors.white,
     ];
     return List.generate(count, (_) => ConfettiParticle(
       x: rng.nextDouble(),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 
+/// A badge widget showing the placed/total piece count.
 class TrayLabel extends StatelessWidget {
   const TrayLabel({required this.placed, required this.total, super.key});
 
@@ -26,7 +28,7 @@ class TrayLabel extends StatelessWidget {
         style: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF6A1B9A),
+          color: AppColors.deepPurple,
           letterSpacing: 0.5,
         ),
       ),
