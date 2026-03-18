@@ -107,7 +107,7 @@ jobs:
           claude_args: |
             --model "claude-sonnet-4-6"
             --max-turns 100
-            --allowedTools "Bash(git:*),Bash(gh issue:*),Bash(gh pr:*),Bash(gh repo:*),Bash(npm:*),Bash(npx:*),Edit,Write,Read,Glob,Grep,LS,WebSearch,WebFetch"
+            --allowedTools "Bash(git:*),Bash(gh issue:*),Bash(gh pr:*),Bash(gh repo:*),Bash(flutter:*),Edit,Write,Read,Glob,Grep,LS,WebSearch,WebFetch"
 
       # Clean up the comment - remove the malformed "Create PR" link and trailing artifacts
       - name: Clean up Claude comment
