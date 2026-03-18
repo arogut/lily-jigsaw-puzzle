@@ -31,7 +31,7 @@ class HintGlowPainter extends CustomPainter {
       hintedPiece.edges, pieceWidth, pieceHeight,
     );
 
-    // Golden glow at the piece's current position
+    // Golden glow at piece's current position, then green glow at target slot
     canvas
       ..save()
       ..translate(
@@ -51,10 +51,7 @@ class HintGlowPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.5,
       )
-      ..restore();
-
-    // Green glow at the target position (board slot)
-    canvas
+      ..restore()
       ..save()
       ..translate(
         hintedPiece.targetPosition.dx - tabW,
