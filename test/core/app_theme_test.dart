@@ -48,7 +48,7 @@ void main() {
   group('AppTheme', () {
     test('backgroundDecoration is a BoxDecoration with LinearGradient', () {
       expect(AppTheme.backgroundDecoration, isA<BoxDecoration>());
-      final decoration = AppTheme.backgroundDecoration;
+      const decoration = AppTheme.backgroundDecoration;
       expect(decoration.gradient, isA<LinearGradient>());
     });
 

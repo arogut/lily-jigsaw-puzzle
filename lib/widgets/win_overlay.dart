@@ -62,7 +62,7 @@ class WinOverlay extends StatelessWidget {
               children: [
                 const Text('🎉', style: TextStyle(fontSize: 72)),
                 const SizedBox(height: 10),
-                GradientTitle(text: l10n.youDidIt, fontSize: 34, strokeWidth: 5),
+                GradientTitle(text: l10n.youDidIt, fontSize: 34),
                 const SizedBox(height: 8),
                 Text(
                   l10n.puzzleComplete,
