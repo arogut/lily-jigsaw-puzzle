@@ -11,12 +11,14 @@ class AllPiecesPainter extends CustomPainter {
     required this.pieceWidth,
     required this.pieceHeight,
     required ValueNotifier<int> repaintNotifier,
+    this.hasActiveHint = false,
   }) : super(repaint: repaintNotifier);
 
   final List<PuzzlePiece> pieces;
   final ui.Image image;
   final double pieceWidth;
   final double pieceHeight;
+  final bool hasActiveHint;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -24,13 +26,17 @@ class AllPiecesPainter extends CustomPainter {
     final tabH = pieceHeight * JigsawPiecePainter.tabFraction;
     final pieceCanvasSize = Size(pieceWidth + 2 * tabW, pieceHeight + 2 * tabH);
 
-    for (final piece in pieces) {
-      canvas
-        ..save()
-        ..translate(
-          piece.currentPosition.dx - tabW,
-          piece.currentPosition.dy - tabH,
-        );
+    void drawPiece(PuzzlePiece piece) {
+      final dimmed = hasActiveHint && !piece.isHinted && !piece.isPlaced;
+      if (dimmed) {
+        canvas.saveLayer(null, Paint()..color = const Color(0xCC000000));
+      } else {
+        canvas.save();
+      }
+      canvas.translate(
+        piece.currentPosition.dx - tabW,
+        piece.currentPosition.dy - tabH,
+      );
       JigsawPiecePainter(
         piece: piece,
         image: image,
@@ -39,6 +45,16 @@ class AllPiecesPainter extends CustomPainter {
       ).paint(canvas, pieceCanvasSize);
       canvas.restore();
     }
+
+    PuzzlePiece? hintedPiece;
+    for (final piece in pieces) {
+      if (piece.isHinted && !piece.isPlaced) {
+        hintedPiece = piece;
+      } else {
+        drawPiece(piece);
+      }
+    }
+    if (hintedPiece != null) drawPiece(hintedPiece);
   }
 
   @override

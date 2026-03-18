@@ -279,4 +279,89 @@ void main() {
       gs.removeListener(() {});
     });
   });
+
+  group('hint system', () {
+    test('hintsRemaining starts at 3', () {
+      final gs = makeState();
+      expect(gs.hintsRemaining, 3);
+    });
+
+    test('hasActiveHint is false initially', () {
+      final gs = makeState();
+      expect(gs.hasActiveHint, isFalse);
+    });
+
+    test('activateHint marks one piece as hinted', () {
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      expect(gs.pieces.where((p) => p.isHinted).length, 1);
+    });
+
+    test('activateHint decrements hintsRemaining', () {
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      expect(gs.hintsRemaining, 2);
+    });
+
+    test('activateHint does not activate when hintsRemaining is 0', () {
+      final gs = makeState()
+        ..phase = GamePhase.playing
+        ..activateHint()
+        ..activateHint()
+        ..activateHint();
+      expect(gs.hintsRemaining, 0);
+      gs.activateHint();
+      expect(gs.hintsRemaining, 0);
+      expect(gs.pieces.where((p) => p.isHinted).length, 1);
+    });
+
+    test('activateHint replaces existing hint with a new one', () {
+      final gs = makeState()
+        ..phase = GamePhase.playing
+        ..activateHint()
+        ..activateHint();
+      // Only one piece should be hinted
+      expect(gs.pieces.where((p) => p.isHinted).length, 1);
+      // Could be same or different piece but only one at a time
+      expect(gs.hintsRemaining, 1);
+    });
+
+    test('hasActiveHint is true after activateHint', () {
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      expect(gs.hasActiveHint, isTrue);
+    });
+
+    test('endDrag clears hint when hinted piece is placed', () {
+      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      final hinted = gs.pieces.firstWhere((p) => p.isHinted);
+      // Find hinted piece index and drag it to its target
+      final idx = gs.pieces.indexOf(hinted);
+      gs.startDrag(idx);
+      final dragged = gs.pieces.last;
+      dragged.currentPosition = dragged.targetPosition;
+      gs.endDrag();
+      expect(dragged.isHinted, isFalse);
+      expect(gs.hasActiveHint, isFalse);
+    });
+
+    test('activateHint notifies listeners', () {
+      final gs = makeState()..phase = GamePhase.playing;
+      var notified = false;
+      gs
+        ..addListener(() => notified = true)
+        ..activateHint();
+      expect(notified, isTrue);
+    });
+
+    test('activateHint does not hint placed pieces', () {
+      final gs = makeState()..phase = GamePhase.playing;
+      // Place all but one piece
+      for (var i = 0; i < gs.pieces.length - 1; i++) {
+        gs.pieces[i].isPlaced = true;
+      }
+      gs.activateHint();
+      // The only hinted piece should be the unplaced one
+      final hinted = gs.pieces.where((p) => p.isHinted).toList();
+      expect(hinted.length, 1);
+      expect(hinted.first.isPlaced, isFalse);
+    });
+  });
 }

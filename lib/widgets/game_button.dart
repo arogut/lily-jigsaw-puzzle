@@ -16,6 +16,7 @@ class GameButton extends StatefulWidget {
     this.height = 60,
     this.fontSize = 20,
     this.icon,
+    this.enabled = true,
   });
   final String label;
   final VoidCallback onPressed;
@@ -25,6 +26,7 @@ class GameButton extends StatefulWidget {
   final double height;
   final double fontSize;
   final IconData? icon;
+  final bool enabled;
 
   @override
   State<GameButton> createState() => _GameButtonState();
@@ -68,16 +70,20 @@ class _GameButtonState extends State<GameButton> {
     final actualWidth = _computeWidth();
 
     return GestureDetector(
-      onTapDown: (_) {
-        unawaited(HapticFeedback.lightImpact());
-        unawaited(SoundService().playClick());
-        setState(() => _pressed = true);
-      },
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onPressed();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
+      onTapDown: widget.enabled
+          ? (_) {
+              unawaited(HapticFeedback.lightImpact());
+              unawaited(SoundService().playClick());
+              setState(() => _pressed = true);
+            }
+          : null,
+      onTapUp: widget.enabled
+          ? (_) {
+              setState(() => _pressed = false);
+              widget.onPressed();
+            }
+          : null,
+      onTapCancel: widget.enabled ? () => setState(() => _pressed = false) : null,
       child: SizedBox(
         width: actualWidth,
         height: widget.height + bottomPad,
