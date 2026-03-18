@@ -14,6 +14,7 @@ import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_grid_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_shadow_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
+import 'package:lily_jigsaw_puzzle/painters/hint_glow_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
@@ -62,6 +63,9 @@ class _GameScreenState extends State<GameScreen>
   List<ConfettiParticle> _confettiParticles = const [];
   bool _showWinOverlay = false;
 
+  // Hint glow animation
+  late AnimationController _hintController;
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +82,11 @@ class _GameScreenState extends State<GameScreen>
       vsync: this,
       duration: const Duration(seconds: 5),
     );
+    _hintController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    unawaited(_hintController.repeat());
   }
 
   @override
@@ -241,6 +250,7 @@ class _GameScreenState extends State<GameScreen>
       ..removeListener(_onReturnTick)
       ..dispose();
     _confettiController.dispose();
+    _hintController.dispose();
     _paintTick.dispose();
     super.dispose();
   }
@@ -371,6 +381,8 @@ class _GameScreenState extends State<GameScreen>
                 ? (d) {
                     final idx = _hitTestPiece(d.localPosition);
                     if (idx != null) {
+                      // When a hint is active, only the hinted piece can be dragged
+                      if (gs.hasActiveHint && !gs.pieces[idx].isHinted) return;
                       unawaited(HapticFeedback.lightImpact());
                       gs.startDrag(idx);
                       _dragCrossedLeft = false;
@@ -433,19 +445,26 @@ class _GameScreenState extends State<GameScreen>
                 pieceWidth: gs.pieceWidth,
                 pieceHeight: gs.pieceHeight,
                 repaintNotifier: _paintTick,
+                hasActiveHint: gs.hasActiveHint,
               ),
             ),
           ),
         ),
 
-        // ── Tray label ──────────────────────────────────────────────────────
-        Positioned(
-          right: _kEdgePad, top: _kEdgePad,
-          child: TrayLabel(
-            placed: gs.pieces.where((p) => p.isPlaced).length,
-            total: gs.pieces.length,
+        // ── Hint glow overlay (on top of pieces so border is visible) ────────
+        if (gs.phase == GamePhase.playing && gs.hasActiveHint)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: HintGlowPainter(
+                  pieces: gs.pieces,
+                  pieceWidth: gs.pieceWidth,
+                  pieceHeight: gs.pieceHeight,
+                  animation: _hintController,
+                ),
+              ),
+            ),
           ),
-        ),
 
         // ── Back button ─────────────────────────────────────────────────────
         Positioned(
@@ -459,6 +478,49 @@ class _GameScreenState extends State<GameScreen>
             fontSize: 15,
             onPressed: () =>
                 Navigator.of(context).popUntil((r) => r.isFirst),
+          ),
+        ),
+
+        // ── Right-side controls: hint button + tray label ────────────────────
+        Positioned(
+          right: _kEdgePad, top: 8,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Opacity(
+                  opacity: (gs.phase == GamePhase.playing &&
+                          gs.hintsRemaining > 0 &&
+                          !gs.hasActiveHint)
+                      ? 1.0
+                      : 0.5,
+                  child: GameButton(
+                    label: '${l10n.hint} (${gs.hintsRemaining})',
+                    icon: Icons.lightbulb_outline,
+                    color: const Color(0xFFFFB300),
+                    width: 120,
+                    height: 44,
+                    fontSize: 15,
+                    enabled: gs.phase == GamePhase.playing &&
+                        gs.hintsRemaining > 0 &&
+                        !gs.hasActiveHint,
+                    onPressed: (gs.phase == GamePhase.playing &&
+                            gs.hintsRemaining > 0 &&
+                            !gs.hasActiveHint)
+                        ? () {
+                            gs.activateHint();
+                            setState(() {});
+                          }
+                        : () {},
+                  ),
+                ),
+              ),
+              TrayLabel(
+                placed: gs.pieces.where((p) => p.isPlaced).length,
+                total: gs.pieces.length,
+              ),
+            ],
           ),
         ),
 

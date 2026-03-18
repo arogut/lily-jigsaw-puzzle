@@ -27,6 +27,7 @@ class PuzzlePiece {
     required this.currentPosition,
     this.isPlaced = false,
     this.isDragging = false,
+    this.isHinted = false,
   });
   final int row;
   final int col;
@@ -37,4 +38,5 @@ class PuzzlePiece {
   Offset currentPosition;
   bool isPlaced;
   bool isDragging;
+  bool isHinted;
 }

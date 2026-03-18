@@ -120,4 +120,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get langSpanish => 'Español';
+
+  @override
+  String get hint => 'Podpowiedź';
 }
