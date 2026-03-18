@@ -33,7 +33,7 @@ flutter analyze                    # Run static analysis
 - `test/` — widget and unit tests
 - `pubspec.yaml` — dependencies and project metadata
 
-## Before Opening a PR — Required Steps
+## Before Pushing a commit — Required Steps
 
 1. Run the full test suite (e.g., `flutter test`) — do NOT raise a PR if tests fail
 2. Run static analysis (e.g., `flutter analyze`)
