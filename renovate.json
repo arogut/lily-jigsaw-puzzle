@@ -10,7 +10,6 @@
   "minimumReleaseAge": "3 days",
   "ignoreUnstable": true,
   "rangeStrategy": "pin",
-  "stabilityDays": 3,
   "prCreation": "not-pending",
   "packageRules": [
     {
