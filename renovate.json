@@ -7,9 +7,11 @@
   "labels": [
     "dependencies"
   ],
-  "minimumReleaseAge": "7 days",
+  "minimumReleaseAge": "3 days",
   "ignoreUnstable": true,
   "rangeStrategy": "pin",
+  "stabilityDays": 3,
+  "prCreation": "not-pending",
   "packageRules": [
     {
       "description": "Flutter SDK updates",
