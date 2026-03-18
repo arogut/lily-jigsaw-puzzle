@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
@@ -21,6 +22,9 @@ class ImageSelectionScreen extends StatefulWidget {
   State<ImageSelectionScreen> createState() => _ImageSelectionScreenState();
 }
 
+// StatefulWidget is required so that returning from Settings triggers a
+// setState() call, which forces each _ImageCard's FutureBuilder to re-fetch
+// updated star counts (e.g. after progress reset).
 class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
   @override
   Widget build(BuildContext context) {
@@ -28,18 +32,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF87CEEB), // sky blue
-              Color(0xFFB39DDB), // lavender
-              Color(0xFFFFABD0), // baby pink
-            ],
-            stops: [0.0, 0.50, 1.0],
-          ),
-        ),
+        decoration: AppTheme.backgroundDecoration,
         child: SafeArea(
           child: Column(
             children: [
@@ -51,8 +44,8 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                     GameButton(
                       label: l10n.quit,
                       icon: Icons.exit_to_app_rounded,
-                      color: const Color(0xFFFF6B6B),
-                      shadowColor: const Color(0xFFCC2222),
+                      color: AppColors.red,
+                      shadowColor: AppColors.redShadow,
                       width: 110,
                       height: 44,
                       fontSize: 15,
@@ -62,8 +55,8 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                     GameButton(
                       label: l10n.settings,
                       icon: Icons.settings_rounded,
-                      color: const Color(0xFF9B59B6),
-                      shadowColor: const Color(0xFF6A1B9A),
+                      color: AppColors.mediumPurple,
+                      shadowColor: AppColors.deepPurple,
                       width: 110,
                       height: 44,
                       fontSize: 15,
@@ -283,7 +276,7 @@ class _ImageCardState extends State<_ImageCard>
                           stars,
                           (_) => const Icon(
                             Icons.star_rounded,
-                            color: Color(0xFFFFD700),
+                            color: AppColors.gold,
                             size: 45,
                             shadows: [
                               Shadow(

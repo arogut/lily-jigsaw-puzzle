@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
@@ -75,18 +76,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF87CEEB),
-              Color(0xFFB39DDB),
-              Color(0xFFFFABD0),
-            ],
-            stops: [0.0, 0.50, 1.0],
-          ),
-        ),
+        decoration: AppTheme.backgroundDecoration,
         child: SafeArea(
           child: Column(
             children: [
@@ -98,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     GameButton(
                       label: l10n.back,
                       icon: Icons.arrow_back_rounded,
-                      color: const Color(0xFF9B59B6),
+                      color: AppColors.mediumPurple,
                       width: 120,
                       height: 46,
                       fontSize: 16,
@@ -149,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF6A1B9A),
+                color: AppColors.deepPurple,
               ),
             ),
             const SizedBox(height: 20),
@@ -161,23 +151,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF6A1B9A),
+                color: AppColors.deepPurple,
               ),
               decoration: InputDecoration(
                 hintText: l10n.mathHint,
                 hintStyle: TextStyle(
-                  color: const Color(0xFF9B59B6).withValues(alpha: 0.50),
+                  color: AppColors.mediumPurple.withValues(alpha: 0.50),
                   fontSize: 16,
                 ),
                 filled: true,
                 fillColor: const Color(0xFFF5EEFF),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFF9B59B6), width: 2),
+                  borderSide: const BorderSide(color: AppColors.mediumPurple, width: 2),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFF6A1B9A), width: 2.5),
+                  borderSide: const BorderSide(color: AppColors.deepPurple, width: 2.5),
                 ),
               ),
               onSubmitted: (_) => _checkAnswer(context),
@@ -187,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: Color(0xFFCC2222),
+                  color: AppColors.redShadow,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -197,8 +187,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             GameButton(
               label: l10n.confirm,
               icon: Icons.check_rounded,
-              color: const Color(0xFF6BCB77),
-              shadowColor: const Color(0xFF3A9E48),
+              color: AppColors.green,
+              shadowColor: AppColors.greenShadow,
               width: 200,
               height: 52,
               fontSize: 18,
@@ -240,12 +230,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFF9B59B6)
+                        ? AppColors.mediumPurple
                         : Colors.white.withValues(alpha: 0.75),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFF6A1B9A)
+                          ? AppColors.deepPurple
                           : Colors.white.withValues(alpha: 0.50),
                       width: 2,
                     ),
@@ -262,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : const Color(0xFF6A1B9A),
+                      color: isSelected ? Colors.white : AppColors.deepPurple,
                     ),
                   ),
                 ),
@@ -278,8 +268,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GameButton(
             label: l10n.resetProgress,
             icon: Icons.delete_sweep_rounded,
-            color: const Color(0xFFFF6B6B),
-            shadowColor: const Color(0xFFCC2222),
+            color: AppColors.red,
+            shadowColor: AppColors.redShadow,
             height: 56,
             fontSize: 18,
             onPressed: () => unawaited(_resetProgress()),
@@ -289,7 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF6BCB77).withValues(alpha: 0.90),
+                color: AppColors.green.withValues(alpha: 0.90),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -315,7 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       style: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w800,
-        color: Color(0xFF6A1B9A),
+        color: AppColors.deepPurple,
         letterSpacing: 0.5,
       ),
     );

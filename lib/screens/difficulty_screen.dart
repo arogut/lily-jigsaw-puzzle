@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
@@ -45,18 +46,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
       body: Container(
         height: double.infinity,
         width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF87CEEB),
-              Color(0xFFB39DDB),
-              Color(0xFFFFABD0),
-            ],
-            stops: [0.0, 0.50, 1.0],
-          ),
-        ),
+        decoration: AppTheme.backgroundDecoration,
         child: SafeArea(
           child: SingleChildScrollView(
             child: Column(
@@ -71,7 +61,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                     child: GameButton(
                       label: l10n.back,
                       icon: Icons.arrow_back_rounded,
-                      color: const Color(0xFF9B59B6),
+                      color: AppColors.mediumPurple,
                       width: 120,
                       height: 46,
                       fontSize: 16,
@@ -93,86 +83,49 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                 const SizedBox(height: 26),
 
                 // Easy — always unlocked
-                Column(
-                  children: [
-                    GameButton(
-                      label: l10n.easy,
-                      color: const Color(0xFF6BCB77),
-                      shadowColor: const Color(0xFF3A9E48),
-                      width: 260,
-                      height: 64,
-                      fontSize: 22,
-                      onPressed: () => _go(context, 3),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.easyDesc,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF6A1B9A).withValues(alpha: 0.70),
-                      ),
-                    ),
-                  ],
+                _DifficultyOption(
+                  description: l10n.easyDesc,
+                  button: GameButton(
+                    label: l10n.easy,
+                    color: AppColors.green,
+                    shadowColor: AppColors.greenShadow,
+                    width: 260,
+                    height: 64,
+                    fontSize: 22,
+                    onPressed: () => _go(context, 3),
+                  ),
                 ),
                 const SizedBox(height: 14),
 
                 // Medium — locked until ≥1 star
-                Column(
-                  children: [
-                    _lockedOrButton(
-                      locked: mediumLocked,
-                      child: GameButton(
-                        label: l10n.medium,
-                        color: const Color(0xFFFFAB40),
-                        shadowColor: const Color(0xFFCC7722),
-                        width: 260,
-                        height: 64,
-                        fontSize: 22,
-                        onPressed: mediumLocked ? () {} : () => _go(context, 5),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.mediumDesc,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF6A1B9A).withValues(alpha: 0.70),
-                      ),
-                    ),
-                  ],
+                _DifficultyOption(
+                  description: l10n.mediumDesc,
+                  locked: mediumLocked,
+                  button: GameButton(
+                    label: l10n.medium,
+                    color: AppColors.orange,
+                    shadowColor: const Color(0xFFCC7722),
+                    width: 260,
+                    height: 64,
+                    fontSize: 22,
+                    onPressed: mediumLocked ? () {} : () => _go(context, 5),
+                  ),
                 ),
                 const SizedBox(height: 14),
 
                 // Hard — locked until ≥2 stars
-                Column(
-                  children: [
-                    _lockedOrButton(
-                      locked: hardLocked,
-                      child: GameButton(
-                        label: l10n.hard,
-                        color: const Color(0xFFFF6B6B),
-                        shadowColor: const Color(0xFFCC2222),
-                        width: 260,
-                        height: 64,
-                        fontSize: 22,
-                        onPressed: hardLocked ? () {} : () => _go(context, 7),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.hardDesc,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF6A1B9A).withValues(alpha: 0.70),
-                      ),
-                    ),
-                  ],
+                _DifficultyOption(
+                  description: l10n.hardDesc,
+                  locked: hardLocked,
+                  button: GameButton(
+                    label: l10n.hard,
+                    color: AppColors.red,
+                    shadowColor: AppColors.redShadow,
+                    width: 260,
+                    height: 64,
+                    fontSize: 22,
+                    onPressed: hardLocked ? () {} : () => _go(context, 7),
+                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -182,12 +135,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
         ),
       ),
     );
-  }
-
-  /// Wraps [child] in reduced opacity when [locked] is true.
-  Widget _lockedOrButton({required bool locked, required Widget child}) {
-    if (!locked) return child;
-    return Opacity(opacity: 0.45, child: child);
   }
 
   Widget _buildPreview() {
@@ -251,5 +198,39 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
         localeNotifier: widget.localeNotifier,
       ),
     )));
+  }
+}
+
+/// A difficulty option row containing a [button] and a description text.
+///
+/// When [locked] is true, the button is shown at reduced opacity.
+class _DifficultyOption extends StatelessWidget {
+  const _DifficultyOption({
+    required this.button,
+    required this.description,
+    this.locked = false,
+  });
+
+  final Widget button;
+  final String description;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (locked) Opacity(opacity: 0.45, child: button) else button,
+        const SizedBox(height: 6),
+        Text(
+          description,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.deepPurple.withValues(alpha: 0.70),
+          ),
+        ),
+      ],
+    );
   }
 }

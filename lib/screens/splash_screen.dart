@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/painters/logo_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
@@ -80,20 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         children: [
           // ── Background gradient ──────────────────────────────────────────
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF87CEEB), // sky blue
-                  Color(0xFFB39DDB), // lavender
-                  Color(0xFFFFABD0), // baby pink
-                ],
-                stops: [0.0, 0.50, 1.0],
-              ),
-            ),
-          ),
+          Container(decoration: AppTheme.backgroundDecoration),
 
           // ── Decorative bubbles ──────────────────────────────────────────
           ..._bubbles(size),
@@ -250,7 +238,7 @@ class _LoadingDotsState extends State<_LoadingDots>
                     color: Colors.white.withValues(alpha: 0.85),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6A1B9A).withValues(alpha: 0.40),
+                        color: AppColors.deepPurple.withValues(alpha: 0.40),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 
 /// A title widget with a gradient fill and purple stroke outline,
 /// used consistently across screens.
@@ -28,12 +29,12 @@ class GradientTitle extends StatelessWidget {
             foreground: Paint()
               ..style = PaintingStyle.stroke
               ..strokeWidth = strokeWidth
-              ..color = const Color(0xFF6A1B9A),
+              ..color = AppColors.deepPurple,
           ),
         ),
         ShaderMask(
           shaderCallback: (b) => const LinearGradient(
-            colors: [Color(0xFFFFD93D), Color(0xFFFF6B9D)],
+            colors: [Color(0xFFFFD93D), AppColors.hotPink],
           ).createShader(b),
           child: Text(
             text,
