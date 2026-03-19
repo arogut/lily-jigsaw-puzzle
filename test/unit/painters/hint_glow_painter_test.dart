@@ -15,7 +15,7 @@ PuzzlePiece _makePiece({bool isHinted = false}) => PuzzlePiece(
         bottom: EdgeType.blank,
         left: EdgeType.flat,
       ),
-      targetPosition: const Offset(0, 0),
+      targetPosition: Offset.zero,
       currentPosition: const Offset(300, 0),
       isHinted: isHinted,
     );
@@ -27,7 +27,7 @@ void main() {
         pieces: [_makePiece()],
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
@@ -40,7 +40,7 @@ void main() {
         pieces: const [],
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
@@ -66,7 +66,7 @@ void main() {
         pieces: [_makePiece(isHinted: true)],
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
@@ -79,7 +79,7 @@ void main() {
         pieces: [_makePiece(isHinted: true)],
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(1.0),
+        animation: const AlwaysStoppedAnimation(1),
       );
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
@@ -121,13 +121,13 @@ void main() {
         pieces: pieces,
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       final p2 = HintGlowPainter(
         pieces: pieces,
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       expect(p2.shouldRepaint(p1), isFalse);
     });
@@ -137,13 +137,13 @@ void main() {
         pieces: [_makePiece()],
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       final p2 = HintGlowPainter(
         pieces: [_makePiece(isHinted: true)],
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       expect(p2.shouldRepaint(p1), isTrue);
     });
@@ -154,13 +154,13 @@ void main() {
         pieces: pieces,
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       final p2 = HintGlowPainter(
         pieces: pieces,
         pieceWidth: 200,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       expect(p2.shouldRepaint(p1), isTrue);
     });
@@ -171,13 +171,13 @@ void main() {
         pieces: pieces,
         pieceWidth: 100,
         pieceHeight: 100,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       final p2 = HintGlowPainter(
         pieces: pieces,
         pieceWidth: 100,
         pieceHeight: 200,
-        animation: const AlwaysStoppedAnimation(0.0),
+        animation: const AlwaysStoppedAnimation(0),
       );
       expect(p2.shouldRepaint(p1), isTrue);
     });

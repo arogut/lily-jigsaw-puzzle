@@ -239,7 +239,7 @@ void main() {
       const tabFrac = JigsawPiecePainter.tabFraction;
       const pw = 100.0;
       const ph = 100.0;
-      final size = Size(pw * (1 + 2 * tabFrac), ph * (1 + 2 * tabFrac));
+      const size = Size(pw * (1 + 2 * tabFrac), ph * (1 + 2 * tabFrac));
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
       painter.paint(canvas, size);
