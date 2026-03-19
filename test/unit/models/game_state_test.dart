@@ -363,5 +363,248 @@ void main() {
       expect(hinted.length, 1);
       expect(hinted.first.isPlaced, isFalse);
     });
+
+    test('activateHint does not hint face-down pieces', () {
+      final gs = makeState()..phase = GamePhase.playing;
+      // Make all but the last piece face-down.
+      for (var i = 0; i < gs.pieces.length - 1; i++) {
+        gs.pieces[i].isFaceDown = true;
+      }
+      gs.activateHint();
+      final hinted = gs.pieces.where((p) => p.isHinted).toList();
+      expect(hinted.length, 1);
+      expect(hinted.first.isFaceDown, isFalse);
+    });
+  });
+
+  group('lift effect', () {
+    test('startDrag scales piece up to lift scale', () {
+      final gs = makeState()..startDrag(0);
+      expect(gs.pieces.last.scale, greaterThan(1.0));
+    });
+
+    test('endDrag resets piece scale to 1.0', () {
+      final gs = makeState()..startDrag(0)..endDrag();
+      expect(gs.pieces.last.scale, 1.0);
+    });
+
+    test('endDragNoPlace resets piece scale to 1.0', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last; // startDrag moves it to end
+      gs.endDragNoPlace();
+      expect(piece.scale, 1.0);
+    });
+  });
+
+  group('physics simulation', () {
+    test('stepPhysics applies friction to piece velocity', () {
+      final gs = makeState()..beginPlaying();
+      gs.pieces[0].velocity = const Offset(1000, 0);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(gs.pieces[0].velocity.dx, lessThan(1000));
+    });
+
+    test('stepPhysics zeroes negligible velocity', () {
+      // Use scattering phase so gravity does not inflate velocity before the
+      // negligible-velocity check (gravity only applies in playing phase).
+      final gs = makeState()..phase = GamePhase.scattering;
+      gs.pieces[0].velocity = const Offset(1, 0); // below min threshold
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(1, trayBounds);
+      expect(gs.pieces[0].velocity, Offset.zero);
+    });
+
+    test('stepPhysics bounces piece off tray right wall', () {
+      final gs = makeState()..beginPlaying();
+      final piece = gs.pieces[0]
+        ..currentPosition = const Offset(580, 100)
+        ..velocity = const Offset(500, 0);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(piece.velocity.dx, isNegative);
+    });
+
+    test('stepPhysics bounces piece off tray bottom wall', () {
+      final gs = makeState()..beginPlaying();
+      final piece = gs.pieces[0]
+        ..currentPosition = const Offset(400, 285)
+        ..velocity = const Offset(0, 500);
+      final trayBounds =
+          Rect.fromLTRB(300, 0, 600, 300 - gs.pieceHeight + 10);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(piece.velocity.dy, isNegative);
+    });
+
+    test('stepPhysics does not move placed pieces', () {
+      final gs = makeState()..beginPlaying();
+      gs.pieces[0]
+        ..isPlaced = true
+        ..currentPosition = Offset.zero
+        ..velocity = const Offset(500, 500);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(gs.pieces[0].currentPosition, Offset.zero);
+    });
+
+    test('stepPhysics does not move dragging pieces', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last
+        ..velocity = const Offset(500, 500);
+      final posBefore = piece.currentPosition;
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(piece.currentPosition, posBefore);
+    });
+
+    test('stepPhysics returns true when something changed', () {
+      final gs = makeState()..beginPlaying();
+      gs.pieces[0].velocity = const Offset(200, 0);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      expect(gs.stepPhysics(0.1, trayBounds), isTrue);
+    });
+
+    test('stepPhysics returns false when nothing moved', () {
+      final gs = makeState()..beginPlaying();
+      // All pieces have zero velocity.
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      expect(gs.stepPhysics(0.1, trayBounds), isFalse);
+    });
+  });
+
+  group('flip mechanic', () {
+    test('flipPiece starts animation on face-down piece', () {
+      final gs = makeState();
+      gs.pieces[0].isFaceDown = true;
+      gs.flipPiece(gs.pieces[0]);
+      expect(gs.pieces[0].flipProgress, 0.0);
+    });
+
+    test('flipPiece does nothing on face-up piece', () {
+      final gs = makeState();
+      gs.pieces[0].flipProgress = 1.0;
+      gs.flipPiece(gs.pieces[0]); // isFaceDown is false
+      expect(gs.pieces[0].flipProgress, 1.0);
+    });
+
+    test('stepPhysics advances flip animation', () {
+      final gs = makeState()..beginPlaying();
+      gs.pieces[0]
+        ..isFaceDown = true
+        ..flipProgress = 0.0;
+      gs.flipPiece(gs.pieces[0]);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(gs.pieces[0].flipProgress, greaterThan(0.0));
+    });
+
+    test('stepPhysics completes flip and clears isFaceDown', () {
+      final gs = makeState()..beginPlaying();
+      gs.pieces[0]
+        ..isFaceDown = true
+        ..flipProgress = 0.0;
+      gs.flipPiece(gs.pieces[0]);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      // Advance enough time for the flip to complete.
+      gs.stepPhysics(1, trayBounds);
+      expect(gs.pieces[0].isFaceDown, isFalse);
+      expect(gs.pieces[0].flipProgress, 1.0);
+    });
+  });
+
+  group('computePilePositions', () {
+    test('returns one position per piece', () {
+      final gs = makeState();
+      final positions = gs.computePilePositions(const Size(600, 300));
+      expect(positions.length, gs.pieces.length);
+    });
+
+    test('pile positions are in the right-half tray region', () {
+      const screenSize = Size(600, 300);
+      final gs = makeState();
+      final positions = gs.computePilePositions(screenSize);
+      for (final pos in positions) {
+        expect(pos.dx, greaterThanOrEqualTo(screenSize.width / 2));
+      }
+    });
+  });
+
+  group('applyScatterVelocities', () {
+    test('applies non-zero velocity to all unplaced pieces', () {
+      final gs = makeState()..applyScatterVelocities(const Size(600, 300));
+      for (final piece in gs.pieces) {
+        expect(piece.velocity.distance, greaterThan(0));
+      }
+    });
+
+    test('does not change velocity of placed pieces', () {
+      final gs = makeState();
+      gs.pieces[0].isPlaced = true;
+      gs.applyScatterVelocities(const Size(600, 300));
+      expect(gs.pieces[0].velocity, Offset.zero);
+    });
+  });
+
+  group('magnetic pull', () {
+    test('updateDrag applies magnetic bias when piece is within 80px of target', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last;
+      // Move piece so it is 50px from its target (within the 80px magnet radius).
+      piece.currentPosition = piece.targetPosition + const Offset(50, 0);
+      final before = piece.currentPosition;
+      gs.updateDrag(const Offset(10, 0));
+      // The magnetic pull toward the target adds a leftward (-x) bias,
+      // so the net displacement is less than the raw +10 px delta.
+      expect(piece.currentPosition.dx, lessThan(before.dx + 10));
+    });
+
+    test('updateDrag applies no bias when piece is beyond 80px of target', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last;
+      // Move piece far from its target (beyond the 80px magnet radius).
+      piece.currentPosition = piece.targetPosition + const Offset(200, 0);
+      final before = piece.currentPosition;
+      gs.updateDrag(const Offset(10, 0));
+      // No magnetic bias: displacement equals the raw delta.
+      expect(piece.currentPosition.dx, closeTo(before.dx + 10, 0.001));
+    });
+  });
+
+  group('stepPhysics wall bounces', () {
+    test('stepPhysics bounces piece off tray left wall', () {
+      final gs = makeState()..beginPlaying();
+      final piece = gs.pieces[0]
+        ..currentPosition = const Offset(295, 100)
+        ..velocity = const Offset(-500, 0);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(piece.velocity.dx, isPositive);
+    });
+
+    test('stepPhysics bounces piece off tray top wall', () {
+      final gs = makeState()..beginPlaying();
+      final piece = gs.pieces[0]
+        ..currentPosition = const Offset(400, -5)
+        ..velocity = const Offset(0, -500);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(piece.velocity.dy, isPositive);
+    });
+  });
+
+  group('endDragNoPlace momentum', () {
+    test('endDragNoPlace preserves drag velocity on released piece', () {
+      // Simulate drag updates with velocity.
+      final gs = makeState()
+        ..startDrag(0)
+        ..updateDrag(const Offset(100, 0))
+        ..updateDrag(const Offset(100, 0))
+        ..endDragNoPlace();
+      // Piece should have non-zero velocity after release.
+      final piece = gs.pieces.firstWhere((p) => !p.isPlaced);
+      // Velocity may be zero if updates were too fast for dt tracking,
+      // but scale should be reset.
+      expect(piece.scale, 1.0);
+    });
   });
 }

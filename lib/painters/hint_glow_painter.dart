@@ -31,13 +31,15 @@ class HintGlowPainter extends CustomPainter {
       hintedPiece.edges, pieceWidth, pieceHeight,
     );
 
-    // Golden glow at piece's current position, then green glow at target slot
+    // Golden glow at piece's current position — scaled to match the lift effect.
     canvas
       ..save()
       ..translate(
-        hintedPiece.currentPosition.dx - tabW,
-        hintedPiece.currentPosition.dy - tabH,
+        hintedPiece.currentPosition.dx + pieceWidth / 2,
+        hintedPiece.currentPosition.dy + pieceHeight / 2,
       )
+      ..scale(hintedPiece.scale, hintedPiece.scale)
+      ..translate(-(tabW + pieceWidth / 2), -(tabH + pieceHeight / 2))
       ..drawPath(
         path,
         Paint()

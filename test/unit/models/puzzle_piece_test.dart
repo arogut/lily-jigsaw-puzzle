@@ -81,5 +81,42 @@ void main() {
       // targetPosition stays unchanged
       expect(piece.targetPosition, const Offset(100, 200));
     });
+
+    test('default isFaceDown is false', () {
+      expect(piece.isFaceDown, isFalse);
+    });
+
+    test('isFaceDown is mutable', () {
+      piece.isFaceDown = true;
+      expect(piece.isFaceDown, isTrue);
+    });
+
+    test('default flipProgress is 1.0 (fully face-up)', () {
+      expect(piece.flipProgress, 1.0);
+    });
+
+    test('flipProgress is mutable', () {
+      piece.flipProgress = 0.5;
+      expect(piece.flipProgress, 0.5);
+    });
+
+    test('default velocity is zero', () {
+      expect(piece.velocity, Offset.zero);
+    });
+
+    test('velocity is mutable', () {
+      piece.velocity = const Offset(100, 200);
+      expect(piece.velocity, const Offset(100, 200));
+    });
+
+    test('default scale is 1.0', () {
+      expect(piece.scale, 1.0);
+    });
+
+    test('scale is mutable', () {
+      piece.scale = 1.08;
+      expect(piece.scale, 1.08);
+    });
+
   });
 }

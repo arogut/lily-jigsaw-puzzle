@@ -6,6 +6,25 @@ import 'package:flutter/painting.dart';
 
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
+// ── Physics constants ──────────────────────────────────────────────────────
+const double _kLiftScale = 1.08;
+const double _kSnapThreshold = 40;
+const double _kMagnetRadius = 80;
+
+// Velocity friction: vel *= (1 - _kFriction * dt). Half-life ≈ 1 second.
+const double _kFriction = 0.7;
+
+// Bounce damping at tray walls.
+const double _kBounceDamp = 0.35;
+
+const double _kMaxVelocity = 1500;
+const double _kMinVelocity = 5;
+
+// Flip animation speed: progress advances by this per second.
+const double _kFlipSpeed = 3;
+
+// ──────────────────────────────────────────────────────────────────────────
+
 enum GamePhase { loading, assembled, scattering, playing, won }
 
 class GameState extends ChangeNotifier {
@@ -35,6 +54,13 @@ class GameState extends ChangeNotifier {
   late List<List<EdgeType>> _hConnectors;
   // vConnectors[r][c]: edge between col c and col c+1, row r
   late List<List<EdgeType>> _vConnectors;
+
+  // Velocity tracking during drag.
+  Offset _dragVelocity = Offset.zero;
+  DateTime? _lastDragTime;
+
+  // Pieces currently animating a flip.
+  final Set<PuzzlePiece> _flippingPieces = {};
 
   void _initialize() {
     pieceWidth = boardSize.width / gridSize;
@@ -138,15 +164,65 @@ class GameState extends ChangeNotifier {
     });
   }
 
+  /// Computes positions for the pile effect: a tight cluster near the tray centre.
+  List<Offset> computePilePositions(Size screenSize) {
+    final rng = Random();
+    const spread = 30.0;
+    final pileCenter = Offset(
+      screenSize.width * 0.75 - pieceWidth / 2,
+      screenSize.height * 0.5 - pieceHeight / 2,
+    );
+    return List.generate(pieces.length, (_) {
+      return pileCenter + Offset(
+        (rng.nextDouble() - 0.5) * spread,
+        (rng.nextDouble() - 0.5) * spread,
+      );
+    });
+  }
+
+  /// Applies explosive outward velocities to all unplaced pieces so they scatter
+  /// from their current (pile) positions. Called after the scatter animation
+  /// places all pieces in the pile.
+  void applyScatterVelocities(Size screenSize) {
+    final rng = Random();
+    final center = Offset(
+      screenSize.width * 0.75,
+      screenSize.height * 0.5,
+    );
+    for (final piece in pieces) {
+      if (piece.isPlaced) continue;
+      final fromCenter = piece.currentPosition - center;
+      final dist = fromCenter.distance;
+      final Offset dir;
+      if (dist > 1) {
+        dir = fromCenter / dist;
+      } else {
+        final angle = rng.nextDouble() * 2 * pi;
+        dir = Offset(cos(angle), sin(angle));
+      }
+      final speed = 350.0 + rng.nextDouble() * 500.0;
+      piece.velocity = dir * speed;
+    }
+  }
+
   void beginPlaying() {
     phase = GamePhase.playing;
     notifyListeners();
   }
 
+  // ── Drag lifecycle ────────────────────────────────────────────────────────
+
   void startDrag(int index) {
-    // Move piece to end of list so it renders on top
-    final piece = pieces.removeAt(index)
-      ..isDragging = true;
+    _dragVelocity = Offset.zero;
+    _lastDragTime = DateTime.now();
+
+    // Move primary piece to end of list so it renders on top.
+    final piece = pieces[index];
+    pieces.remove(piece);
+    piece
+      ..isDragging = true
+      ..scale = _kLiftScale
+      ..velocity = Offset.zero;
     pieces.add(piece);
     draggingIndex = pieces.length - 1;
     notifyListeners();
@@ -154,30 +230,65 @@ class GameState extends ChangeNotifier {
 
   void updateDrag(Offset delta) {
     if (draggingIndex == null) return;
+
+    // Track velocity using an exponential moving average.
+    final now = DateTime.now();
+    if (_lastDragTime != null) {
+      final dt = now.difference(_lastDragTime!).inMicroseconds / 1e6;
+      if (dt > 0 && dt < 0.1) {
+        final rawVel = delta / dt;
+        _dragVelocity = _dragVelocity * 0.6 + rawVel * 0.4;
+      }
+    }
+    _lastDragTime = now;
+
     final piece = pieces[draggingIndex!];
-    piece.currentPosition = piece.currentPosition + delta;
+    final adjustedDelta = _applyMagneticPull(piece, delta);
+
+    piece.currentPosition = piece.currentPosition + adjustedDelta;
     notifyListeners();
   }
 
-  /// Ends the drag without snapping/placing — used when the piece was dropped
-  /// in the wrong position and the view will animate it back to the tray.
+  /// Applies a subtle magnetic pull toward the snap target when the piece is
+  /// within [_kMagnetRadius]. Returns the adjusted delta.
+  Offset _applyMagneticPull(PuzzlePiece piece, Offset delta) {
+    final dist = (piece.currentPosition - piece.targetPosition).distance;
+    if (dist <= 0 || dist > _kMagnetRadius) return delta;
+
+    // Pull strength ramps from 0 (at magnetRadius) to 8% correction (at snap threshold).
+    final t = 1.0 - dist / _kMagnetRadius;
+    final pullDir = (piece.targetPosition - piece.currentPosition) / dist;
+    return delta + pullDir * (dist * t * 0.08);
+  }
+
+  /// Ends the drag without snapping/placing. Used when the piece was dropped
+  /// in the wrong position and the view will animate it back, or when it stays
+  /// in the tray with momentum.
   void endDragNoPlace() {
     if (draggingIndex == null) return;
-    pieces[draggingIndex!].isDragging = false;
+    pieces[draggingIndex!]
+      ..isDragging = false
+      ..scale = 1.0
+      ..velocity = _clampVelocity(_dragVelocity);
     draggingIndex = null;
   }
 
   void endDrag() {
     if (draggingIndex == null) return;
     final piece = pieces[draggingIndex!]
-      ..isDragging = false;
+      ..isDragging = false
+      ..scale = 1.0;
 
-    const snapThreshold = 40.0;
+    const snapThreshold = _kSnapThreshold;
     if ((piece.currentPosition - piece.targetPosition).distance <= snapThreshold) {
       piece
         ..currentPosition = piece.targetPosition
         ..isPlaced = true
-        ..isHinted = false;
+        ..isHinted = false
+        ..velocity = Offset.zero;
+    } else {
+      // Not snapped — give the piece momentum.
+      piece.velocity = _clampVelocity(_dragVelocity);
     }
 
     draggingIndex = null;
@@ -189,12 +300,96 @@ class GameState extends ChangeNotifier {
     }
   }
 
+  /// Advances the physics simulation by [dt] seconds within [trayBounds].
+  ///
+  /// Returns true if any piece changed state (position, velocity, or flip),
+  /// so the caller knows whether to schedule a repaint.
+  bool stepPhysics(double dt, Rect trayBounds) {
+    var changed = false;
+
+    for (final piece in pieces) {
+      if (piece.isPlaced || piece.isDragging) continue;
+
+      var vel = piece.velocity;
+      var pos = piece.currentPosition;
+
+      // Apply friction (exponential decay).
+      vel = vel * (1.0 - _kFriction * dt).clamp(0.0, 1.0);
+
+      // Zero out negligible velocity to avoid perpetual micro-movement.
+      if (vel.distance < _kMinVelocity) {
+        vel = Offset.zero;
+      }
+
+      if (vel != Offset.zero) {
+        pos = pos + vel * dt;
+
+        // Bounce off tray walls.
+        if (pos.dx < trayBounds.left) {
+          pos = Offset(trayBounds.left, pos.dy);
+          vel = Offset(-vel.dx * _kBounceDamp, vel.dy);
+        }
+        if (pos.dx + pieceWidth > trayBounds.right) {
+          pos = Offset(trayBounds.right - pieceWidth, pos.dy);
+          vel = Offset(-vel.dx * _kBounceDamp, vel.dy);
+        }
+        if (pos.dy < trayBounds.top) {
+          pos = Offset(pos.dx, trayBounds.top);
+          vel = Offset(vel.dx, -vel.dy * _kBounceDamp);
+        }
+        if (pos.dy + pieceHeight > trayBounds.bottom) {
+          pos = Offset(pos.dx, trayBounds.bottom - pieceHeight);
+          vel = Offset(vel.dx, -vel.dy * _kBounceDamp);
+        }
+
+        piece
+          ..currentPosition = pos
+          ..velocity = vel;
+        changed = true;
+      } else if (piece.velocity != Offset.zero) {
+        // Velocity was reduced to zero — write the zeroed value back.
+        piece.velocity = Offset.zero;
+        changed = true;
+      }
+    }
+
+    // Advance flip animations.
+    for (final piece in _flippingPieces.toList()) {
+      piece.flipProgress = (piece.flipProgress + dt * _kFlipSpeed).clamp(0.0, 1.0);
+      if (piece.flipProgress >= 1.0) {
+        piece.isFaceDown = false;
+        _flippingPieces.remove(piece);
+      }
+      changed = true;
+    }
+
+    if (changed) notifyListeners();
+    return changed;
+  }
+
+  /// Triggers a flip animation for [piece] if it is currently face-down.
+  void flipPiece(PuzzlePiece piece) {
+    if (!piece.isFaceDown) return;
+    piece.flipProgress = 0.0;
+    _flippingPieces.add(piece);
+    notifyListeners();
+  }
+
+  Offset _clampVelocity(Offset vel) {
+    final d = vel.distance;
+    if (d <= _kMaxVelocity) return vel;
+    return vel / d * _kMaxVelocity;
+  }
+
   bool get hasActiveHint => pieces.any((p) => p.isHinted);
 
   void activateHint() {
     if (hintsRemaining <= 0) return;
     _clearHint();
-    final unplaced = pieces.where((p) => !p.isPlaced && !p.isDragging).toList();
+    // Only hint face-up, unplaced, non-dragging pieces.
+    final unplaced = pieces
+        .where((p) => !p.isPlaced && !p.isDragging && !p.isFaceDown)
+        .toList();
     if (unplaced.isEmpty) return;
     final rng = Random();
     unplaced[rng.nextInt(unplaced.length)].isHinted = true;
