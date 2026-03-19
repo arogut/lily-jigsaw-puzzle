@@ -406,7 +406,9 @@ void main() {
     });
 
     test('stepPhysics zeroes negligible velocity', () {
-      final gs = makeState()..beginPlaying();
+      // Use scattering phase so gravity does not inflate velocity before the
+      // negligible-velocity check (gravity only applies in playing phase).
+      final gs = makeState()..phase = GamePhase.scattering;
       gs.pieces[0].velocity = const Offset(1, 0); // below min threshold
       const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
       gs.stepPhysics(1, trayBounds);
@@ -526,9 +528,13 @@ void main() {
     test('checkGroupFormation does not merge pieces at wrong positions', () {
       final gs = makeState();
       final a = gs.pieces[0];
-      // Place b far from correct relative position.
-      final b = gs.pieces[1]
-        ..currentPosition = a.currentPosition + const Offset(200, 200);
+      final b = gs.pieces[1];
+      // Move ALL other pieces far from their correct relative positions so no
+      // accidental neighbour match (e.g. pieces[3] at row=1,col=0) triggers a
+      // merge.
+      for (final p in gs.pieces) {
+        if (p != a) p.currentPosition = a.currentPosition + const Offset(200, 200);
+      }
       gs.checkGroupFormation(a);
       expect(a.groupId, isNull);
       expect(b.groupId, isNull);
