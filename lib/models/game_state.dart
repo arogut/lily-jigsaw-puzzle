@@ -414,6 +414,10 @@ class GameState extends ChangeNotifier {
           ..currentPosition = pos
           ..velocity = vel;
         changed = true;
+      } else if (piece.velocity != Offset.zero) {
+        // Velocity was reduced to zero — write the zeroed value back.
+        piece.velocity = Offset.zero;
+        changed = true;
       }
     }
 
