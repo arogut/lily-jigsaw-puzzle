@@ -211,6 +211,42 @@ void main() {
       expect(p2.shouldRepaint(p1), isTrue);
     });
 
+    test('paints face-down piece without error', () {
+      final piece = _makePiece(const PieceEdges(
+        top: EdgeType.flat,
+        right: EdgeType.flat,
+        bottom: EdgeType.flat,
+        left: EdgeType.flat,
+      ))..isFaceDown = true;
+      _paintPiece(piece, testImage);
+    });
+
+    test('paints face-down piece with logo image without error', () async {
+      final logoImg = await createTestImage(width: 48, height: 48);
+      final piece = _makePiece(const PieceEdges(
+        top: EdgeType.flat,
+        right: EdgeType.flat,
+        bottom: EdgeType.flat,
+        left: EdgeType.flat,
+      ))..isFaceDown = true;
+      final painter = JigsawPiecePainter(
+        piece: piece,
+        image: testImage,
+        pieceWidth: 100,
+        pieceHeight: 100,
+        logoImage: logoImg,
+      );
+      const tabFrac = JigsawPiecePainter.tabFraction;
+      const pw = 100.0;
+      const ph = 100.0;
+      final size = Size(pw * (1 + 2 * tabFrac), ph * (1 + 2 * tabFrac));
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, size);
+      recorder.endRecording().dispose();
+      logoImg.dispose();
+    });
+
     test('shouldRepaint returns true for different pieceHeight', () {
       final piece = _makePiece(const PieceEdges(
         top: EdgeType.flat,

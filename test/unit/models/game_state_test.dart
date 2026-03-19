@@ -545,6 +545,53 @@ void main() {
     });
   });
 
+  group('magnetic pull', () {
+    test('updateDrag applies magnetic bias when piece is within 80px of target', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last;
+      // Move piece so it is 50px from its target (within the 80px magnet radius).
+      piece.currentPosition = piece.targetPosition + const Offset(50, 0);
+      final before = piece.currentPosition;
+      gs.updateDrag(const Offset(10, 0));
+      // The magnetic pull toward the target adds a leftward (-x) bias,
+      // so the net displacement is less than the raw +10 px delta.
+      expect(piece.currentPosition.dx, lessThan(before.dx + 10));
+    });
+
+    test('updateDrag applies no bias when piece is beyond 80px of target', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last;
+      // Move piece far from its target (beyond the 80px magnet radius).
+      piece.currentPosition = piece.targetPosition + const Offset(200, 0);
+      final before = piece.currentPosition;
+      gs.updateDrag(const Offset(10, 0));
+      // No magnetic bias: displacement equals the raw delta.
+      expect(piece.currentPosition.dx, closeTo(before.dx + 10, 0.001));
+    });
+  });
+
+  group('stepPhysics wall bounces', () {
+    test('stepPhysics bounces piece off tray left wall', () {
+      final gs = makeState()..beginPlaying();
+      final piece = gs.pieces[0]
+        ..currentPosition = const Offset(295, 100)
+        ..velocity = const Offset(-500, 0);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(piece.velocity.dx, isPositive);
+    });
+
+    test('stepPhysics bounces piece off tray top wall', () {
+      final gs = makeState()..beginPlaying();
+      final piece = gs.pieces[0]
+        ..currentPosition = const Offset(400, -5)
+        ..velocity = const Offset(0, -500);
+      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
+      gs.stepPhysics(0.1, trayBounds);
+      expect(piece.velocity.dy, isPositive);
+    });
+  });
+
   group('endDragNoPlace momentum', () {
     test('endDragNoPlace preserves drag velocity on released piece', () {
       // Simulate drag updates with velocity.

@@ -358,6 +358,7 @@ class JigsawPiecePainter extends CustomPainter {
   /// as the front face.
   void _paintFaceDown(Canvas canvas, Path path, Rect bounds) {
     // Drop shadows — same layered offset as the face-up unplaced piece.
+    // Back fill: cardboard / kraft-paper colour, clipped to the piece shape.
     canvas
       ..save()
       ..translate(6, 10)
@@ -370,10 +371,7 @@ class JigsawPiecePainter extends CustomPainter {
       ..save()
       ..translate(2, 4)
       ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
-      ..restore();
-
-    // Back fill: cardboard / kraft-paper colour, clipped to the piece shape.
-    canvas
+      ..restore()
       ..save()
       ..clipPath(path)
       ..drawRect(bounds, Paint()..color = const Color(0xFFB8860B));
