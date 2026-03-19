@@ -25,6 +25,9 @@ import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
 const _kEdgePad = 20.0;
 
+// Physics scatter settles for this long before playing phase begins.
+const _kScatterSettleMs = 1200;
+
 class GameScreen extends StatefulWidget {
 
   const GameScreen({
@@ -68,6 +71,10 @@ class _GameScreenState extends State<GameScreen>
   // Hint glow animation
   late AnimationController _hintController;
 
+  // Physics simulation ticker (momentum, gravity, bounce, flip animations).
+  late Ticker _physicsTicker;
+  Duration? _lastPhysicsTime;
+
   @override
   void initState() {
     super.initState();
@@ -89,6 +96,8 @@ class _GameScreenState extends State<GameScreen>
       duration: const Duration(milliseconds: 1500),
     );
     unawaited(_hintController.repeat());
+
+    _physicsTicker = createTicker(_onPhysicsTick);
   }
 
   @override
@@ -132,10 +141,30 @@ class _GameScreenState extends State<GameScreen>
     Future.delayed(const Duration(seconds: 1), _startScatter);
   }
 
+  // ── Tray bounds used by physics ──────────────────────────────────────────
+
+  Rect _trayBounds(Size screenSize) => Rect.fromLTRB(
+        screenSize.width / 2 + _kEdgePad,
+        0,
+        screenSize.width - _kEdgePad,
+        screenSize.height,
+      );
+
+  // ── Scatter: board positions → pile → physics scatter ────────────────────
+
   void _startScatter() {
     if (!mounted || _gameState == null) return;
     final size = MediaQuery.of(context).size;
-    _scatterTargets = _gameState!.computeScatterTargets(size);
+
+    // Animate from board positions to a tight pile at the tray centre.
+    _scatterTargets = _gameState!.computePilePositions(size);
+
+    // All pieces start face-down as they scatter off the board.
+    for (final piece in _gameState!.pieces) {
+      piece
+        ..isFaceDown = true
+        ..flipProgress = 0.0;
+    }
 
     setState(() => _gameState!.phase = GamePhase.scattering);
 
@@ -172,10 +201,46 @@ class _GameScreenState extends State<GameScreen>
 
   void _onScatterStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
-      _gameState!.beginPlaying();
-      setState(() {}); // phase change → shadow layer updates
+      // Pieces are now in the pile. Apply explosive outward velocities so the
+      // physics ticker scatters them across the tray.
+      final size = MediaQuery.of(context).size;
+      _gameState!.applyScatterVelocities(size);
+
+      // Start the physics simulation.
+      _lastPhysicsTime = null;
+      if (!_physicsTicker.isActive) unawaited(_physicsTicker.start());
+
+      // Wait for velocities to settle before entering playing phase.
+      Future.delayed(
+        const Duration(milliseconds: _kScatterSettleMs),
+        () {
+          if (mounted && _gameState != null) {
+            _gameState!.beginPlaying();
+            setState(() {}); // phase change → shadow layer + hint button update
+          }
+        },
+      );
     }
   }
+
+  // ── Physics tick ─────────────────────────────────────────────────────────
+
+  void _onPhysicsTick(Duration elapsed) {
+    if (_gameState == null) return;
+
+    final previous = _lastPhysicsTime;
+    _lastPhysicsTime = elapsed;
+    if (previous == null) return; // Skip first tick to get a valid dt.
+
+    final dtMicro = elapsed.inMicroseconds - previous.inMicroseconds;
+    final dt = (dtMicro / 1e6).clamp(0.0, 0.05);
+
+    final size = MediaQuery.of(context).size;
+    final changed = _gameState!.stepPhysics(dt, _trayBounds(size));
+    if (changed) _paintTick.value++;
+  }
+
+  // ── Hit-test ──────────────────────────────────────────────────────────────
 
   // Hit-test which unplaced piece (if any) is under [localPos].
   int? _hitTestPiece(Offset localPos) {
@@ -244,6 +309,7 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    _physicsTicker.dispose();
     _scatterController
       ..removeListener(_onScatterTick)
       ..removeStatusListener(_onScatterStatus)
@@ -379,8 +445,15 @@ class _GameScreenState extends State<GameScreen>
                 ? (d) {
                     final idx = _hitTestPiece(d.localPosition);
                     if (idx != null) {
-                      // When a hint is active, only the hinted piece can be dragged
+                      // When a hint is active, only the hinted piece can be touched.
                       if (gs.hasActiveHint && !gs.pieces[idx].isHinted) return;
+                      final piece = gs.pieces[idx];
+                      if (piece.isFaceDown) {
+                        // Tap on a face-down piece triggers a flip instead of drag.
+                        gs.flipPiece(piece);
+                        unawaited(HapticFeedback.lightImpact());
+                        return;
+                      }
                       unawaited(HapticFeedback.lightImpact());
                       gs.startDrag(idx);
                       _dragCrossedLeft = false;
@@ -401,14 +474,14 @@ class _GameScreenState extends State<GameScreen>
                   }
                 : null,
             onPanEnd: gs.phase == GamePhase.playing
-                ? (_) {
+                ? (d) {
                     if (gs.draggingIndex == null) return;
                     final piece = gs.pieces[gs.draggingIndex!];
                     const snapThreshold = 40.0;
                     if ((piece.currentPosition - piece.targetPosition)
                             .distance <=
                         snapThreshold) {
-                      // Snapped into place
+                      // Snapped into place.
                       gs.endDrag();
                       unawaited(SoundService().playSnap());
                       if (gs.phase == GamePhase.won) {
@@ -425,12 +498,11 @@ class _GameScreenState extends State<GameScreen>
                       gs.endDragNoPlace();
                       _startReturnAnimation(piece);
                     } else {
-                      // Piece never left the tray — drop where it is, but
-                      // animate back if it was dragged outside the screen.
-                      final droppedPiece = gs.pieces[gs.draggingIndex!];
+                      // Piece never left the tray — apply momentum and check group formation.
                       gs.endDragNoPlace();
                       if (!_snapToTrayIfOutside(
-                          droppedPiece, MediaQuery.of(context).size)) {
+                          piece, MediaQuery.of(context).size)) {
+                        gs.checkGroupFormation(piece);
                         _paintTick.value++;
                       }
                     }
@@ -539,6 +611,8 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _restartGame() {
+    _physicsTicker.stop();
+    _lastPhysicsTime = null;
     _scatterController
       ..removeListener(_onScatterTick)
       ..removeStatusListener(_onScatterStatus);
@@ -561,7 +635,7 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  /// If the piece center has gone outside the visible screen bounds,
+  /// If the piece centre has gone outside the visible screen bounds,
   /// animates it back to a random position in the right-side tray.
   /// Returns true if an animation was started, false if no action was needed.
   bool _snapToTrayIfOutside(PuzzlePiece piece, Size screenSize) {
@@ -578,6 +652,7 @@ class _GameScreenState extends State<GameScreen>
   // ── Confetti helpers ───────────────────────────────────────────────────────
 
   void _startConfetti() {
+    _physicsTicker.stop();
     _confettiParticles = _generateConfetti(250);
     setState(() {}); // show confetti layer
     _confettiController.reset();

@@ -26,6 +26,13 @@ class JigsawPiecePainter extends CustomPainter {
     final path = buildPiecePath(piece.edges, pieceWidth, pieceHeight);
     final bounds = Rect.fromLTWH(0, 0, size.width, size.height);
 
+    // Show the back face when the piece is face-down or mid-flip (first half).
+    final showBack = piece.isFaceDown || piece.flipProgress < 0.5;
+    if (showBack) {
+      _paintFaceDown(canvas, path, bounds);
+      return;
+    }
+
     // Pre-compute image variables so they can be used inside the single canvas cascade.
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
@@ -340,6 +347,57 @@ class JigsawPiecePainter extends CustomPainter {
 
       // 6. Flat to edge end
       ..lineTo(to.dx, to.dy);
+  }
+
+  /// Paints the back (face-down) side of the piece: a warm cardboard colour
+  /// with a subtle diagonal cross pattern and the same bevel/shadow as the front.
+  void _paintFaceDown(Canvas canvas, Path path, Rect bounds) {
+    // Drop shadows — same layered offset as the face-up unplaced piece.
+    canvas
+      ..save()
+      ..translate(6, 10)
+      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.11))
+      ..restore()
+      ..save()
+      ..translate(4, 7)
+      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.18))
+      ..restore()
+      ..save()
+      ..translate(2, 4)
+      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
+      ..restore();
+
+    // Back fill: cardboard / kraft-paper colour, clipped to the piece shape.
+    canvas
+      ..save()
+      ..clipPath(path)
+      ..drawRect(bounds, Paint()..color = const Color(0xFFB8860B));
+
+    // Subtle diagonal cross pattern for visual texture.
+    final linePaint = Paint()
+      ..color = const Color(0xFF8B6010)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+    canvas
+      ..drawLine(bounds.topLeft, bounds.bottomRight, linePaint)
+      ..drawLine(bounds.topRight, bounds.bottomLeft, linePaint)
+      ..restore();
+
+    // Bevel edge — same gradient stroke as the face-up piece.
+    final bevelPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: 0.95),
+          Colors.white.withValues(alpha: 0.30),
+          Colors.black.withValues(alpha: 0.40),
+        ],
+        stops: const [0.0, 0.50, 1.0],
+      ).createShader(bounds);
+    canvas.drawPath(path, bevelPaint);
   }
 
   @override

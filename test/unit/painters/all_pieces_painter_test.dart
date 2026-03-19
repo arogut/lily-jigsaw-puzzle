@@ -96,5 +96,56 @@ void main() {
       expect(painter.shouldRepaint(painter), isTrue);
       notifier.dispose();
     });
+
+    test('paints face-down piece without error', () {
+      final notifier = ValueNotifier<int>(0);
+      final piece = _makePiece()..isFaceDown = true..flipProgress = 0.0;
+      final painter = AllPiecesPainter(
+        pieces: [piece],
+        image: testImage,
+        pieceWidth: 100,
+        pieceHeight: 100,
+        repaintNotifier: notifier,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(800, 600));
+      recorder.endRecording().dispose();
+      notifier.dispose();
+    });
+
+    test('paints mid-flip piece without error', () {
+      final notifier = ValueNotifier<int>(0);
+      final piece = _makePiece()..isFaceDown = true..flipProgress = 0.5;
+      final painter = AllPiecesPainter(
+        pieces: [piece],
+        image: testImage,
+        pieceWidth: 100,
+        pieceHeight: 100,
+        repaintNotifier: notifier,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(800, 600));
+      recorder.endRecording().dispose();
+      notifier.dispose();
+    });
+
+    test('paints scaled (lifted) piece without error', () {
+      final notifier = ValueNotifier<int>(0);
+      final piece = _makePiece()..scale = 1.08;
+      final painter = AllPiecesPainter(
+        pieces: [piece],
+        image: testImage,
+        pieceWidth: 100,
+        pieceHeight: 100,
+        repaintNotifier: notifier,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(800, 600));
+      recorder.endRecording().dispose();
+      notifier.dispose();
+    });
   });
 }
