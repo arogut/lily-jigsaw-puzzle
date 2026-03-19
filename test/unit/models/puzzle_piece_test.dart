@@ -118,13 +118,5 @@ void main() {
       expect(piece.scale, 1.08);
     });
 
-    test('default groupId is null', () {
-      expect(piece.groupId, isNull);
-    });
-
-    test('groupId is mutable', () {
-      piece.groupId = 42;
-      expect(piece.groupId, 42);
-    });
   });
 }

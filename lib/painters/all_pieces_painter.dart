@@ -13,6 +13,7 @@ class AllPiecesPainter extends CustomPainter {
     required this.pieceHeight,
     required ValueNotifier<int> repaintNotifier,
     this.hasActiveHint = false,
+    this.logoImage,
   }) : super(repaint: repaintNotifier);
 
   final List<PuzzlePiece> pieces;
@@ -20,6 +21,9 @@ class AllPiecesPainter extends CustomPainter {
   final double pieceWidth;
   final double pieceHeight;
   final bool hasActiveHint;
+
+  /// Optional app logo drawn grayed-out on the back face of pieces.
+  final ui.Image? logoImage;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -61,6 +65,7 @@ class AllPiecesPainter extends CustomPainter {
         image: image,
         pieceWidth: pieceWidth,
         pieceHeight: pieceHeight,
+        logoImage: logoImage,
       ).paint(canvas, pieceCanvasSize);
       canvas.restore();
     }

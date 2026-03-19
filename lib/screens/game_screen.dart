@@ -46,6 +46,7 @@ class _GameScreenState extends State<GameScreen>
     with TickerProviderStateMixin {
   GameState? _gameState;
   ui.Image? _uiImage;
+  ui.Image? _logoImage;
 
   late AnimationController _scatterController;
   late AnimationController _returnController;
@@ -118,8 +119,19 @@ class _GameScreenState extends State<GameScreen>
       targetWidth: targetW,
     );
     final frame = await codec.getNextFrame();
+
+    final logoData = await rootBundle.load('assets/icons/app_icon.png');
+    final logoCodec = await ui.instantiateImageCodec(
+      logoData.buffer.asUint8List(),
+      targetWidth: 256,
+    );
+    final logoFrame = await logoCodec.getNextFrame();
+
     if (!mounted) return;
-    setState(() => _uiImage = frame.image);
+    setState(() {
+      _uiImage = frame.image;
+      _logoImage = logoFrame.image;
+    });
   }
 
   void _initGame() {
@@ -499,11 +511,9 @@ class _GameScreenState extends State<GameScreen>
                       gs.endDragNoPlace();
                       _startReturnAnimation(piece);
                     } else {
-                      // Piece never left the tray — apply momentum and check group formation.
+                      // Piece never left the tray — apply momentum.
                       gs.endDragNoPlace();
-                      if (!_snapToTrayIfOutside(
-                          piece, MediaQuery.of(context).size)) {
-                        gs.checkGroupFormation(piece);
+                      if (!_snapToTrayIfOutside(piece, MediaQuery.of(context).size)) {
                         _paintTick.value++;
                       }
                     }
@@ -517,6 +527,7 @@ class _GameScreenState extends State<GameScreen>
                 pieceHeight: gs.pieceHeight,
                 repaintNotifier: _paintTick,
                 hasActiveHint: gs.hasActiveHint,
+                logoImage: _logoImage,
               ),
             ),
           ),

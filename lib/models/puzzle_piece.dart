@@ -56,8 +56,4 @@ class PuzzlePiece {
   /// Scale factor for the lift effect: 1.0 = normal size, > 1.0 = lifted
   /// during drag to give a "picked up" feel.
   double scale = 1;
-
-  /// Group ID for group snapping. Pieces with the same non-null [groupId]
-  /// move together when dragged and snap together when one of them snaps.
-  int? groupId;
 }

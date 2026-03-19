@@ -512,54 +512,6 @@ void main() {
     });
   });
 
-  group('group snapping', () {
-    test('checkGroupFormation merges adjacent pieces at correct relative positions', () {
-      final gs = makeState();
-      // pieces[0] is (row=0, col=0), pieces[1] is (row=0, col=1)
-      final a = gs.pieces[0];
-      final b = gs.pieces[1];
-      // Place b at exactly the correct relative position from a.
-      b.currentPosition = a.currentPosition + (b.targetPosition - a.targetPosition);
-      gs.checkGroupFormation(a);
-      expect(a.groupId, isNotNull);
-      expect(b.groupId, equals(a.groupId));
-    });
-
-    test('checkGroupFormation does not merge pieces at wrong positions', () {
-      final gs = makeState();
-      final a = gs.pieces[0];
-      final b = gs.pieces[1];
-      // Move ALL other pieces far from their correct relative positions so no
-      // accidental neighbour match (e.g. pieces[3] at row=1,col=0) triggers a
-      // merge.
-      for (final p in gs.pieces) {
-        if (p != a) p.currentPosition = a.currentPosition + const Offset(200, 200);
-      }
-      gs.checkGroupFormation(a);
-      expect(a.groupId, isNull);
-      expect(b.groupId, isNull);
-    });
-
-    test('chain-snap snaps adjacent unplaced piece within threshold', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      // Set up: place all but pieces[0] and pieces[1].
-      for (var i = 2; i < gs.pieces.length; i++) {
-        gs.pieces[i].isPlaced = true;
-      }
-      final a = gs.pieces[0];
-      final b = gs.pieces[1];
-      // Move b to just within snap threshold of its target.
-      b.currentPosition = b.targetPosition + const Offset(15, 0);
-      // Snap a to its target via drag.
-      gs.startDrag(gs.pieces.indexOf(a));
-      gs.pieces.last.currentPosition = gs.pieces.last.targetPosition;
-      gs.endDrag();
-      // b should have been chain-snapped.
-      expect(b.isPlaced, isTrue);
-      expect(b.currentPosition, b.targetPosition);
-    });
-  });
-
   group('computePilePositions', () {
     test('returns one position per piece', () {
       final gs = makeState();

@@ -12,6 +12,7 @@ class JigsawPiecePainter extends CustomPainter {
     required this.image,
     required this.pieceWidth,
     required this.pieceHeight,
+    this.logoImage,
   });
   // Tab margin as a fraction of piece dimension (also used outside for canvas sizing)
   static const double tabFraction = 0.35;
@@ -20,6 +21,9 @@ class JigsawPiecePainter extends CustomPainter {
   final ui.Image image;
   final double pieceWidth;
   final double pieceHeight;
+
+  /// Optional app logo drawn grayed-out on the back face of a piece.
+  final ui.Image? logoImage;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -350,7 +354,8 @@ class JigsawPiecePainter extends CustomPainter {
   }
 
   /// Paints the back (face-down) side of the piece: a warm cardboard colour
-  /// with a subtle diagonal cross pattern and the same bevel/shadow as the front.
+  /// with a grayed-out app logo centred on the body, plus the same bevel/shadow
+  /// as the front face.
   void _paintFaceDown(Canvas canvas, Path path, Rect bounds) {
     // Drop shadows — same layered offset as the face-up unplaced piece.
     canvas
@@ -367,20 +372,43 @@ class JigsawPiecePainter extends CustomPainter {
       ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
       ..restore();
 
-    // Subtle diagonal cross pattern for visual texture.
-    final linePaint = Paint()
-      ..color = const Color(0xFF8B6010)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
     // Back fill: cardboard / kraft-paper colour, clipped to the piece shape.
     canvas
       ..save()
       ..clipPath(path)
-      ..drawRect(bounds, Paint()..color = const Color(0xFFB8860B))
-      ..drawLine(bounds.topLeft, bounds.bottomRight, linePaint)
-      ..drawLine(bounds.topRight, bounds.bottomLeft, linePaint)
-      ..restore();
+      ..drawRect(bounds, Paint()..color = const Color(0xFFB8860B));
+
+    // Grayed-out app logo centred on the piece body.
+    if (logoImage != null) {
+      final tabW = pieceWidth * tabFraction;
+      final tabH = pieceHeight * tabFraction;
+      final logoSize = pieceWidth * 0.55;
+      final logoDst = Rect.fromCenter(
+        center: Offset(tabW + pieceWidth / 2, tabH + pieceHeight / 2),
+        width: logoSize,
+        height: logoSize,
+      );
+      final logoSrc = Rect.fromLTWH(
+        0,
+        0,
+        logoImage!.width.toDouble(),
+        logoImage!.height.toDouble(),
+      );
+      canvas.drawImageRect(
+        logoImage!,
+        logoSrc,
+        logoDst,
+        Paint()
+          ..colorFilter = const ColorFilter.matrix([
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0,      0,      0,      0.6, 0,
+          ]),
+      );
+    }
+
+    canvas.restore();
 
     // Bevel edge — same gradient stroke as the face-up piece.
     final bevelPaint = Paint()
