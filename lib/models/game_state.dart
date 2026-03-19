@@ -8,24 +8,24 @@ import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
 // ── Physics constants ──────────────────────────────────────────────────────
 const double _kLiftScale = 1.08;
-const double _kSnapThreshold = 40.0;
-const double _kGroupFormThreshold = 25.0;
-const double _kMagnetRadius = 80.0;
+const double _kSnapThreshold = 40;
+const double _kGroupFormThreshold = 25;
+const double _kMagnetRadius = 80;
 
 // Velocity friction: vel *= (1 - _kFriction * dt). Half-life ≈ 1 second.
 const double _kFriction = 0.7;
 
 // Gentle gravity for tray pieces (pixels/s²).
-const double _kGravity = 20.0;
+const double _kGravity = 20;
 
 // Bounce damping at tray walls.
 const double _kBounceDamp = 0.35;
 
-const double _kMaxVelocity = 1500.0;
-const double _kMinVelocity = 5.0;
+const double _kMaxVelocity = 1500;
+const double _kMinVelocity = 5;
 
 // Flip animation speed: progress advances by this per second.
-const double _kFlipSpeed = 3.0;
+const double _kFlipSpeed = 3;
 
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -295,7 +295,7 @@ class GameState extends ChangeNotifier {
   /// in the tray with momentum.
   void endDragNoPlace() {
     if (draggingIndex == null) return;
-    final piece = pieces[draggingIndex!]
+    pieces[draggingIndex!]
       ..isDragging = false
       ..scale = 1.0
       ..velocity = _clampVelocity(_dragVelocity);
@@ -410,8 +410,9 @@ class GameState extends ChangeNotifier {
           vel = Offset(vel.dx, -vel.dy * _kBounceDamp);
         }
 
-        piece.currentPosition = pos;
-        piece.velocity = vel;
+        piece
+          ..currentPosition = pos
+          ..velocity = vel;
         changed = true;
       }
     }

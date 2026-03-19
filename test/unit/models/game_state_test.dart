@@ -409,7 +409,7 @@ void main() {
       final gs = makeState()..beginPlaying();
       gs.pieces[0].velocity = const Offset(1, 0); // below min threshold
       const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
-      gs.stepPhysics(1.0, trayBounds);
+      gs.stepPhysics(1, trayBounds);
       expect(gs.pieces[0].velocity, Offset.zero);
     });
 
@@ -438,11 +438,11 @@ void main() {
       final gs = makeState()..beginPlaying();
       gs.pieces[0]
         ..isPlaced = true
-        ..currentPosition = const Offset(0, 0)
+        ..currentPosition = Offset.zero
         ..velocity = const Offset(500, 500);
       const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
       gs.stepPhysics(0.1, trayBounds);
-      expect(gs.pieces[0].currentPosition, const Offset(0, 0));
+      expect(gs.pieces[0].currentPosition, Offset.zero);
     });
 
     test('stepPhysics does not move dragging pieces', () {
@@ -504,7 +504,7 @@ void main() {
       gs.flipPiece(gs.pieces[0]);
       const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
       // Advance enough time for the flip to complete.
-      gs.stepPhysics(1.0, trayBounds);
+      gs.stepPhysics(1, trayBounds);
       expect(gs.pieces[0].isFaceDown, isFalse);
       expect(gs.pieces[0].flipProgress, 1.0);
     });
@@ -526,9 +526,9 @@ void main() {
     test('checkGroupFormation does not merge pieces at wrong positions', () {
       final gs = makeState();
       final a = gs.pieces[0];
-      final b = gs.pieces[1];
       // Place b far from correct relative position.
-      b.currentPosition = a.currentPosition + const Offset(200, 200);
+      final b = gs.pieces[1]
+        ..currentPosition = a.currentPosition + const Offset(200, 200);
       gs.checkGroupFormation(a);
       expect(a.groupId, isNull);
       expect(b.groupId, isNull);
@@ -573,8 +573,7 @@ void main() {
 
   group('applyScatterVelocities', () {
     test('applies non-zero velocity to all unplaced pieces', () {
-      final gs = makeState();
-      gs.applyScatterVelocities(const Size(600, 300));
+      final gs = makeState()..applyScatterVelocities(const Size(600, 300));
       for (final piece in gs.pieces) {
         expect(piece.velocity.distance, greaterThan(0));
       }
@@ -590,11 +589,12 @@ void main() {
 
   group('endDragNoPlace momentum', () {
     test('endDragNoPlace preserves drag velocity on released piece', () {
-      final gs = makeState()..startDrag(0);
       // Simulate drag updates with velocity.
-      gs.updateDrag(const Offset(100, 0));
-      gs.updateDrag(const Offset(100, 0));
-      gs.endDragNoPlace();
+      final gs = makeState()
+        ..startDrag(0)
+        ..updateDrag(const Offset(100, 0))
+        ..updateDrag(const Offset(100, 0))
+        ..endDragNoPlace();
       // Piece should have non-zero velocity after release.
       final piece = gs.pieces.firstWhere((p) => !p.isPlaced);
       // Velocity may be zero if updates were too fast for dt tracking,

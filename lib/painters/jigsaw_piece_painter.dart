@@ -367,18 +367,17 @@ class JigsawPiecePainter extends CustomPainter {
       ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
       ..restore();
 
-    // Back fill: cardboard / kraft-paper colour, clipped to the piece shape.
-    canvas
-      ..save()
-      ..clipPath(path)
-      ..drawRect(bounds, Paint()..color = const Color(0xFFB8860B));
-
     // Subtle diagonal cross pattern for visual texture.
     final linePaint = Paint()
       ..color = const Color(0xFF8B6010)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
+
+    // Back fill: cardboard / kraft-paper colour, clipped to the piece shape.
     canvas
+      ..save()
+      ..clipPath(path)
+      ..drawRect(bounds, Paint()..color = const Color(0xFFB8860B))
       ..drawLine(bounds.topLeft, bounds.bottomRight, linePaint)
       ..drawLine(bounds.topRight, bounds.bottomLeft, linePaint)
       ..restore();

@@ -47,7 +47,7 @@ class PuzzlePiece {
 
   /// Flip animation progress: 0.0 = fully face-down, 1.0 = fully face-up.
   /// Values in (0, 1) represent a mid-flip state used for the squeeze animation.
-  double flipProgress = 1.0;
+  double flipProgress = 1;
 
   /// Current velocity in pixels per second, used by the physics simulation
   /// for momentum, throw-and-bounce, and gravity.
@@ -55,7 +55,7 @@ class PuzzlePiece {
 
   /// Scale factor for the lift effect: 1.0 = normal size, > 1.0 = lifted
   /// during drag to give a "picked up" feel.
-  double scale = 1.0;
+  double scale = 1;
 
   /// Group ID for group snapping. Pieces with the same non-null [groupId]
   /// move together when dragged and snap together when one of them snaps.

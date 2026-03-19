@@ -3,6 +3,7 @@ import 'dart:math' show Random, pi, sin;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:flutter/services.dart';
 
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
