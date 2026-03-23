@@ -607,4 +607,48 @@ void main() {
       expect(piece.scale, 1.0);
     });
   });
+
+  group('activateHint edge cases', () {
+    test('activateHint does nothing when all unplaced pieces are face-down', () {
+      final gs = makeState()..phase = GamePhase.playing;
+      for (final piece in gs.pieces) {
+        piece.isFaceDown = true;
+      }
+      gs.activateHint();
+      expect(gs.pieces.where((p) => p.isHinted).length, 0);
+      // hintsRemaining is unchanged because no eligible piece was found.
+      expect(gs.hintsRemaining, 3);
+    });
+  });
+
+  group('applyScatterVelocities edge cases', () {
+    test('assigns velocity to piece located exactly at scatter center', () {
+      final gs = makeState();
+      const screenSize = Size(600, 300);
+      // Place piece exactly at the scatter centre so dist == 0.
+      final center = Offset(screenSize.width * 0.75, screenSize.height * 0.5);
+      gs.pieces[0].currentPosition = center;
+      gs.applyScatterVelocities(screenSize);
+      // A random direction is assigned, so velocity must be non-zero.
+      expect(gs.pieces[0].velocity.distance, greaterThan(0));
+    });
+  });
+
+  group('velocity clamping', () {
+    test('endDrag clamps piece velocity to _kMaxVelocity when drag velocity is excessive', () {
+      final gs = makeState()..startDrag(0);
+      final piece = gs.pieces.last;
+      // Move piece away from target so it does not snap.
+      piece.currentPosition = piece.targetPosition + const Offset(200, 0);
+      // Inject a very large drag velocity by performing a big delta update.
+      // Use a sufficiently large delta to push the EMA above the 1500 px/s cap.
+      // Two updates with a modest delta; timing may still clamp in CI,
+      // but the velocity must never exceed the cap after endDrag.
+      gs
+        ..updateDrag(const Offset(5000, 0))
+        ..updateDrag(const Offset(5000, 0))
+        ..endDrag();
+      expect(piece.velocity.distance, lessThanOrEqualTo(1500 + 0.001));
+    });
+  });
 }
