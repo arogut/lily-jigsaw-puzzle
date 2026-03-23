@@ -11,8 +11,8 @@ const double _kLiftScale = 1.08;
 const double _kSnapThreshold = 40;
 const double _kMagnetRadius = 80;
 
-// Velocity friction: vel *= (1 - _kFriction * dt). Half-life ≈ 1 second.
-const double _kFriction = 0.7;
+// Velocity friction: vel *= (1 - _kFriction * dt). Half-life ≈ 0.3 seconds.
+const double _kFriction = 2.5;
 
 // Bounce damping at tray walls.
 const double _kBounceDamp = 0.35;

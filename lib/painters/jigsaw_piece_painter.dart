@@ -374,7 +374,7 @@ class JigsawPiecePainter extends CustomPainter {
       ..restore()
       ..save()
       ..clipPath(path)
-      ..drawRect(bounds, Paint()..color = const Color(0xFFB8860B));
+      ..drawRect(bounds, Paint()..color = Colors.grey);
 
     // Grayed-out app logo centred on the piece body.
     if (logoImage != null) {

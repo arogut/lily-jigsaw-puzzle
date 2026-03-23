@@ -172,11 +172,13 @@ class _GameScreenState extends State<GameScreen>
     // Animate from board positions to a tight pile at the tray centre.
     _scatterTargets = _gameState!.computePilePositions(size);
 
-    // All pieces start face-down as they scatter off the board.
+    // Randomly flip roughly half the pieces face-down as they scatter off the board.
+    final rng = Random();
     for (final piece in _gameState!.pieces) {
+      final faceDown = rng.nextBool();
       piece
-        ..isFaceDown = true
-        ..flipProgress = 0.0;
+        ..isFaceDown = faceDown
+        ..flipProgress = faceDown ? 0 : 1;
     }
 
     setState(() => _gameState!.phase = GamePhase.scattering);
