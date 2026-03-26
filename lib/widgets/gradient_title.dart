@@ -29,6 +29,7 @@ class GradientTitle extends StatelessWidget {
             foreground: Paint()
               ..style = PaintingStyle.stroke
               ..strokeWidth = strokeWidth
+              ..strokeJoin = StrokeJoin.round
               ..color = AppColors.deepPurple,
           ),
         ),
