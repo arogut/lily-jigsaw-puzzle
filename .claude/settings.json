@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter test:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(flutter run:*)"
+    ],
+    "ask": [],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Read(**/.env)",
+      "Read(**/secrets/**)"
+    ]
+  }
+}
