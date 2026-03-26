@@ -48,15 +48,21 @@ class AllPiecesPainter extends CustomPainter {
       final sx = piece.scale * flipScaleX;
       final sy = piece.scale;
 
+      // Back face is visible when the piece is face-down or in the first half
+      // of a flip animation.
+      final showBack = piece.isFaceDown || piece.flipProgress < 0.5;
+
       // Apply transforms centred on the piece body centre so the piece scales
       // in place rather than from the top-left corner.
       //   1. Translate to piece body centre.
-      //   2. Scale (lift + flip).
-      //   3. Translate so the painter's top-left lands at the correct position.
+      //   2. Rotate 180° for the back face — shape tabs mirror reality.
+      //   3. Scale (lift + flip).
+      //   4. Translate so the painter's top-left lands at the correct position.
       final cx = piece.currentPosition.dx + pieceWidth / 2;
       final cy = piece.currentPosition.dy + pieceHeight / 2;
       canvas
         ..translate(cx, cy)
+        ..rotate(showBack ? pi : 0.0)
         ..scale(sx, sy)
         ..translate(-(tabW + pieceWidth / 2), -(tabH + pieceHeight / 2));
 

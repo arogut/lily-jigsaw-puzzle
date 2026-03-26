@@ -172,15 +172,6 @@ class _GameScreenState extends State<GameScreen>
     // Animate from board positions to a tight pile at the tray centre.
     _scatterTargets = _gameState!.computePilePositions(size);
 
-    // Randomly flip roughly half the pieces face-down as they scatter off the board.
-    final rng = Random();
-    for (final piece in _gameState!.pieces) {
-      final faceDown = rng.nextBool();
-      piece
-        ..isFaceDown = faceDown
-        ..flipProgress = faceDown ? 0 : 1;
-    }
-
     setState(() => _gameState!.phase = GamePhase.scattering);
 
     _scatterController
@@ -216,8 +207,16 @@ class _GameScreenState extends State<GameScreen>
 
   void _onScatterStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
-      // Pieces are now in the pile. Apply explosive outward velocities so the
-      // physics ticker scatters them across the tray.
+      // Pieces are now in the pile. Randomly flip roughly half face-down.
+      final rng = Random();
+      for (final piece in _gameState!.pieces) {
+        final faceDown = rng.nextBool();
+        piece
+          ..isFaceDown = faceDown
+          ..flipProgress = faceDown ? 0 : 1;
+      }
+
+      // Apply explosive outward velocities so the physics ticker scatters them.
       final size = MediaQuery.of(context).size;
       _gameState!.applyScatterVelocities(size);
 
