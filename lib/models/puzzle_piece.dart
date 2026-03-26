@@ -28,7 +28,6 @@ class PuzzlePiece {
     this.isPlaced = false,
     this.isDragging = false,
     this.isHinted = false,
-    this.isFaceDown = false,
   });
   final int row;
   final int col;
@@ -41,16 +40,8 @@ class PuzzlePiece {
   bool isDragging;
   bool isHinted;
 
-  /// Whether this piece is face-down (back facing up). Face-down pieces cannot
-  /// be dragged — the player must tap to flip them first.
-  bool isFaceDown;
-
-  /// Flip animation progress: 0.0 = fully face-down, 1.0 = fully face-up.
-  /// Values in (0, 1) represent a mid-flip state used for the squeeze animation.
-  double flipProgress = 1;
-
   /// Current velocity in pixels per second, used by the physics simulation
-  /// for momentum, throw-and-bounce, and gravity.
+  /// for momentum, throw-and-bounce.
   Offset velocity = Offset.zero;
 
   /// Scale factor for the lift effect: 1.0 = normal size, > 1.0 = lifted

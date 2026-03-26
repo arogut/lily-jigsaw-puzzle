@@ -26,8 +26,8 @@ import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
 const _kEdgePad = 20.0;
 
-// Physics scatter settles for this long before playing phase begins.
-const _kScatterSettleMs = 1200;
+// Brief pause after scatter animation before entering playing phase.
+const _kScatterSettleMs = 300;
 
 class GameScreen extends StatefulWidget {
 
@@ -46,7 +46,6 @@ class _GameScreenState extends State<GameScreen>
     with TickerProviderStateMixin {
   GameState? _gameState;
   ui.Image? _uiImage;
-  ui.Image? _logoImage;
 
   late AnimationController _scatterController;
   late AnimationController _returnController;
@@ -120,17 +119,9 @@ class _GameScreenState extends State<GameScreen>
     );
     final frame = await codec.getNextFrame();
 
-    final logoData = await rootBundle.load('assets/icons/app_icon.png');
-    final logoCodec = await ui.instantiateImageCodec(
-      logoData.buffer.asUint8List(),
-      targetWidth: 256,
-    );
-    final logoFrame = await logoCodec.getNextFrame();
-
     if (!mounted) return;
     setState(() {
       _uiImage = frame.image;
-      _logoImage = logoFrame.image;
     });
   }
 
@@ -169,8 +160,8 @@ class _GameScreenState extends State<GameScreen>
     if (!mounted || _gameState == null) return;
     final size = MediaQuery.of(context).size;
 
-    // Animate from board positions to a tight pile at the tray centre.
-    _scatterTargets = _gameState!.computePilePositions(size);
+    // Animate from board positions to spread positions across the right tray.
+    _scatterTargets = _gameState!.computeScatterTargets(size);
 
     setState(() => _gameState!.phase = GamePhase.scattering);
 
@@ -207,24 +198,11 @@ class _GameScreenState extends State<GameScreen>
 
   void _onScatterStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
-      // Pieces are now in the pile. Randomly flip roughly half face-down.
-      final rng = Random();
-      for (final piece in _gameState!.pieces) {
-        final faceDown = rng.nextBool();
-        piece
-          ..isFaceDown = faceDown
-          ..flipProgress = faceDown ? 0 : 1;
-      }
-
-      // Apply explosive outward velocities so the physics ticker scatters them.
-      final size = MediaQuery.of(context).size;
-      _gameState!.applyScatterVelocities(size);
-
-      // Start the physics simulation.
+      // Start the physics simulation for piece momentum during play.
       _lastPhysicsTime = null;
       if (!_physicsTicker.isActive) unawaited(_physicsTicker.start());
 
-      // Wait for velocities to settle before entering playing phase.
+      // Brief pause before entering playing phase.
       Future.delayed(
         const Duration(milliseconds: _kScatterSettleMs),
         () {
@@ -461,13 +439,6 @@ class _GameScreenState extends State<GameScreen>
                     if (idx != null) {
                       // When a hint is active, only the hinted piece can be touched.
                       if (gs.hasActiveHint && !gs.pieces[idx].isHinted) return;
-                      final piece = gs.pieces[idx];
-                      if (piece.isFaceDown) {
-                        // Tap on a face-down piece triggers a flip instead of drag.
-                        gs.flipPiece(piece);
-                        unawaited(HapticFeedback.lightImpact());
-                        return;
-                      }
                       unawaited(HapticFeedback.lightImpact());
                       gs.startDrag(idx);
                       _dragCrossedLeft = false;
@@ -528,7 +499,6 @@ class _GameScreenState extends State<GameScreen>
                 pieceHeight: gs.pieceHeight,
                 repaintNotifier: _paintTick,
                 hasActiveHint: gs.hasActiveHint,
-                logoImage: _logoImage,
               ),
             ),
           ),

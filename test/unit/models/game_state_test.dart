@@ -364,17 +364,6 @@ void main() {
       expect(hinted.first.isPlaced, isFalse);
     });
 
-    test('activateHint does not hint face-down pieces', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      // Make all but the last piece face-down.
-      for (var i = 0; i < gs.pieces.length - 1; i++) {
-        gs.pieces[i].isFaceDown = true;
-      }
-      gs.activateHint();
-      final hinted = gs.pieces.where((p) => p.isHinted).toList();
-      expect(hinted.length, 1);
-      expect(hinted.first.isFaceDown, isFalse);
-    });
   });
 
   group('lift effect', () {
@@ -406,8 +395,6 @@ void main() {
     });
 
     test('stepPhysics zeroes negligible velocity', () {
-      // Use scattering phase so gravity does not inflate velocity before the
-      // negligible-velocity check (gravity only applies in playing phase).
       final gs = makeState()..phase = GamePhase.scattering;
       gs.pieces[0].velocity = const Offset(1, 0); // below min threshold
       const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
@@ -472,78 +459,6 @@ void main() {
     });
   });
 
-  group('flip mechanic', () {
-    test('flipPiece starts animation on face-down piece', () {
-      final gs = makeState();
-      gs.pieces[0].isFaceDown = true;
-      gs.flipPiece(gs.pieces[0]);
-      expect(gs.pieces[0].flipProgress, 0.0);
-    });
-
-    test('flipPiece does nothing on face-up piece', () {
-      final gs = makeState();
-      gs.pieces[0].flipProgress = 1.0;
-      gs.flipPiece(gs.pieces[0]); // isFaceDown is false
-      expect(gs.pieces[0].flipProgress, 1.0);
-    });
-
-    test('stepPhysics advances flip animation', () {
-      final gs = makeState()..beginPlaying();
-      gs.pieces[0]
-        ..isFaceDown = true
-        ..flipProgress = 0.0;
-      gs.flipPiece(gs.pieces[0]);
-      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
-      gs.stepPhysics(0.1, trayBounds);
-      expect(gs.pieces[0].flipProgress, greaterThan(0.0));
-    });
-
-    test('stepPhysics completes flip and clears isFaceDown', () {
-      final gs = makeState()..beginPlaying();
-      gs.pieces[0]
-        ..isFaceDown = true
-        ..flipProgress = 0.0;
-      gs.flipPiece(gs.pieces[0]);
-      const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
-      // Advance enough time for the flip to complete.
-      gs.stepPhysics(1, trayBounds);
-      expect(gs.pieces[0].isFaceDown, isFalse);
-      expect(gs.pieces[0].flipProgress, 1.0);
-    });
-  });
-
-  group('computePilePositions', () {
-    test('returns one position per piece', () {
-      final gs = makeState();
-      final positions = gs.computePilePositions(const Size(600, 300));
-      expect(positions.length, gs.pieces.length);
-    });
-
-    test('pile positions are in the right-half tray region', () {
-      const screenSize = Size(600, 300);
-      final gs = makeState();
-      final positions = gs.computePilePositions(screenSize);
-      for (final pos in positions) {
-        expect(pos.dx, greaterThanOrEqualTo(screenSize.width / 2));
-      }
-    });
-  });
-
-  group('applyScatterVelocities', () {
-    test('applies non-zero velocity to all unplaced pieces', () {
-      final gs = makeState()..applyScatterVelocities(const Size(600, 300));
-      for (final piece in gs.pieces) {
-        expect(piece.velocity.distance, greaterThan(0));
-      }
-    });
-
-    test('does not change velocity of placed pieces', () {
-      final gs = makeState();
-      gs.pieces[0].isPlaced = true;
-      gs.applyScatterVelocities(const Size(600, 300));
-      expect(gs.pieces[0].velocity, Offset.zero);
-    });
-  });
 
   group('magnetic pull', () {
     test('updateDrag applies magnetic bias when piece is within 80px of target', () {
@@ -608,31 +523,6 @@ void main() {
     });
   });
 
-  group('activateHint edge cases', () {
-    test('activateHint does nothing when all unplaced pieces are face-down', () {
-      final gs = makeState()..phase = GamePhase.playing;
-      for (final piece in gs.pieces) {
-        piece.isFaceDown = true;
-      }
-      gs.activateHint();
-      expect(gs.pieces.where((p) => p.isHinted).length, 0);
-      // hintsRemaining is unchanged because no eligible piece was found.
-      expect(gs.hintsRemaining, 3);
-    });
-  });
-
-  group('applyScatterVelocities edge cases', () {
-    test('assigns velocity to piece located exactly at scatter center', () {
-      final gs = makeState();
-      const screenSize = Size(600, 300);
-      // Place piece exactly at the scatter centre so dist == 0.
-      final center = Offset(screenSize.width * 0.75, screenSize.height * 0.5);
-      gs.pieces[0].currentPosition = center;
-      gs.applyScatterVelocities(screenSize);
-      // A random direction is assigned, so velocity must be non-zero.
-      expect(gs.pieces[0].velocity.distance, greaterThan(0));
-    });
-  });
 
   group('velocity clamping', () {
     test('endDrag clamps piece velocity to _kMaxVelocity when drag velocity is excessive', () {

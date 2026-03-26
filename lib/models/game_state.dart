@@ -20,9 +20,6 @@ const double _kBounceDamp = 0.35;
 const double _kMaxVelocity = 1500;
 const double _kMinVelocity = 5;
 
-// Flip animation speed: progress advances by this per second.
-const double _kFlipSpeed = 3;
-
 // ──────────────────────────────────────────────────────────────────────────
 
 enum GamePhase { loading, assembled, scattering, playing, won }
@@ -58,9 +55,6 @@ class GameState extends ChangeNotifier {
   // Velocity tracking during drag.
   Offset _dragVelocity = Offset.zero;
   DateTime? _lastDragTime;
-
-  // Pieces currently animating a flip.
-  final Set<PuzzlePiece> _flippingPieces = {};
 
   void _initialize() {
     pieceWidth = boardSize.width / gridSize;
@@ -148,7 +142,7 @@ class GameState extends ChangeNotifier {
     pieces[index].currentPosition = position;
   }
 
-  /// Sets scatter random target positions in the right-half tray area.
+  /// Sets scatter random target positions spread across the right-half tray area.
   List<Offset> computeScatterTargets(Size screenSize) {
     final rng = Random();
     const margin = 20.0;
@@ -162,47 +156,6 @@ class GameState extends ChangeNotifier {
         trayTop + rng.nextDouble() * (trayBottom - trayTop).clamp(0, double.infinity),
       );
     });
-  }
-
-  /// Computes positions for the pile effect: a tight cluster near the tray centre.
-  List<Offset> computePilePositions(Size screenSize) {
-    final rng = Random();
-    const spread = 30.0;
-    final pileCenter = Offset(
-      screenSize.width * 0.75 - pieceWidth / 2,
-      screenSize.height * 0.5 - pieceHeight / 2,
-    );
-    return List.generate(pieces.length, (_) {
-      return pileCenter + Offset(
-        (rng.nextDouble() - 0.5) * spread,
-        (rng.nextDouble() - 0.5) * spread,
-      );
-    });
-  }
-
-  /// Applies explosive outward velocities to all unplaced pieces so they scatter
-  /// from their current (pile) positions. Called after the scatter animation
-  /// places all pieces in the pile.
-  void applyScatterVelocities(Size screenSize) {
-    final rng = Random();
-    final center = Offset(
-      screenSize.width * 0.75,
-      screenSize.height * 0.5,
-    );
-    for (final piece in pieces) {
-      if (piece.isPlaced) continue;
-      final fromCenter = piece.currentPosition - center;
-      final dist = fromCenter.distance;
-      final Offset dir;
-      if (dist > 1) {
-        dir = fromCenter / dist;
-      } else {
-        final angle = rng.nextDouble() * 2 * pi;
-        dir = Offset(cos(angle), sin(angle));
-      }
-      final speed = 350.0 + rng.nextDouble() * 500.0;
-      piece.velocity = dir * speed;
-    }
   }
 
   void beginPlaying() {
@@ -302,7 +255,7 @@ class GameState extends ChangeNotifier {
 
   /// Advances the physics simulation by [dt] seconds within [trayBounds].
   ///
-  /// Returns true if any piece changed state (position, velocity, or flip),
+  /// Returns true if any piece changed state (position or velocity),
   /// so the caller knows whether to schedule a repaint.
   bool stepPhysics(double dt, Rect trayBounds) {
     var changed = false;
@@ -353,26 +306,8 @@ class GameState extends ChangeNotifier {
       }
     }
 
-    // Advance flip animations.
-    for (final piece in _flippingPieces.toList()) {
-      piece.flipProgress = (piece.flipProgress + dt * _kFlipSpeed).clamp(0.0, 1.0);
-      if (piece.flipProgress >= 1.0) {
-        piece.isFaceDown = false;
-        _flippingPieces.remove(piece);
-      }
-      changed = true;
-    }
-
     if (changed) notifyListeners();
     return changed;
-  }
-
-  /// Triggers a flip animation for [piece] if it is currently face-down.
-  void flipPiece(PuzzlePiece piece) {
-    if (!piece.isFaceDown) return;
-    piece.flipProgress = 0.0;
-    _flippingPieces.add(piece);
-    notifyListeners();
   }
 
   Offset _clampVelocity(Offset vel) {
@@ -386,9 +321,9 @@ class GameState extends ChangeNotifier {
   void activateHint() {
     if (hintsRemaining <= 0) return;
     _clearHint();
-    // Only hint face-up, unplaced, non-dragging pieces.
+    // Only hint unplaced, non-dragging pieces.
     final unplaced = pieces
-        .where((p) => !p.isPlaced && !p.isDragging && !p.isFaceDown)
+        .where((p) => !p.isPlaced && !p.isDragging)
         .toList();
     if (unplaced.isEmpty) return;
     final rng = Random();

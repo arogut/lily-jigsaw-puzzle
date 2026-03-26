@@ -12,7 +12,6 @@ class JigsawPiecePainter extends CustomPainter {
     required this.image,
     required this.pieceWidth,
     required this.pieceHeight,
-    this.logoImage,
   });
   // Tab margin as a fraction of piece dimension (also used outside for canvas sizing)
   static const double tabFraction = 0.35;
@@ -22,20 +21,10 @@ class JigsawPiecePainter extends CustomPainter {
   final double pieceWidth;
   final double pieceHeight;
 
-  /// Optional app logo drawn grayed-out on the back face of a piece.
-  final ui.Image? logoImage;
-
   @override
   void paint(Canvas canvas, Size size) {
     final path = buildPiecePath(piece.edges, pieceWidth, pieceHeight);
     final bounds = Rect.fromLTWH(0, 0, size.width, size.height);
-
-    // Show the back face when the piece is face-down or mid-flip (first half).
-    final showBack = piece.isFaceDown || piece.flipProgress < 0.5;
-    if (showBack) {
-      _paintFaceDown(canvas, path, bounds);
-      return;
-    }
 
     // Pre-compute image variables so they can be used inside the single canvas cascade.
     final imgW = image.width.toDouble();
@@ -351,78 +340,6 @@ class JigsawPiecePainter extends CustomPainter {
 
       // 6. Flat to edge end
       ..lineTo(to.dx, to.dy);
-  }
-
-  /// Paints the back (face-down) side of the piece: a warm cardboard colour
-  /// with a grayed-out app logo centred on the body, plus the same bevel/shadow
-  /// as the front face.
-  void _paintFaceDown(Canvas canvas, Path path, Rect bounds) {
-    // Drop shadows — same layered offset as the face-up unplaced piece.
-    // Back fill: cardboard / kraft-paper colour, clipped to the piece shape.
-    canvas
-      ..save()
-      ..translate(6, 10)
-      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.11))
-      ..restore()
-      ..save()
-      ..translate(4, 7)
-      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.18))
-      ..restore()
-      ..save()
-      ..translate(2, 4)
-      ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
-      ..restore()
-      ..save()
-      ..clipPath(path)
-      ..drawRect(bounds, Paint()..color = Colors.grey);
-
-    // Grayed-out app logo centred on the piece body.
-    if (logoImage != null) {
-      final tabW = pieceWidth * tabFraction;
-      final tabH = pieceHeight * tabFraction;
-      final logoSize = pieceWidth * 0.55;
-      final logoDst = Rect.fromCenter(
-        center: Offset(tabW + pieceWidth / 2, tabH + pieceHeight / 2),
-        width: logoSize,
-        height: logoSize,
-      );
-      final logoSrc = Rect.fromLTWH(
-        0,
-        0,
-        logoImage!.width.toDouble(),
-        logoImage!.height.toDouble(),
-      );
-      canvas.drawImageRect(
-        logoImage!,
-        logoSrc,
-        logoDst,
-        Paint()
-          ..colorFilter = const ColorFilter.matrix([
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0,      0,      0,      0.6, 0,
-          ]),
-      );
-    }
-
-    canvas.restore();
-
-    // Bevel edge — same gradient stroke as the face-up piece.
-    final bevelPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.white.withValues(alpha: 0.95),
-          Colors.white.withValues(alpha: 0.30),
-          Colors.black.withValues(alpha: 0.40),
-        ],
-        stops: const [0.0, 0.50, 1.0],
-      ).createShader(bounds);
-    canvas.drawPath(path, bevelPaint);
   }
 
   @override

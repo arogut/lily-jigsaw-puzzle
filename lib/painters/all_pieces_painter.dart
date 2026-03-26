@@ -1,4 +1,3 @@
-import 'dart:math' show cos, pi;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -13,7 +12,6 @@ class AllPiecesPainter extends CustomPainter {
     required this.pieceHeight,
     required ValueNotifier<int> repaintNotifier,
     this.hasActiveHint = false,
-    this.logoImage,
   }) : super(repaint: repaintNotifier);
 
   final List<PuzzlePiece> pieces;
@@ -21,9 +19,6 @@ class AllPiecesPainter extends CustomPainter {
   final double pieceWidth;
   final double pieceHeight;
   final bool hasActiveHint;
-
-  /// Optional app logo drawn grayed-out on the back face of pieces.
-  final ui.Image? logoImage;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -39,31 +34,12 @@ class AllPiecesPainter extends CustomPainter {
         canvas.save();
       }
 
-      // Combined scale: lift effect (piece.scale) × horizontal flip squeeze.
-      // The flip squeeze maps flipProgress ∈ [0,1] to |cos(π·t)| ∈ [1,0,1],
-      // which creates the horizontal-squeeze illusion of a flip without rotation.
-      final flipScaleX = piece.flipProgress < 1.0
-          ? cos(piece.flipProgress * pi).abs()
-          : 1.0;
-      final sx = piece.scale * flipScaleX;
-      final sy = piece.scale;
-
-      // Back face is visible when the piece is face-down or in the first half
-      // of a flip animation.
-      final showBack = piece.isFaceDown || piece.flipProgress < 0.5;
-
-      // Apply transforms centred on the piece body centre so the piece scales
-      // in place rather than from the top-left corner.
-      //   1. Translate to piece body centre.
-      //   2. Rotate 180° for the back face — shape tabs mirror reality.
-      //   3. Scale (lift + flip).
-      //   4. Translate so the painter's top-left lands at the correct position.
+      // Apply lift scale centred on the piece body so it scales in place.
       final cx = piece.currentPosition.dx + pieceWidth / 2;
       final cy = piece.currentPosition.dy + pieceHeight / 2;
       canvas
         ..translate(cx, cy)
-        ..rotate(showBack ? pi : 0.0)
-        ..scale(sx, sy)
+        ..scale(piece.scale, piece.scale)
         ..translate(-(tabW + pieceWidth / 2), -(tabH + pieceHeight / 2));
 
       JigsawPiecePainter(
@@ -71,7 +47,6 @@ class AllPiecesPainter extends CustomPainter {
         image: image,
         pieceWidth: pieceWidth,
         pieceHeight: pieceHeight,
-        logoImage: logoImage,
       ).paint(canvas, pieceCanvasSize);
       canvas.restore();
     }
