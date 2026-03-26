@@ -33,10 +33,15 @@ class AllPiecesPainter extends CustomPainter {
       } else {
         canvas.save();
       }
-      canvas.translate(
-        piece.currentPosition.dx - tabW,
-        piece.currentPosition.dy - tabH,
-      );
+
+      // Apply lift scale centred on the piece body so it scales in place.
+      final cx = piece.currentPosition.dx + pieceWidth / 2;
+      final cy = piece.currentPosition.dy + pieceHeight / 2;
+      canvas
+        ..translate(cx, cy)
+        ..scale(piece.scale, piece.scale)
+        ..translate(-(tabW + pieceWidth / 2), -(tabH + pieceHeight / 2));
+
       JigsawPiecePainter(
         piece: piece,
         image: image,

@@ -39,4 +39,12 @@ class PuzzlePiece {
   bool isPlaced;
   bool isDragging;
   bool isHinted;
+
+  /// Current velocity in pixels per second, used by the physics simulation
+  /// for momentum, throw-and-bounce.
+  Offset velocity = Offset.zero;
+
+  /// Scale factor for the lift effect: 1.0 = normal size, > 1.0 = lifted
+  /// during drag to give a "picked up" feel.
+  double scale = 1;
 }

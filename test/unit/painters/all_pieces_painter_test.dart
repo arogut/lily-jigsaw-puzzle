@@ -96,5 +96,60 @@ void main() {
       expect(painter.shouldRepaint(painter), isTrue);
       notifier.dispose();
     });
+
+    test('paints scaled (lifted) piece without error', () {
+      final notifier = ValueNotifier<int>(0);
+      final piece = _makePiece()..scale = 1.08;
+      final painter = AllPiecesPainter(
+        pieces: [piece],
+        image: testImage,
+        pieceWidth: 100,
+        pieceHeight: 100,
+        repaintNotifier: notifier,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(800, 600));
+      recorder.endRecording().dispose();
+      notifier.dispose();
+    });
+
+    test('dims non-hinted pieces when hasActiveHint is true', () {
+      final notifier = ValueNotifier<int>(0);
+      final hinted = _makePiece()..isHinted = true;
+      final dimmed = _makePiece(col: 1);
+      final painter = AllPiecesPainter(
+        pieces: [dimmed, hinted],
+        image: testImage,
+        pieceWidth: 100,
+        pieceHeight: 100,
+        repaintNotifier: notifier,
+        hasActiveHint: true,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(800, 600));
+      recorder.endRecording().dispose();
+      notifier.dispose();
+    });
+
+    test('paints hinted piece last when hasActiveHint is true', () {
+      final notifier = ValueNotifier<int>(0);
+      final hinted = _makePiece()..isHinted = true;
+      final painter = AllPiecesPainter(
+        pieces: [hinted],
+        image: testImage,
+        pieceWidth: 100,
+        pieceHeight: 100,
+        repaintNotifier: notifier,
+        hasActiveHint: true,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(800, 600));
+      recorder.endRecording().dispose();
+      notifier.dispose();
+    });
+
   });
 }
