@@ -170,9 +170,6 @@ class _ImageCardState extends State<_ImageCard>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final imageName = localizedImageName(l10n, widget.image.assetPath);
-
     return GestureDetector(
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) => _onTap(),
@@ -223,39 +220,6 @@ class _ImageCardState extends State<_ImageCard>
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(20),
                         topRight: Radius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Bottom gradient + name label
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [Color(0xCC000000), Color(0x00000000)],
-                      ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(6, 14, 6, 6),
-                    child: Text(
-                      imageName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        shadows: [
-                          Shadow(
-                            color: Color(0x88000000),
-                            offset: Offset(0, 1),
-                            blurRadius: 2,
-                          ),
-                        ],
                       ),
                     ),
                   ),

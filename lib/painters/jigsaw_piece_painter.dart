@@ -53,19 +53,31 @@ class JigsawPiecePainter extends CustomPainter {
     // For unplaced pieces, draw full shadow for floating effect.
     if (!piece.isPlaced) {
       canvas
-        // 1. Drop shadow — three layered offset fills (no blur for software render
-        //    performance). Three layers give a softer, deeper shadow.
+        // 1. Drop shadow — six layered offset fills (no blur for software render
+        //    performance). Six layers give a smoother, softer shadow gradient.
         ..save()
         ..translate(6, 10)
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.08))
+        ..restore()
+        ..save()
+        ..translate(5, 9)
         ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.11))
         ..restore()
         ..save()
         ..translate(4, 7)
-        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.18))
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.14))
+        ..restore()
+        ..save()
+        ..translate(3, 6)
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.17))
         ..restore()
         ..save()
         ..translate(2, 4)
-        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.22))
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.20))
+        ..restore()
+        ..save()
+        ..translate(1, 2)
+        ..drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.23))
         ..restore();
     } else {
       // For placed pieces, draw shadow only on outer (flat) edges

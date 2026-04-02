@@ -35,15 +35,15 @@ void main() {
     await tester.pump(const Duration(seconds: 6));
   });
 
-  testWidgets('Image selection screen shows all puzzle names', (tester) async {
+  testWidgets('Image selection screen shows all puzzle images', (tester) async {
     // Use a large screen so layout doesn't overflow in the test environment.
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
       _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
     );
     await tester.pump();
-    // Images show localized names in English
-    expect(find.text('Cat'), findsOneWidget);
+    // Names were removed; each card shows only a photo thumbnail.
+    expect(find.byType(Image), findsWidgets);
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -110,7 +110,7 @@ void main() {
       _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
     );
     await tester.pump();
-    await tester.tap(find.text('Cat'));
+    await tester.tap(find.byType(Image).first);
     await tester.pumpAndSettle();
     expect(find.text('Pick Difficulty'), findsWidgets);
     await tester.binding.setSurfaceSize(null);
@@ -250,7 +250,7 @@ void main() {
     await tester.tap(find.text('Back'));
     await tester.pumpAndSettle();
     // Back on ImageSelectionScreen
-    expect(find.text('Cat'), findsOneWidget);
+    expect(find.text('Choose a Puzzle!'), findsWidgets);
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -262,13 +262,13 @@ void main() {
     );
     await tester.pumpAndSettle();
     // Navigate to DifficultyScreen
-    await tester.tap(find.text('Cat'));
+    await tester.tap(find.byType(Image).first);
     await tester.pumpAndSettle();
     expect(find.text('Pick Difficulty'), findsWidgets);
     // Pop back to ImageSelectionScreen via Back button
     await tester.tap(find.text('Back'));
     await tester.pumpAndSettle();
-    expect(find.text('Cat'), findsOneWidget);
+    expect(find.text('Choose a Puzzle!'), findsWidgets);
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -331,14 +331,14 @@ void main() {
       _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
     );
     await tester.pump();
-    // Start a gesture on the Cat card then cancel
+    // Start a gesture on the first image card then cancel
     final gesture = await tester.startGesture(
-      tester.getCenter(find.text('Cat')),
+      tester.getCenter(find.byType(Image).first),
     );
     await tester.pump();
     await gesture.cancel();
     await tester.pump();
-    expect(find.text('Cat'), findsOneWidget);
+    expect(find.text('Choose a Puzzle!'), findsWidgets);
     await tester.binding.setSurfaceSize(null);
   });
 
