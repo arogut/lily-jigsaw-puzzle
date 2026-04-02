@@ -77,9 +77,8 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: GridView.builder(
+                child: GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
@@ -95,7 +94,6 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                       );
                     },
                   ),
-                ),
               ),
               const SizedBox(height: 16),
             ],
