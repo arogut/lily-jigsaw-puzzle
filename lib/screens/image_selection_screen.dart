@@ -78,7 +78,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
               const SizedBox(height: 16),
               Expanded(
                 child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
