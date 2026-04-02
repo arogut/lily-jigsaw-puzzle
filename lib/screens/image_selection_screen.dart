@@ -225,7 +225,7 @@ class _ImageCardState extends State<_ImageCard>
                   ),
                 ),
 
-// Stars overlay (top-right)
+                // Stars overlay (top-right)
                 Positioned(
                   top: 5,
                   right: 5,
