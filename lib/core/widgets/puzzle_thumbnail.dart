@@ -117,7 +117,7 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
     final r = colors.map((c) => c.r).reduce((a, b) => a + b) / colors.length;
     final g = colors.map((c) => c.g).reduce((a, b) => a + b) / colors.length;
     final b = colors.map((c) => c.b).reduce((a, b) => a + b) / colors.length;
-    return Color.from(alpha: 1.0, red: r, green: g, blue: b);
+    return Color.from(alpha: 1, red: r, green: g, blue: b);
   }
 
   static Color _darken(Color c, [double amount = 0.20]) {
