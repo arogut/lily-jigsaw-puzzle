@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 
-/// A 3-D cartoon-style star icon matching the visual language of [GameButton].
+/// A 3-D cartoon-style star icon matching the visual language of GameButton.
 ///
 /// Renders a stacked shadow-and-face pair: a dark-amber "base" star offset
 /// downward, with the gold star face on top — giving a raised, physical feel.

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:palette_generator/palette_generator.dart';
 
 /// A 3-D cartoon-style puzzle thumbnail matching the visual language of
-/// [GameButton].
+/// GameButton.
 ///
 /// The "raised edge" at the bottom is tinted with the image's dominant colour
 /// (darkened ~30 %), giving each card a unique, physical feel. Palette
@@ -76,7 +76,7 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
       size: const Size(100, 75), // small sample for performance
     );
     final base = palette.dominantColor?.color ?? const Color(0xFF555555);
-    final edge = _darken(base, 0.28);
+    final edge = _darken(base);
     PuzzleThumbnail._cache[path] = edge;
     if (mounted) setState(() => _edgeColor = edge);
   }

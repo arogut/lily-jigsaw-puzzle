@@ -207,7 +207,7 @@ class _ImageCardState extends State<_ImageCard>
                   if (stars == 0) return const SizedBox.shrink();
                   return Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: List.generate(stars, (_) => const Star3d(size: 28)),
+                    children: List.generate(stars, (_) => const Star3d()),
                   );
                 },
               ),

@@ -31,8 +31,10 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 900));
     expect(find.text("Lily's Puzzle"), findsWidgets);
-    // Drain all pending timers (splash lasts 5 s).
+    // Drain all pending timers: splash (5 s) + PaletteGenerator (15 s) after
+    // navigating to ImageSelectionScreen.
     await tester.pump(const Duration(seconds: 6));
+    await tester.pump(const Duration(seconds: 16));
   });
 
   testWidgets('Image selection screen shows all puzzle images', (tester) async {
@@ -44,6 +46,8 @@ void main() {
     await tester.pump();
     // Names were removed; each card shows only a photo thumbnail.
     expect(find.byType(Image), findsWidgets);
+    // Drain PaletteGenerator timers started by PuzzleThumbnail widgets.
+    await tester.pump(const Duration(seconds: 16));
     await tester.binding.setSurfaceSize(null);
   });
 

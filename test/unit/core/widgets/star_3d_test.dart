@@ -28,11 +28,14 @@ void main() {
         ),
       );
       // The Star3d root SizedBox has height = size + _shadowOffset (3.0).
+      // Use .first because Icon widgets also contain SizedBox descendants.
       final box = tester.widget<SizedBox>(
-        find.descendant(
-          of: find.byType(Star3d),
-          matching: find.byType(SizedBox),
-        ),
+        find
+            .descendant(
+              of: find.byType(Star3d),
+              matching: find.byType(SizedBox),
+            )
+            .first,
       );
       expect(box.height, greaterThan(testSize));
     });
