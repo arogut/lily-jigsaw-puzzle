@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/star_3d.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
@@ -176,9 +178,7 @@ class _ImageCardState extends State<_ImageCard>
         animation: _scale,
         builder: (_, child) =>
             Transform.scale(scale: _scale.value, child: child),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
+        child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
@@ -194,79 +194,23 @@ class _ImageCardState extends State<_ImageCard>
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Puzzle image
-                Image.asset(widget.image.assetPath, fit: BoxFit.cover),
-
-                // Top gloss highlight
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 28,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x44FFFFFF), Color(0x00FFFFFF)],
-                      ),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Stars overlay (top-right)
-                Positioned(
-                  top: 5,
-                  right: 5,
-                  child: FutureBuilder<int>(
-                    future: CompletionService().getStars(widget.image.uuid),
-                    builder: (context, snap) {
-                      final stars = snap.data ?? 0;
-                      if (stars == 0) return const SizedBox.shrink();
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(
-                          stars,
-                          (_) => const Icon(
-                            Icons.star_rounded,
-                            color: AppColors.gold,
-                            size: 45,
-                            shadows: [
-                              Shadow(
-                                color: Color(0x88000000),
-                                offset: Offset(0, 1),
-                                blurRadius: 2,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // White border overlay
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        width: 2.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          child: PuzzleThumbnail(
+            assetPath: widget.image.assetPath,
+            cornerRadius: 20,
+            overlay: Positioned(
+              top: 5,
+              right: 5,
+              child: FutureBuilder<int>(
+                future: CompletionService().getStars(widget.image.uuid),
+                builder: (context, snap) {
+                  final stars = snap.data ?? 0;
+                  if (stars == 0) return const SizedBox.shrink();
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(stars, (_) => const Star3d(size: 28)),
+                  );
+                },
+              ),
             ),
           ),
         ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
@@ -138,7 +139,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
   }
 
   Widget _buildPreview() {
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -153,38 +154,13 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
             offset: const Offset(0, -2),
           ),
         ],
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.70),
-          width: 3,
-        ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(21),
-        child: Stack(
-          children: [
-            Image.asset(
-              widget.selectedImage.assetPath,
-              width: 280,
-              height: 200,
-              fit: BoxFit.cover,
-            ),
-            // Gloss highlight
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 60,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0x50FFFFFF), Color(0x00FFFFFF)],
-                  ),
-                ),
-              ),
-            ),
-          ],
+      child: SizedBox(
+        width: 280,
+        height: 200,
+        child: PuzzleThumbnail(
+          assetPath: widget.selectedImage.assetPath,
+          cornerRadius: 24,
         ),
       ),
     );

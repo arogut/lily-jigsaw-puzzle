@@ -143,8 +143,8 @@ void main() {
     );
     // Let the FutureBuilder resolve.
     await tester.pumpAndSettle();
-    // Three star icons should be visible for the completed puzzle.
-    expect(find.byIcon(Icons.star_rounded), findsNWidgets(3));
+    // 3 stars → 3 Star3d widgets, each rendering 2 Icons.star_rounded (face + shadow).
+    expect(find.byIcon(Icons.star_rounded), findsNWidgets(6));
     await tester.binding.setSurfaceSize(null);
   });
 
