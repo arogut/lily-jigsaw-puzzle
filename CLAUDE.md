@@ -114,6 +114,24 @@ These principles are **non-negotiable**. Apply them on every change — new feat
 3. Verify test coverage has not dropped
 4. Only open a PR once all of the above pass cleanly
 
+## After Opening a PR — CI Watch Loop
+
+After creating a PR, poll CI status using `gh` until checks complete:
+```bash
+# Wait for all checks to finish (polls every 30s)
+gh pr checks  --watch
+
+# If any check fails, read the logs:
+gh run list --branch  --limit 1
+gh run view  --log-failed
+```
+
+If checks fail:
+1. Read the failure output carefully
+2. Fix the root cause in the source code
+3. Commit and push the fix to the same branch
+4. Repeat until `gh pr checks --watch` exits with all green
+
 ## CI/CD Context
 When running in GitHub Actions:
 - Always create a new branch for changes, never commit directly to main
