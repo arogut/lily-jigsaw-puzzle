@@ -197,17 +197,21 @@ class _ImageCardState extends State<_ImageCard>
           child: PuzzleThumbnail(
             assetPath: widget.image.assetPath,
             cornerRadius: 20,
-            overlay: Positioned(
-              top: 5,
-              right: 5,
+            overlay: Align(
               child: FutureBuilder<int>(
                 future: CompletionService().getStars(widget.image.uuid),
                 builder: (context, snap) {
                   final stars = snap.data ?? 0;
                   if (stars == 0) return const SizedBox.shrink();
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(stars, (_) => const Star3d()),
+                  return FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(
+                        stars,
+                        (_) => const Star3d(size: 56),
+                      ),
+                    ),
                   );
                 },
               ),
