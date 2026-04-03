@@ -71,14 +71,19 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
       return;
     }
 
-    final palette = await PaletteGenerator.fromImageProvider(
-      AssetImage(path),
-      size: const Size(100, 75), // small sample for performance
-    );
-    final base = palette.dominantColor?.color ?? const Color(0xFF555555);
-    final edge = _darken(base);
-    PuzzleThumbnail._cache[path] = edge;
-    if (mounted) setState(() => _edgeColor = edge);
+    try {
+      final palette = await PaletteGenerator.fromImageProvider(
+        AssetImage(path),
+        size: const Size(100, 75), // small sample for performance
+      );
+      final base = palette.dominantColor?.color ?? const Color(0xFF555555);
+      final edge = _darken(base);
+      PuzzleThumbnail._cache[path] = edge;
+      if (mounted) setState(() => _edgeColor = edge);
+    } on Exception catch (_) {
+      // Image could not be loaded (e.g. asset unavailable in tests).
+      // The default fallback colour in build() is used instead.
+    }
   }
 
   static Color _darken(Color c, [double amount = 0.28]) {
