@@ -1,0 +1,50 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/star_3d.dart';
+
+void main() {
+  group('Star3d', () {
+    testWidgets('renders two stacked star icons', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: Star3d())),
+      );
+      expect(find.byIcon(Icons.star_rounded), findsNWidgets(2));
+    });
+
+    testWidgets('face star has glossy ShaderMask applied', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: Star3d(size: 24))),
+      );
+      // The face star is wrapped in a ShaderMask that applies the gold gradient.
+      expect(find.byType(ShaderMask), findsOneWidget);
+    });
+
+    testWidgets('widget height exceeds size to accommodate shadow offset', (tester) async {
+      const testSize = 30.0;
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: Center(child: Star3d(size: testSize))),
+        ),
+      );
+      // The Star3d root SizedBox has height = size + _shadowOffset (3.0).
+      // Use .first because Icon widgets also contain SizedBox descendants.
+      final box = tester.widget<SizedBox>(
+        find
+            .descendant(
+              of: find.byType(Star3d),
+              matching: find.byType(SizedBox),
+            )
+            .first,
+      );
+      expect(box.height, greaterThan(testSize));
+    });
+
+    testWidgets('respects custom size', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: Star3d(size: 48))),
+      );
+      final icons = tester.widgetList<Icon>(find.byIcon(Icons.star_rounded));
+      expect(icons.every((i) => i.size == 48), isTrue);
+    });
+  });
+}
