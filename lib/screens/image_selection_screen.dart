@@ -209,7 +209,7 @@ class _ImageCardState extends State<_ImageCard>
                     mainAxisSize: MainAxisSize.min,
                     children: List.generate(
                       stars,
-                      (_) => const Star3d(),
+                      (_) => const Star3d(size: 56),
                     ),
                   );
                 },

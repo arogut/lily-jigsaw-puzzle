@@ -131,7 +131,10 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
     } else {
       final stops = _gradientColors ?? [fallback, fallback, fallback];
       baseDecoration = BoxDecoration(
-        gradient: LinearGradient(colors: stops),
+        gradient: LinearGradient(
+          colors: stops,
+          stops: const [0.0, 0.5, 1.0],
+        ),
         borderRadius: br,
       );
     }
