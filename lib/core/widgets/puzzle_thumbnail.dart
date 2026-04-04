@@ -6,11 +6,12 @@ import 'package:palette_generator/palette_generator.dart';
 /// A 3-D cartoon-style puzzle thumbnail matching the visual language of
 /// GameButton.
 ///
-/// The "raised edge" at the bottom is tinted with an ambilight colour derived
-/// by sampling the outer edges of the image (bottom, left, right strips).
-/// This mirrors the dominant hue visible near those edges, giving each card a
-/// unique, physical feel. Palette extraction is cached per asset path so each
-/// image is sampled only once per app session.
+/// The "raised edge" at the bottom is tinted with an ambilight gradient
+/// derived by sampling three points along the bottom edge of the image:
+/// bottom-left corner, bottom-center, and bottom-right corner. These become
+/// the gradient stops (left → center → right), giving each card a unique,
+/// physical feel. Palette extraction is cached per asset path so each image
+/// is sampled only once per app session.
 ///
 /// Supply [edgeColor] in tests (or to hard-code a colour) to bypass the async
 /// palette computation.
@@ -75,26 +76,26 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
     }
 
     try {
-      // Ambilight effect: sample three outer edge strips — left 20%, bottom
-      // 30%, and right 20% — and darken each independently. The three colours
-      // are then used as gradient stops (left → center → right) so the bottom
-      // edge visually "bleeds" the hues seen at each side of the image.
+      // Ambilight effect: sample three points along the bottom edge —
+      // bottom-left corner, bottom-center, and bottom-right corner.
+      // Each is used as a gradient stop so the 3-D edge colour smoothly
+      // blends the hues visible at each bottom corner of the image.
       const size = Size(120, 90);
       final palettes = await Future.wait([
         PaletteGenerator.fromImageProvider(
           AssetImage(path),
           size: size,
-          region: const Rect.fromLTWH(0, 0, 24, 90), // left 20 %
+          region: const Rect.fromLTWH(0, 63, 40, 27), // bottom-left corner
         ),
         PaletteGenerator.fromImageProvider(
           AssetImage(path),
           size: size,
-          region: const Rect.fromLTWH(0, 63, 120, 27), // bottom 30 %
+          region: const Rect.fromLTWH(40, 63, 40, 27), // bottom-center
         ),
         PaletteGenerator.fromImageProvider(
           AssetImage(path),
           size: size,
-          region: const Rect.fromLTWH(96, 0, 24, 90), // right 20 %
+          region: const Rect.fromLTWH(80, 63, 40, 27), // bottom-right corner
         ),
       ]);
 

@@ -205,7 +205,13 @@ class _ImageCardState extends State<_ImageCard>
                 builder: (context, snap) {
                   final stars = snap.data ?? 0;
                   if (stars == 0) return const SizedBox.shrink();
-                  return const Star3d(size: 56);
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      stars,
+                      (_) => const Star3d(),
+                    ),
+                  );
                 },
               ),
             ),
