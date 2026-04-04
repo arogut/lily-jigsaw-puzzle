@@ -123,6 +123,23 @@ String localizedImageName(AppLocalizations l10n, String assetPath) {
   }
 }
 
+// ── Medal helpers ────────────────────────────────────────────────────────────
+
+/// Returns the star face colour for the achieved difficulty level.
+/// 1 = easy → bronze, 2 = medium → silver, 3 = hard → gold.
+Color _medalColor(int stars) {
+  if (stars >= 3) return AppColors.gold;
+  if (stars == 2) return const Color(0xFFC0C0C0); // silver
+  return const Color(0xFFCD7F32); // bronze
+}
+
+/// Returns the star shadow colour to pair with [_medalColor].
+Color _medalShadowColor(int stars) {
+  if (stars >= 3) return const Color(0xFFB8860B); // dark gold
+  if (stars == 2) return const Color(0xFF808080); // dark silver
+  return const Color(0xFF8B5E3C); // dark bronze
+}
+
 // ── Image card ───────────────────────────────────────────────────────────────
 
 class _ImageCard extends StatefulWidget {
@@ -197,21 +214,18 @@ class _ImageCardState extends State<_ImageCard>
           child: PuzzleThumbnail(
             assetPath: widget.image.assetPath,
             cornerRadius: 20,
-            overlay: Align(
+            overlay: Positioned(
+              top: 5,
+              right: 5,
               child: FutureBuilder<int>(
                 future: CompletionService().getStars(widget.image.uuid),
                 builder: (context, snap) {
                   final stars = snap.data ?? 0;
                   if (stars == 0) return const SizedBox.shrink();
-                  return FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(
-                        stars,
-                        (_) => const Star3d(size: 56),
-                      ),
-                    ),
+                  return Star3d(
+                    size: 28,
+                    color: _medalColor(stars),
+                    shadowColor: _medalShadowColor(stars),
                   );
                 },
               ),

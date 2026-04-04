@@ -147,8 +147,8 @@ void main() {
     );
     // Let the FutureBuilder resolve.
     await tester.pumpAndSettle();
-    // 3 stars → 3 Star3d widgets, each rendering 2 Icons.star_rounded (face + shadow).
-    expect(find.byIcon(Icons.star_rounded), findsNWidgets(6));
+    // hard completion → 1 gold Star3d widget, rendering 2 Icons.star_rounded (face + shadow).
+    expect(find.byIcon(Icons.star_rounded), findsNWidgets(2));
     await tester.binding.setSurfaceSize(null);
   });
 
