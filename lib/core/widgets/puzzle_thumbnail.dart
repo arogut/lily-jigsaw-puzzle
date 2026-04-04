@@ -53,7 +53,7 @@ class PuzzleThumbnail extends StatefulWidget {
 
 class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
   /// Three gradient stops [left, center, right] resolved from the image edges.
-  /// Null while loading (or when [widget.edgeColor] override is used).
+  /// Null while loading (or when `edgeColor` override is used).
   List<Color>? _gradientColors;
 
   @override
