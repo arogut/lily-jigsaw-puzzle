@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/star_3d.dart';
 
 void main() {
@@ -12,12 +11,12 @@ void main() {
       expect(find.byIcon(Icons.star_rounded), findsNWidgets(2));
     });
 
-    testWidgets('face star uses gold colour', (tester) async {
+    testWidgets('face star has glossy ShaderMask applied', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(home: Scaffold(body: Star3d(size: 24))),
       );
-      final icons = tester.widgetList<Icon>(find.byIcon(Icons.star_rounded));
-      expect(icons.any((i) => i.color == AppColors.gold), isTrue);
+      // The face star is wrapped in a ShaderMask that applies the gold gradient.
+      expect(find.byType(ShaderMask), findsOneWidget);
     });
 
     testWidgets('widget height exceeds size to accommodate shadow offset', (tester) async {

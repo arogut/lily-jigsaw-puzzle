@@ -6,8 +6,8 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 /// Renders a stacked shadow-and-face pair: a dark "base" star offset
 /// downward, with the face star on top — giving a raised, physical feel.
 ///
-/// Defaults to gold. Pass [color] and [shadowColor] for medal variants
-/// (bronze, silver).
+/// Defaults to gold with a glossy top highlight. Pass [color] and
+/// [shadowColor] to customise the appearance.
 class Star3d extends StatelessWidget {
   const Star3d({
     super.key,
@@ -40,21 +40,21 @@ class Star3d extends StatelessWidget {
             left: 0,
             child: Icon(Icons.star_rounded, color: shadowColor, size: size),
           ),
-          // Face star (top layer)
+          // Face star with glossy gradient (top layer)
           Positioned(
             top: 0,
             left: 0,
-            child: Icon(
-              Icons.star_rounded,
-              color: color,
-              size: size,
-              shadows: const [
-                Shadow(
-                  color: Color(0x55FFFFFF),
-                  offset: Offset(0, -1),
-                  blurRadius: 3,
-                ),
-              ],
+            child: ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.lerp(Colors.white, color, 0.35)!,
+                  color,
+                ],
+              ).createShader(bounds),
+              blendMode: BlendMode.srcIn,
+              child: Icon(Icons.star_rounded, color: Colors.white, size: size),
             ),
           ),
         ],
