@@ -223,7 +223,6 @@ class _ImageCardState extends State<_ImageCard>
                   final stars = snap.data ?? 0;
                   if (stars == 0) return const SizedBox.shrink();
                   return Star3d(
-                    size: 28,
                     color: _medalColor(stars),
                     shadowColor: _medalShadowColor(stars),
                   );
