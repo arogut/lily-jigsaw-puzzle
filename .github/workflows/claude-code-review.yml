@@ -38,7 +38,6 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: |
-            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
-
-            After you finish reviewing the code changes and if tests pass and code quality is acceptable, approve it using the GitHub CLI: gh pr review --approve
+            /code-review --comment
+            
 
