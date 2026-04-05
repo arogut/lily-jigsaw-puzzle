@@ -67,11 +67,10 @@ jobs:
 
             For each item, check if it's satisfied and comment on any that need attention.
 
-            Post a summary comment using:
-            gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
-              --method POST --input - << 'EOF'
-            {"body": "<your review text here>"}
-            EOF
+            **CRITICAL RULE:** Do NOT modify any existing repository files. You are strictly allowed to write ONLY to `review.md`.
+
+            Post a summary comment by first writing it to a file `review.md` and then using:
+            gh pr comment ${{ github.event.pull_request.number }} --body-file review.md
 
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Write,Read,Glob,Grep,LS"
