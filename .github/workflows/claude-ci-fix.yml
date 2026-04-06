@@ -70,7 +70,7 @@ jobs:
             CI has failed on PR #${{ steps.pr.outputs.number }} on the bot's working branch. Fix the failures:
 
             Diagnose and fix the failures so the build goes green:
-            1. gh run list --branch "${{ steps.pr.outputs.branch }}" --limit 5
+            1. gh run list --limit 5
             2. gh run view RUN_ID --log-failed
             3. Fix the root cause in source code
             4. flutter analyze && flutter test
