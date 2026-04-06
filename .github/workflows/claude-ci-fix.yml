@@ -67,7 +67,7 @@ jobs:
             actions: read
           
           prompt: |
-            CI has failed on PR #${{ steps.pr.outputs.number }} (branch: ${{ steps.pr.outputs.branch }}) which you raised.
+            CI has failed on PR #${{ steps.pr.outputs.number }} on the bot's working branch. Fix the failures:
 
             Diagnose and fix the failures so the build goes green:
             1. gh run list --branch "${{ steps.pr.outputs.branch }}" --limit 5
