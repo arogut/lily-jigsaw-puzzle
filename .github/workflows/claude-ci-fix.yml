@@ -25,8 +25,9 @@ jobs:
         id: pr
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
         run: |
-          PR_NUMBER=$(echo '${{ toJson(github.event.workflow_run.pull_requests) }}' | jq '.[0].number // empty')
+          PR_NUMBER=$(echo "$PR_JSON" | jq '.[0].number // empty')
           if [ -z "$PR_NUMBER" ]; then
             PR_NUMBER=$(gh api "repos/${{ github.repository }}/pulls?state=open&per_page=50" \
               --jq ".[] | select(.head.sha == \"${{ github.event.workflow_run.head_sha }}\") | .number" | head -1)
