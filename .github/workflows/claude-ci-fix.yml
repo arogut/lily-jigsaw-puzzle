@@ -25,7 +25,8 @@ jobs:
         id: pr
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
+        env:
+          GH_TOKEN: ${{ github.token }}
           PR_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
         run: |
           PR_NUMBER=$(echo "$PR_JSON" | jq '.[0].number // empty')
