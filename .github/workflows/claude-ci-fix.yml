@@ -26,6 +26,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_JSON: ${{ toJson(github.event.workflow_run.pull_requests) }}
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch }}
         run: |
           PR_NUMBER=$(echo "$PR_JSON" | jq '.[0].number // empty')
           if [ -z "$PR_NUMBER" ]; then
@@ -33,7 +34,7 @@ jobs:
               --jq ".[] | select(.head.sha == \"${{ github.event.workflow_run.head_sha }}\") | .number" | head -1)
           fi
           echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "branch=${{ github.event.workflow_run.head_branch }}" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Skip if PR number not found
         if: steps.pr.outputs.number == ''
@@ -74,7 +75,7 @@ jobs:
             2. gh run view RUN_ID --log-failed
             3. Fix the root cause in source code
             4. flutter analyze && flutter test
-            5. Commit and push the fix to branch: ${{ steps.pr.outputs.branch }}
+            5. Commit and push the fix to source branch
 
             **COMMIT RULES:**
             - Do NOT add "Co-authored-by" lines
