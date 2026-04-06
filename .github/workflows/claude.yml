@@ -28,7 +28,7 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      actions: read
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -49,8 +49,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
-          plugin_marketplaces: "https://github.com/obra/superpowers-marketplace.git"
-          plugins: "superpowers@superpowers-marketplace"
+          plugin_marketplaces: 'https://github.com/obra/superpowers-marketplace.git'
+          plugins: 'superpowers@superpowers-marketplace'
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -109,7 +109,7 @@ jobs:
           claude_args: |
             --model "claude-sonnet-4-6"
             --max-turns 100
-            --allowedTools "Bash(git:*),Bash(gh issue:*),Bash(gh pr:*),Bash(gh repo:*),Bash(flutter:*),Edit,Write,Read,Glob,Grep,LS,WebSearch,WebFetch"
+            --allowedTools "Bash(git:*),Bash(gh issue:*),Bash(gh pr:*),Bash(gh repo:*),Bash(gh run:*),Bash(flutter:*),Edit,Write,Read,Glob,Grep,LS,WebSearch,WebFetch"
 
       # Clean up the comment - remove the malformed "Create PR" link and trailing artifacts
       - name: Clean up Claude comment

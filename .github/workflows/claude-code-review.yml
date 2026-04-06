@@ -6,12 +6,10 @@ on:
 
 jobs:
   claude-review:
-    if: github.event.pull_request.user.type != 'Bot'
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
       issues: read
       id-token: write
 
@@ -22,7 +20,7 @@ jobs:
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-    
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -35,10 +33,130 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
+          show_full_output: true
           prompt: |
-            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
 
-            After you finish reviewing the code changes and if tests pass and code quality is acceptable, approve it using the GitHub CLI: gh pr review --approve
+            ## Step 1 — Fetch existing bot comments
 
+            Fetch all existing PR-level summary comments posted by the GitHub App bot and save
+            their IDs — you will replace exactly one of them later:
+
+            ```
+            gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+              --jq '.[] | select(.performed_via_github_app != null) | {id, body}'
+            ```
+
+            Fetch all existing bot-posted inline review comments and save them as your
+            **prior-comments list** (id, path, line, body):
+
+            ```
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              --jq '.[] | select(.performed_via_github_app != null) | {id, path, line, original_line, body}'
+            ```
+
+            ## Step 2 — Fetch the current diff
+
+            ```
+            gh pr diff ${{ github.event.pull_request.number }}
+            ```
+
+            Parse the diff to build a map of **currently changed lines**: for each `+` line,
+            record its file path and position/line number. Lines that no longer appear as `+`
+            in the diff have been removed or fixed in the latest commit.
+
+            ## Step 3 — Reconcile inline comments
+
+            Go through every comment in the **prior-comments list** one by one:
+
+            a. **Check if the issue still exists.**
+               - Look at the file + line the comment references.
+               - Read the current content of that line in the diff (or the checked-out file).
+               - If the code that caused the issue is **gone or fixed** → the comment is stale.
+               - If the same problematic code is **still present** → the comment is still valid.
+
+            b. **Act accordingly:**
+               - **Stale comment** (issue fixed): delete it.
+                 `gh api repos/${{ github.repository }}/pulls/comments/{id} -X DELETE`
+               - **Still-valid comment** (issue not fixed): keep it as-is. Do NOT delete and
+                 re-create it. Only update it if the line number shifted significantly due to
+                 surrounding changes (use PATCH to update the body noting the line moved).
+
+            c. **New issues** found in the diff that have no existing inline comment:
+               post a new inline comment using `mcp__github_inline_comment__create_inline_comment`.
+               Each new inline comment must:
+               - Reference the exact file path and line number from the diff (`+` lines only).
+               - Briefly explain the issue and suggest a concrete improvement.
+               - Only be posted when you are confident there is a real violation of the rules
+                 below — do not post trivial or purely stylistic notes.
+
+            ### Review rules to apply to the diff
+
+            #### Code Quality
+            - Code follows the Dart style guide and project conventions
+            - No commented-out code left in
+            - Meaningful variable/method names
+            - DRY principle (no repeated logic or literals)
+            - SOLID principles
+            - KISS principle (no unnecessary complexity)
+            - YAGNI principle (no speculative features)
+
+            #### Testing
+            - Unit tests for new functions/classes
+            - Widget tests for new widgets
+            - Edge cases covered
+            - Test coverage not reduced
+
+            #### Documentation
+            - Public APIs have `///` doc comments
+            - Inline comments explain non-obvious logic
+
+            #### Security
+            - No hardcoded credentials or secrets
+            - Input validation at system boundaries
+            - Proper error handling
+            - No sensitive data in logs
+
+            ## Step 4 — Replace the summary comment (always at the bottom)
+
+            Delete every previous bot-posted summary comment found in Step 1 so the new one
+            appears at the bottom of the conversation:
+
+            ```
+            # for each id from Step 1:
+            gh api repos/${{ github.repository }}/issues/comments/{id} -X DELETE
+            ```
+
+            Write a concise review summary to `review.md` and post it:
+            ```
+            gh pr comment ${{ github.event.pull_request.number }} --body-file review.md
+            ```
+
+            The summary must:
+            - Start with an overall verdict: **Approved**, **Approved with suggestions**, or **Changes requested**
+            - List only checklist items that need attention (skip items that pass)
+            - Note which previously raised issues were fixed in the latest commit
+            - Cross-reference remaining inline comments (e.g., "see inline comment in `lib/foo.dart`")
+            - Be concise — aim for under 30 lines
+
+            ## Step 5 — Submit a formal PR review
+
+            After posting the summary comment, submit a GitHub review so the verdict is
+            reflected in the PR's review status (green checkmark or blocking review):
+
+            - **No issues found**: approve the PR
+              `gh pr review ${{ github.event.pull_request.number }} --approve --body "LGTM — no issues found."`
+            - **Suggestions only (non-blocking)**: approve with a note
+              `gh pr review ${{ github.event.pull_request.number }} --approve --body "Approved with suggestions — see inline comments."`
+            - **Issues that must be fixed**: request changes
+              `gh pr review ${{ github.event.pull_request.number }} --request-changes --body "Changes requested — see inline comments and summary."`
+
+            Use **request-changes** only when there is a clear violation of the rules in Step 3
+            (e.g. missing tests for new code, hardcoded secrets, broken SOLID/DRY/KISS rules).
+            Use **approve** for everything else, including minor style suggestions.
+
+            **CRITICAL RULE:** Do NOT modify any existing repository files. You may ONLY write to `review.md`.
+
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh api:*),Write,Read,Glob,Grep,LS"
