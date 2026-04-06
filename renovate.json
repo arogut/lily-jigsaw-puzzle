@@ -8,6 +8,7 @@
     "dependencies"
   ],
   "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
   "ignoreUnstable": true,
   "rangeStrategy": "pin",
   "packageRules": [
