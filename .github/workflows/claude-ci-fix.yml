@@ -101,4 +101,4 @@ jobs:
           claude_args: |
             --model "claude-sonnet-4-6"
             --max-turns 50
-            --allowedTools "Bash(git:*),Bash(gh issue:*),Bash(gh pr:*),Bash(gh repo:*),Bash(flutter:*),Edit,Write,Read,Glob,Grep,LS,WebSearch,WebFetch"
+            --allowedTools "Bash(git:*),Bash(gh issue:*),Bash(gh pr:*),Bash(gh repo:*),Bash(gh run:*),Bash(flutter:*),Edit,Write,Read,Glob,Grep,LS,WebSearch,WebFetch"
