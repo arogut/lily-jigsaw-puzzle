@@ -210,7 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ('es', l10n.langSpanish),
     ];
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

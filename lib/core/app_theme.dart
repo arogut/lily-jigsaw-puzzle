@@ -35,6 +35,9 @@ abstract final class AppColors {
   /// Orange — medium difficulty buttons.
   static const Color orange = Color(0xFFFFAB40);
 
+  /// Dark orange — shadow for orange buttons.
+  static const Color orangeShadow = Color(0xFFCC7722);
+
   /// Blue — navigation buttons.
   static const Color blue = Color(0xFF4D96FF);
 
