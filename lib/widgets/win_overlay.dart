@@ -37,7 +37,7 @@ class WinOverlay extends StatelessWidget {
     final gap = compact ? 6.0 : 10.0;
     final subtitleGap = compact ? 4.0 : 8.0;
     final btnGap = compact ? 16.0 : 28.0;
-    final btnSpacing = compact ? 8.0 : 12.0;
+    final layout = _WinOverlayLayout.of(screenH);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

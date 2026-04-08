@@ -225,7 +225,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                         button: GameButton(
                           label: l10n.medium,
                           color: AppColors.orange,
-                          shadowColor: const Color(0xFFCC7722),
+                          shadowColor: AppColors.orangeShadow,
                           width: 180,
                           height: btnHeight,
                           fontSize: btnFontSize,
