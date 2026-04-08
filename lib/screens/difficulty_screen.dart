@@ -39,7 +39,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
     final mediumLocked = _stars < 1;
     final hardLocked = _stars < 2;
 
@@ -49,99 +48,221 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
         width: double.infinity,
         decoration: AppTheme.backgroundDecoration,
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 14),
-
-                // Back button
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 14),
-                    child: GameButton(
-                      label: l10n.back,
-                      icon: Icons.arrow_back_rounded,
-                      color: AppColors.mediumPurple,
-                      width: 120,
-                      height: 46,
-                      fontSize: 16,
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // Image preview with decorative frame
-                _buildPreview(),
-
-                const SizedBox(height: 26),
-
-                // Section title
-                GradientTitle(text: l10n.pickDifficulty),
-
-                const SizedBox(height: 26),
-
-                // Easy — always unlocked
-                _DifficultyOption(
-                  description: l10n.easyDesc,
-                  button: GameButton(
-                    label: l10n.easy,
-                    color: AppColors.green,
-                    shadowColor: AppColors.greenShadow,
-                    width: 260,
-                    height: 64,
-                    fontSize: 22,
-                    onPressed: () => _go(context, 3),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Medium — locked until ≥1 star
-                _DifficultyOption(
-                  description: l10n.mediumDesc,
-                  locked: mediumLocked,
-                  button: GameButton(
-                    label: l10n.medium,
-                    color: AppColors.orange,
-                    shadowColor: const Color(0xFFCC7722),
-                    width: 260,
-                    height: 64,
-                    fontSize: 22,
-                    onPressed: mediumLocked ? () {} : () => _go(context, 5),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Hard — locked until ≥2 stars
-                _DifficultyOption(
-                  description: l10n.hardDesc,
-                  locked: hardLocked,
-                  button: GameButton(
-                    label: l10n.hard,
-                    color: AppColors.red,
-                    shadowColor: AppColors.redShadow,
-                    width: 260,
-                    height: 64,
-                    fontSize: 22,
-                    onPressed: hardLocked ? () {} : () => _go(context, 7),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-              ],
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxHeight < 750;
+              return compact
+                  ? _buildCompactLayout(context, l10n, constraints, mediumLocked, hardLocked)
+                  : _buildNormalLayout(context, l10n, mediumLocked, hardLocked);
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPreview() {
+  /// Standard vertical layout for tablets and larger screens.
+  Widget _buildNormalLayout(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool mediumLocked,
+    bool hardLocked,
+  ) {
+    return Column(
+      children: [
+        const SizedBox(height: 14),
+
+        // Back button
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 14),
+            child: GameButton(
+              label: l10n.back,
+              icon: Icons.arrow_back_rounded,
+              color: AppColors.mediumPurple,
+              width: 120,
+              height: 46,
+              fontSize: 16,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Image preview with decorative frame
+        _buildThumbnailBox(width: 280, height: 200),
+
+        const SizedBox(height: 26),
+
+        GradientTitle(text: l10n.pickDifficulty),
+
+        const SizedBox(height: 26),
+
+        _DifficultyOption(
+          description: l10n.easyDesc,
+          button: GameButton(
+            label: l10n.easy,
+            color: AppColors.green,
+            shadowColor: AppColors.greenShadow,
+            width: 260,
+            height: 64,
+            fontSize: 22,
+            onPressed: () => _go(context, 3),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        _DifficultyOption(
+          description: l10n.mediumDesc,
+          locked: mediumLocked,
+          button: GameButton(
+            label: l10n.medium,
+            color: AppColors.orange,
+            shadowColor: const Color(0xFFCC7722),
+            width: 260,
+            height: 64,
+            fontSize: 22,
+            onPressed: mediumLocked ? () {} : () => _go(context, 5),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        _DifficultyOption(
+          description: l10n.hardDesc,
+          locked: hardLocked,
+          button: GameButton(
+            label: l10n.hard,
+            color: AppColors.red,
+            shadowColor: AppColors.redShadow,
+            width: 260,
+            height: 64,
+            fontSize: 22,
+            onPressed: hardLocked ? () {} : () => _go(context, 7),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  /// Compact two-column layout for small landscape screens (phones).
+  ///
+  /// Shows the puzzle thumbnail on the left and difficulty buttons on the right.
+  Widget _buildCompactLayout(
+    BuildContext context,
+    AppLocalizations l10n,
+    BoxConstraints constraints,
+    bool mediumLocked,
+    bool hardLocked,
+  ) {
+    final btnHeight = (constraints.maxHeight * 0.18).clamp(38.0, 52.0);
+    final btnFontSize = (btnHeight * 0.38).clamp(13.0, 18.0);
+
+    return Column(
+      children: [
+        // Back button row
+        Padding(
+          padding: const EdgeInsets.only(left: 14, top: 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: GameButton(
+              label: l10n.back,
+              icon: Icons.arrow_back_rounded,
+              color: AppColors.mediumPurple,
+              width: 100,
+              height: 36,
+              fontSize: 13,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        ),
+
+        // Thumbnail (left) + difficulty buttons (right)
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Thumbnail fills left half
+                Expanded(
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 4 / 3,
+                      child: _buildThumbnailBox(cornerRadius: 18),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 16),
+
+                // Title + difficulty buttons on right half
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GradientTitle(text: l10n.pickDifficulty, fontSize: 18),
+                      const SizedBox(height: 8),
+                      _DifficultyOption(
+                        description: l10n.easyDesc,
+                        button: GameButton(
+                          label: l10n.easy,
+                          color: AppColors.green,
+                          shadowColor: AppColors.greenShadow,
+                          width: 180,
+                          height: btnHeight,
+                          fontSize: btnFontSize,
+                          onPressed: () => _go(context, 3),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _DifficultyOption(
+                        description: l10n.mediumDesc,
+                        locked: mediumLocked,
+                        button: GameButton(
+                          label: l10n.medium,
+                          color: AppColors.orange,
+                          shadowColor: const Color(0xFFCC7722),
+                          width: 180,
+                          height: btnHeight,
+                          fontSize: btnFontSize,
+                          onPressed: mediumLocked ? () {} : () => _go(context, 5),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _DifficultyOption(
+                        description: l10n.hardDesc,
+                        locked: hardLocked,
+                        button: GameButton(
+                          label: l10n.hard,
+                          color: AppColors.red,
+                          shadowColor: AppColors.redShadow,
+                          width: 180,
+                          height: btnHeight,
+                          fontSize: btnFontSize,
+                          onPressed: hardLocked ? () {} : () => _go(context, 7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Decorated thumbnail box. When [width] and [height] are omitted the
+  /// widget expands to fill its parent (use inside [AspectRatio] or [SizedBox]).
+  Widget _buildThumbnailBox({double? width, double? height, double cornerRadius = 24}) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(cornerRadius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.30),
@@ -156,11 +277,11 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
         ],
       ),
       child: SizedBox(
-        width: 280,
-        height: 200,
+        width: width,
+        height: height,
         child: PuzzleThumbnail(
           assetPath: widget.selectedImage.assetPath,
-          cornerRadius: 24,
+          cornerRadius: cornerRadius,
         ),
       ),
     );
@@ -196,7 +317,7 @@ class _DifficultyOption extends StatelessWidget {
     return Column(
       children: [
         if (locked) Opacity(opacity: 0.45, child: button) else button,
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           description,
           textAlign: TextAlign.center,
