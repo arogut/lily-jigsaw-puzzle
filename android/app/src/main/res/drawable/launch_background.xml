@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matches AppTheme.backgroundDecoration: sky-blue → lavender → baby-pink,
+     Alignment.topLeft → Alignment.bottomRight (Android angle 315°). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:type="linear"
+        android:angle="315"
+        android:startColor="#87CEEB"
+        android:centerColor="#B39DDB"
+        android:endColor="#FFABD0" />
+</shape>

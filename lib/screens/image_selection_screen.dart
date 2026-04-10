@@ -107,21 +107,6 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
 
 }
 
-/// Returns the localized image name for a given asset path.
-String localizedImageName(AppLocalizations l10n, String assetPath) {
-  switch (assetPath) {
-    case 'assets/images/puzzle-1.jpg': return l10n.imageCat;
-    case 'assets/images/puzzle-2.jpg': return l10n.imageDog;
-    case 'assets/images/puzzle-3.jpg': return l10n.imageForest;
-    case 'assets/images/puzzle-4.jpg': return l10n.imageCity;
-    case 'assets/images/puzzle-5.jpg': return l10n.imageLion;
-    case 'assets/images/puzzle-6.jpg': return l10n.imageSea;
-    case 'assets/images/puzzle-7.jpg': return l10n.imageElephant;
-    case 'assets/images/puzzle-8.jpg': return l10n.imageSquirrel;
-    case 'assets/images/puzzle-9.jpg': return l10n.imageHedgehog;
-    default: return '';
-  }
-}
 
 // ── Image card ───────────────────────────────────────────────────────────────
 
