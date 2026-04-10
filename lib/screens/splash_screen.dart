@@ -77,6 +77,16 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
+    // Scale content proportionally so it fits on small landscape screens.
+    // 440 is the natural content height at 1× (logo + gaps + title + dots).
+    final scale = (size.height / 440).clamp(0.0, 1.0);
+    final logoBox = 230.0 * scale;
+    final titleFontSize = 48.0 * scale;
+    final subtitleFontSize = 18.0 * scale;
+    final gapAfterLogo = 32.0 * scale;
+    final gapAfterTitle = 14.0 * scale;
+    final gapBeforeDots = 48.0 * scale;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -101,31 +111,31 @@ class _SplashScreenState extends State<SplashScreen>
                       // Logo
                       Transform.scale(
                         scale: _scaleIn.value,
-                        child: const SizedBox(
-                          width: 230,
-                          height: 230,
+                        child: SizedBox(
+                          width: logoBox,
+                          height: logoBox,
                           child: CustomPaint(
-                            painter: LogoPainter(size: 200),
+                            painter: LogoPainter(size: logoBox * 0.87),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      SizedBox(height: gapAfterLogo),
 
                       // Title with gradient + outline
-                      const GradientTitle(
+                      GradientTitle(
                         text: "Lily's Puzzle",
-                        fontSize: 48,
+                        fontSize: titleFontSize,
                         strokeWidth: 7,
                       ),
 
-                      const SizedBox(height: 14),
+                      SizedBox(height: gapAfterTitle),
 
                       // Subtitle
                       Text(
                         'Put the pieces together!',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: subtitleFontSize,
                           fontWeight: FontWeight.w700,
                           color: Colors.white.withValues(alpha: 0.92),
                           letterSpacing: 0.5,
@@ -139,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 48),
+                      SizedBox(height: gapBeforeDots),
 
                       // Loading dots
                       const _LoadingDots(),

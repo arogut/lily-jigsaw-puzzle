@@ -101,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 16),
               Expanded(
                 child: _unlocked
                     ? _buildSettingsPanel(context, l10n)
@@ -213,6 +213,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Language section
           _buildSectionLabel(l10n.language),
@@ -260,11 +261,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }).toList(),
           ),
 
-          const SizedBox(height: 36),
+          const SizedBox(height: 24),
 
           // Reset progress section
           _buildSectionLabel(l10n.resetProgress),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           GameButton(
             label: l10n.resetProgress,
             icon: Icons.delete_sweep_rounded,
@@ -275,7 +276,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () => unawaited(_resetProgress()),
           ),
           if (_resetDone) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
@@ -292,8 +293,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
-
-          const SizedBox(height: 30),
         ],
       ),
     );
