@@ -85,7 +85,7 @@ class PuzzleThumbnail extends StatefulWidget {
         final base = p.vibrantColor?.color ?? p.dominantColor?.color;
         return base != null ? _darken(base) : fallback;
       }).toList();
-    } on Exception catch (_) {
+    } catch (_) {
       // Asset unavailable (e.g. in tests) — fallback colour used in build().
     }
   }
