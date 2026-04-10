@@ -66,4 +66,23 @@ void main() {
       );
     });
   });
+
+  group('prewarm', () {
+    testWidgets('completes without error for an empty path list', (_) async {
+      await PuzzleThumbnail.prewarm([]);
+    });
+
+    testWidgets('completes without error when asset paths are unavailable', (_) async {
+      // _computeAndCache swallows exceptions for missing assets, so prewarm
+      // must always complete rather than propagating errors to the caller.
+      await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
+    });
+
+    testWidgets('completes without error when called multiple times for same path', (_) async {
+      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
+      // Second call completes without error (either via cache hit or a retry
+      // when the first attempt failed to load the asset in this environment).
+      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
+    });
+  });
 }
