@@ -67,6 +67,39 @@ void main() {
     });
   });
 
+  group('PuzzleThumbnail without edgeColor', () {
+    testWidgets('renders with gradient decoration when no edgeColor is supplied',
+        (tester) async {
+      // Does not supply edgeColor — exercises initState → _applyEdgeColor →
+      // _computeAndCache (swallows missing-asset error) → setState path, and
+      // the gradient BoxDecoration branch inside build().
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 200,
+              height: 150,
+              child: PuzzleThumbnail(
+                assetPath: 'assets/images/does-not-exist.jpg',
+                cornerRadius: 8,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(PuzzleThumbnail), findsOneWidget);
+      // The base layer must use a gradient (not a solid colour) when no
+      // edgeColor override is provided.
+      final decorations =
+          tester.widgetList<DecoratedBox>(find.byType(DecoratedBox));
+      expect(
+        decorations.any((d) => (d.decoration as BoxDecoration).gradient != null),
+        isTrue,
+      );
+    });
+  });
+
   group('prewarm', () {
     testWidgets('completes without error for an empty path list', (_) async {
       await PuzzleThumbnail.prewarm([]);
