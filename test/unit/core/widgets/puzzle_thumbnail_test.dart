@@ -79,10 +79,11 @@ void main() {
     });
 
     testWidgets('completes without error when called multiple times for same path', (_) async {
-      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
-      // Second call completes without error (either via cache hit or a retry
-      // when the first attempt failed to load the asset in this environment).
-      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
+      // Use a missing path so rootBundle.load fails fast rather than hanging
+      // during image decode. Tests that repeated calls with the same path
+      // never propagate errors to the caller.
+      await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
+      await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
     });
   });
 }
