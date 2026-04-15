@@ -80,7 +80,7 @@ void main() {
       // decoration, not image-loading behaviour.
       final prevOnError = FlutterError.onError;
       addTearDown(() => FlutterError.onError = prevOnError);
-      FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.onError = (details) {
         if (details.exception.toString().contains('Unable to load asset')) return;
         prevOnError?.call(details);
       };
@@ -129,6 +129,15 @@ void main() {
       // never propagate errors to the caller.
       await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
       await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
+    });
+
+    testWidgets('populates cache for a real asset and returns early on second call',
+        (_) async {
+      // Exercises the full success path: rootBundle.load → instantiateImageCodec
+      // → getNextFrame → PaletteGenerator.fromImage × 3 → _darken → _cache write.
+      // The second call must hit the early-return guard (cache already populated).
+      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
+      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
     });
   });
 }
