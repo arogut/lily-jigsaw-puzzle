@@ -73,12 +73,16 @@ class PuzzleThumbnail extends StatefulWidget {
       final image = (await codec.getNextFrame()).image;
 
       // Ambilight effect: sample bottom-left, bottom-center, bottom-right.
-      final palettes = await Future.wait([
-        PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(0, 63, 40, 27)),
-        PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(40, 63, 40, 27)),
-        PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(80, 63, 40, 27)),
-      ]);
-      image.dispose();
+      final List<PaletteGenerator> palettes;
+      try {
+        palettes = await Future.wait([
+          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(0, 63, 40, 27)),
+          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(40, 63, 40, 27)),
+          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(80, 63, 40, 27)),
+        ]);
+      } finally {
+        image.dispose();
+      }
 
       const fallback = Color(0xFF555555);
       _cache[path] = palettes.map((p) {

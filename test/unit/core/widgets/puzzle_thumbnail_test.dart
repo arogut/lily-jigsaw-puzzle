@@ -73,6 +73,18 @@ void main() {
       // Does not supply edgeColor — exercises initState → _applyEdgeColor →
       // _computeAndCache (swallows missing-asset error) → setState path, and
       // the gradient BoxDecoration branch inside build().
+      //
+      // Image.asset also tries to load the same non-existent path and reports
+      // an error to FlutterError.onError. Suppress it so the test framework
+      // does not treat it as a failure — this test is verifying the gradient
+      // decoration, not image-loading behaviour.
+      final prevOnError = FlutterError.onError;
+      addTearDown(() => FlutterError.onError = prevOnError);
+      FlutterError.onError = (FlutterErrorDetails details) {
+        if (details.exception.toString().contains('Unable to load asset')) return;
+        prevOnError?.call(details);
+      };
+
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
