@@ -56,6 +56,9 @@ class GameState extends ChangeNotifier {
   Offset _dragVelocity = Offset.zero;
   DateTime? _lastDragTime;
 
+  // Raw finger position during drag, tracked independently of magnetic pull.
+  Offset _rawDragPosition = Offset.zero;
+
   void _initialize() {
     pieceWidth = boardSize.width / gridSize;
     pieceHeight = boardSize.height / gridSize;
@@ -178,6 +181,7 @@ class GameState extends ChangeNotifier {
       ..velocity = Offset.zero;
     pieces.add(piece);
     draggingIndex = pieces.length - 1;
+    _rawDragPosition = piece.currentPosition;
     notifyListeners();
   }
 
@@ -195,23 +199,25 @@ class GameState extends ChangeNotifier {
     }
     _lastDragTime = now;
 
+    _rawDragPosition += delta;
     final piece = pieces[draggingIndex!];
-    final adjustedDelta = _applyMagneticPull(piece, delta);
-
-    piece.currentPosition = piece.currentPosition + adjustedDelta;
+    piece.currentPosition =
+        _rawDragPosition + _magneticOffset(_rawDragPosition, piece.targetPosition);
     notifyListeners();
   }
 
-  /// Applies a subtle magnetic pull toward the snap target when the piece is
-  /// within [_kMagnetRadius]. Returns the adjusted delta.
-  Offset _applyMagneticPull(PuzzlePiece piece, Offset delta) {
-    final dist = (piece.currentPosition - piece.targetPosition).distance;
-    if (dist <= 0 || dist > _kMagnetRadius) return delta;
+  /// Returns the magnetic offset to add to the raw finger position when the
+  /// piece is within [_kMagnetRadius] of its target. The offset is zero at the
+  /// radius boundary and grows smoothly inward, so there is no discontinuity
+  /// when the piece enters or exits the magnet zone.
+  Offset _magneticOffset(Offset rawPos, Offset targetPos) {
+    final dist = (rawPos - targetPos).distance;
+    if (dist <= 0 || dist > _kMagnetRadius) return Offset.zero;
 
-    // Pull strength ramps from 0 (at magnetRadius) to 8% correction (at snap threshold).
+    // Pull strength ramps from 0 (at magnetRadius) to 8% correction (closer in).
     final t = 1.0 - dist / _kMagnetRadius;
-    final pullDir = (piece.targetPosition - piece.currentPosition) / dist;
-    return delta + pullDir * (dist * t * 0.08);
+    final pullDir = (targetPos - rawPos) / dist;
+    return pullDir * (dist * t * 0.08);
   }
 
   /// Ends the drag without snapping/placing. Used when the piece was dropped
@@ -232,8 +238,7 @@ class GameState extends ChangeNotifier {
       ..isDragging = false
       ..scale = 1.0;
 
-    const snapThreshold = _kSnapThreshold;
-    if ((piece.currentPosition - piece.targetPosition).distance <= snapThreshold) {
+    if ((piece.currentPosition - piece.targetPosition).distance <= _kSnapThreshold) {
       piece
         ..currentPosition = piece.targetPosition
         ..isPlaced = true

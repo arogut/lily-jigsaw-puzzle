@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:palette_generator/palette_generator.dart';
 
 /// A 3-D cartoon-style puzzle thumbnail matching the visual language of
@@ -48,6 +50,55 @@ class PuzzleThumbnail extends StatefulWidget {
   @visibleForTesting
   static void clearCache() => _cache.clear();
 
+  /// Pre-computes and caches edge colours for [paths] in parallel.
+  ///
+  /// Call this early (e.g. during the splash screen) so thumbnails render with
+  /// their final colour immediately when the image selection screen first appears.
+  static Future<void> prewarm(List<String> paths) =>
+      Future.wait(paths.map(_computeAndCache));
+
+  // Decodes the image once at thumbnail size, then samples three bottom-edge
+  // regions in parallel — avoiding three separate fromImageProvider calls
+  // (each of which would decode the image independently).
+  static Future<void> _computeAndCache(String path) async {
+    if (_cache.containsKey(path)) return;
+
+    try {
+      final bytes = await rootBundle.load(path);
+      final codec = await ui.instantiateImageCodec(
+        bytes.buffer.asUint8List(),
+        targetWidth: 120,
+        targetHeight: 90,
+      );
+      final image = (await codec.getNextFrame()).image;
+
+      // Ambilight effect: sample bottom-left, bottom-center, bottom-right.
+      final List<PaletteGenerator> palettes;
+      try {
+        palettes = await Future.wait([
+          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(0, 63, 40, 27)),
+          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(40, 63, 40, 27)),
+          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(80, 63, 40, 27)),
+        ]);
+      } finally {
+        image.dispose();
+      }
+
+      const fallback = Color(0xFF555555);
+      _cache[path] = palettes.map((p) {
+        final base = p.vibrantColor?.color ?? p.dominantColor?.color;
+        return base != null ? _darken(base) : fallback;
+      }).toList();
+    } on Object catch (_) {
+      // Asset unavailable or decode error (e.g. in tests) — fallback colour used in build().
+    }
+  }
+
+  static Color _darken(Color c, [double amount = 0.20]) {
+    final hsl = HSLColor.fromColor(c);
+    return hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0)).toColor();
+  }
+
   @override
   State<PuzzleThumbnail> createState() => _PuzzleThumbnailState();
 }
@@ -61,61 +112,16 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
   void initState() {
     super.initState();
     if (widget.edgeColor == null) {
-      unawaited(_resolveEdgeColor());
+      unawaited(_applyEdgeColor());
     }
   }
 
-  Future<void> _resolveEdgeColor() async {
-    final path = widget.assetPath;
-
-    if (PuzzleThumbnail._cache.containsKey(path)) {
-      if (mounted) {
-        setState(() => _gradientColors = PuzzleThumbnail._cache[path]);
-      }
-      return;
+  // Reads the cached result (or waits for it to be computed) then rebuilds.
+  Future<void> _applyEdgeColor() async {
+    await PuzzleThumbnail._computeAndCache(widget.assetPath);
+    if (mounted) {
+      setState(() => _gradientColors = PuzzleThumbnail._cache[widget.assetPath]);
     }
-
-    try {
-      // Ambilight effect: sample three points along the bottom edge —
-      // bottom-left corner, bottom-center, and bottom-right corner.
-      // Each is used as a gradient stop so the 3-D edge colour smoothly
-      // blends the hues visible at each bottom corner of the image.
-      const size = Size(120, 90);
-      final palettes = await Future.wait([
-        PaletteGenerator.fromImageProvider(
-          AssetImage(path),
-          size: size,
-          region: const Rect.fromLTWH(0, 63, 40, 27), // bottom-left corner
-        ),
-        PaletteGenerator.fromImageProvider(
-          AssetImage(path),
-          size: size,
-          region: const Rect.fromLTWH(40, 63, 40, 27), // bottom-center
-        ),
-        PaletteGenerator.fromImageProvider(
-          AssetImage(path),
-          size: size,
-          region: const Rect.fromLTWH(80, 63, 40, 27), // bottom-right corner
-        ),
-      ]);
-
-      const fallback = Color(0xFF555555);
-      final gradient = palettes.map((p) {
-        final base = p.vibrantColor?.color ?? p.dominantColor?.color;
-        return base != null ? _darken(base) : fallback;
-      }).toList();
-
-      PuzzleThumbnail._cache[path] = gradient;
-      if (mounted) setState(() => _gradientColors = gradient);
-    } on Exception catch (_) {
-      // Image could not be loaded (e.g. asset unavailable in tests).
-      // The fallback colour in build() is used instead.
-    }
-  }
-
-  static Color _darken(Color c, [double amount = 0.20]) {
-    final hsl = HSLColor.fromColor(c);
-    return hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0)).toColor();
   }
 
   @override

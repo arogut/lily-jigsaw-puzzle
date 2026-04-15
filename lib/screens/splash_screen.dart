@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/painters/logo_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
@@ -47,6 +49,12 @@ class _SplashScreenState extends State<SplashScreen>
         CurvedAnimation(parent: _outController, curve: Curves.easeIn);
 
     unawaited(_inController.forward());
+
+    // Pre-warm thumbnail edge colours so they are ready when the selection
+    // screen appears. Runs in parallel with the splash animation.
+    unawaited(PuzzleThumbnail.prewarm(
+      PuzzleImageData.all.map((e) => e.assetPath).toList(),
+    ));
 
     // Start fade-out at 4.4 s, navigate at 5 s
     unawaited(Future.delayed(const Duration(milliseconds: 4400), () {

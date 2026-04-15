@@ -171,7 +171,10 @@ void main() {
     });
 
     test('updateDrag moves the dragged piece by delta', () {
-      final gs = makeState()..startDrag(0);
+      final gs = makeState();
+      // Place the piece far from its target so no magnetic bias applies.
+      gs.pieces[0].currentPosition = const Offset(200, 200);
+      gs.startDrag(0);
       final before = gs.pieces[gs.draggingIndex!].currentPosition;
       gs.updateDrag(const Offset(10, 20));
       expect(gs.pieces[gs.draggingIndex!].currentPosition, before + const Offset(10, 20));
@@ -474,10 +477,12 @@ void main() {
     });
 
     test('updateDrag applies no bias when piece is beyond 80px of target', () {
-      final gs = makeState()..startDrag(0);
+      final gs = makeState();
+      // Place piece far from its target BEFORE startDrag so _rawDragPosition
+      // is initialised to the far position.
+      gs.pieces[0].currentPosition = gs.pieces[0].targetPosition + const Offset(200, 0);
+      gs.startDrag(0);
       final piece = gs.pieces.last;
-      // Move piece far from its target (beyond the 80px magnet radius).
-      piece.currentPosition = piece.targetPosition + const Offset(200, 0);
       final before = piece.currentPosition;
       gs.updateDrag(const Offset(10, 0));
       // No magnetic bias: displacement equals the raw delta.
