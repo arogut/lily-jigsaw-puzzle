@@ -132,12 +132,21 @@ void main() {
     });
 
     testWidgets('populates cache for a real asset and returns early on second call',
-        (_) async {
+        (tester) async {
+      // runAsync bypasses FakeAsync so that ui.instantiateImageCodec and
+      // PaletteGenerator.fromImage (which use platform channels and isolates)
+      // can complete. Without it the platform channel response is blocked by
+      // the fake timer zone and the test hangs until the 10-minute timeout.
+      //
       // Exercises the full success path: rootBundle.load → instantiateImageCodec
       // → getNextFrame → PaletteGenerator.fromImage × 3 → _darken → _cache write.
-      // The second call must hit the early-return guard (cache already populated).
-      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
-      await PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']);
+      await tester.runAsync(
+        () => PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']),
+      );
+      // Second call must hit the early-return guard (cache already populated).
+      await tester.runAsync(
+        () => PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']),
+      );
     });
   });
 }
