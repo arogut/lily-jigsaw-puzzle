@@ -37,6 +37,7 @@ void main() {
       _wrap(GameScreen(
         selectedImage: _testImage,
         gridSize: 3,
+        difficultyStars: 1,
         localeNotifier: _makeLocaleNotifier(),
       )),
     );
@@ -53,6 +54,7 @@ void main() {
       _wrap(GameScreen(
         selectedImage: _testImage,
         gridSize: 3,
+        difficultyStars: 1,
         localeNotifier: _makeLocaleNotifier(),
       )),
     );
@@ -72,6 +74,7 @@ void main() {
       _wrap(GameScreen(
         selectedImage: _testImage,
         gridSize: 3,
+        difficultyStars: 1,
         localeNotifier: _makeLocaleNotifier(),
       )),
     );
@@ -90,6 +93,7 @@ void main() {
       _wrap(GameScreen(
         selectedImage: _testImage,
         gridSize: 5,
+        difficultyStars: 2,
         localeNotifier: _makeLocaleNotifier(),
       )),
     );

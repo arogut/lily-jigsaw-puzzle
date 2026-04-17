@@ -15,9 +15,8 @@ void _exerciseAllStrings(AppLocalizations l10n) {
   expect(l10n.easy, isNotEmpty);
   expect(l10n.medium, isNotEmpty);
   expect(l10n.hard, isNotEmpty);
-  expect(l10n.easyDesc, isNotEmpty);
-  expect(l10n.mediumDesc, isNotEmpty);
-  expect(l10n.hardDesc, isNotEmpty);
+  expect(l10n.difficultyTitle, isNotEmpty);
+  expect(l10n.difficultyPiecesDesc(9, 3), isNotEmpty);
   expect(l10n.youDidIt, isNotEmpty);
   expect(l10n.puzzleComplete, isNotEmpty);
   expect(l10n.playAgain, isNotEmpty);

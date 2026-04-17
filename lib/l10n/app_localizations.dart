@@ -150,23 +150,17 @@ abstract class AppLocalizations {
   /// **'Hard'**
   String get hard;
 
-  /// No description provided for @easyDesc.
+  /// No description provided for @difficultyTitle.
   ///
   /// In en, this message translates to:
-  /// **'9 pieces (3×3)'**
-  String get easyDesc;
+  /// **'Difficulty'**
+  String get difficultyTitle;
 
-  /// No description provided for @mediumDesc.
+  /// No description provided for @difficultyPiecesDesc.
   ///
   /// In en, this message translates to:
-  /// **'25 pieces (5×5)'**
-  String get mediumDesc;
-
-  /// No description provided for @hardDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'49 pieces (7×7)'**
-  String get hardDesc;
+  /// **'{count} pieces ({n}×{n})'**
+  String difficultyPiecesDesc(int count, int n);
 
   /// No description provided for @youDidIt.
   ///

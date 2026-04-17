@@ -8,16 +8,21 @@ import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
 class DifficultyScreen extends StatefulWidget {
 
   const DifficultyScreen({
-    required this.selectedImage, required this.localeNotifier, super.key,
+    required this.selectedImage,
+    required this.localeNotifier,
+    required this.difficultySettings,
+    super.key,
   });
   final PuzzleImageData selectedImage;
   final LocaleNotifier localeNotifier;
+  final DifficultySettings difficultySettings;
 
   @override
   State<DifficultyScreen> createState() => _DifficultyScreenState();
@@ -41,6 +46,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
     final l10n = AppLocalizations.of(context)!;
     final mediumLocked = _stars < 1;
     final hardLocked = _stars < 2;
+    final ds = widget.difficultySettings;
 
     return Scaffold(
       body: Container(
@@ -52,8 +58,8 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
             builder: (context, constraints) {
               final compact = constraints.maxHeight < 750;
               return compact
-                  ? _buildCompactLayout(context, l10n, constraints, mediumLocked, hardLocked)
-                  : _buildNormalLayout(context, l10n, mediumLocked, hardLocked);
+                  ? _buildCompactLayout(context, l10n, constraints, mediumLocked, hardLocked, ds)
+                  : _buildNormalLayout(context, l10n, mediumLocked, hardLocked, ds);
             },
           ),
         ),
@@ -67,6 +73,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
     AppLocalizations l10n,
     bool mediumLocked,
     bool hardLocked,
+    DifficultySettings ds,
   ) {
     return Column(
       children: [
@@ -101,7 +108,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
         const SizedBox(height: 26),
 
         _DifficultyOption(
-          description: l10n.easyDesc,
+          description: l10n.difficultyPiecesDesc(ds.easyGridSize * ds.easyGridSize, ds.easyGridSize),
           button: GameButton(
             label: l10n.easy,
             color: AppColors.green,
@@ -109,13 +116,13 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
             width: 260,
             height: 64,
             fontSize: 22,
-            onPressed: () => _go(context, 3),
+            onPressed: () => _go(context, ds.easyGridSize, 1),
           ),
         ),
         const SizedBox(height: 14),
 
         _DifficultyOption(
-          description: l10n.mediumDesc,
+          description: l10n.difficultyPiecesDesc(ds.mediumGridSize * ds.mediumGridSize, ds.mediumGridSize),
           locked: mediumLocked,
           button: GameButton(
             label: l10n.medium,
@@ -124,13 +131,13 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
             width: 260,
             height: 64,
             fontSize: 22,
-            onPressed: mediumLocked ? () {} : () => _go(context, 5),
+            onPressed: mediumLocked ? () {} : () => _go(context, ds.mediumGridSize, 2),
           ),
         ),
         const SizedBox(height: 14),
 
         _DifficultyOption(
-          description: l10n.hardDesc,
+          description: l10n.difficultyPiecesDesc(ds.hardGridSize * ds.hardGridSize, ds.hardGridSize),
           locked: hardLocked,
           button: GameButton(
             label: l10n.hard,
@@ -139,7 +146,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
             width: 260,
             height: 64,
             fontSize: 22,
-            onPressed: hardLocked ? () {} : () => _go(context, 7),
+            onPressed: hardLocked ? () {} : () => _go(context, ds.hardGridSize, 3),
           ),
         ),
 
@@ -157,6 +164,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
     BoxConstraints constraints,
     bool mediumLocked,
     bool hardLocked,
+    DifficultySettings ds,
   ) {
     final btnHeight = (constraints.maxHeight * 0.18).clamp(38.0, 52.0);
     final btnFontSize = (btnHeight * 0.38).clamp(13.0, 18.0);
@@ -207,7 +215,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                       GradientTitle(text: l10n.pickDifficulty, fontSize: 18),
                       const SizedBox(height: 8),
                       _DifficultyOption(
-                        description: l10n.easyDesc,
+                        description: l10n.difficultyPiecesDesc(ds.easyGridSize * ds.easyGridSize, ds.easyGridSize),
                         button: GameButton(
                           label: l10n.easy,
                           color: AppColors.green,
@@ -215,12 +223,12 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                           width: 180,
                           height: btnHeight,
                           fontSize: btnFontSize,
-                          onPressed: () => _go(context, 3),
+                          onPressed: () => _go(context, ds.easyGridSize, 1),
                         ),
                       ),
                       const SizedBox(height: 6),
                       _DifficultyOption(
-                        description: l10n.mediumDesc,
+                        description: l10n.difficultyPiecesDesc(ds.mediumGridSize * ds.mediumGridSize, ds.mediumGridSize),
                         locked: mediumLocked,
                         button: GameButton(
                           label: l10n.medium,
@@ -229,12 +237,12 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                           width: 180,
                           height: btnHeight,
                           fontSize: btnFontSize,
-                          onPressed: mediumLocked ? () {} : () => _go(context, 5),
+                          onPressed: mediumLocked ? () {} : () => _go(context, ds.mediumGridSize, 2),
                         ),
                       ),
                       const SizedBox(height: 6),
                       _DifficultyOption(
-                        description: l10n.hardDesc,
+                        description: l10n.difficultyPiecesDesc(ds.hardGridSize * ds.hardGridSize, ds.hardGridSize),
                         locked: hardLocked,
                         button: GameButton(
                           label: l10n.hard,
@@ -243,7 +251,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                           width: 180,
                           height: btnHeight,
                           fontSize: btnFontSize,
-                          onPressed: hardLocked ? () {} : () => _go(context, 7),
+                          onPressed: hardLocked ? () {} : () => _go(context, ds.hardGridSize, 3),
                         ),
                       ),
                     ],
@@ -287,11 +295,12 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
     );
   }
 
-  void _go(BuildContext context, int gridSize) {
+  void _go(BuildContext context, int gridSize, int difficultyStars) {
     unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => GameScreen(
         selectedImage: widget.selectedImage,
         gridSize: gridSize,
+        difficultyStars: difficultyStars,
         localeNotifier: widget.localeNotifier,
       ),
     )));
