@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/screens/difficulty_sliders_section.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
@@ -272,12 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Difficulty section
           _buildSectionLabel(l10n.difficultyTitle),
           const SizedBox(height: 12),
-          ListenableBuilder(
-            listenable: widget.difficultySettings,
-            builder: (context, _) {
-              return _buildDifficultySliders(l10n);
-            },
-          ),
+          DifficultySlidersSection(settings: widget.difficultySettings),
 
           const SizedBox(height: 24),
 
@@ -314,113 +310,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
         ],
       ),
-    );
-  }
-
-  Widget _buildDifficultySliders(AppLocalizations l10n) {
-    final ds = widget.difficultySettings;
-    final easy = ds.easyGridSize;
-    final medium = ds.mediumGridSize;
-    final hard = ds.hardGridSize;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildDifficultySliderRow(
-            label: l10n.easy,
-            color: AppColors.green,
-            value: easy,
-            min: DifficultySettings.minGridSize,
-            max: medium - 1,
-            onChanged: ds.setEasy,
-          ),
-          const SizedBox(height: 8),
-          _buildDifficultySliderRow(
-            label: l10n.medium,
-            color: AppColors.orange,
-            value: medium,
-            min: easy + 1,
-            max: hard - 1,
-            onChanged: ds.setMedium,
-          ),
-          const SizedBox(height: 8),
-          _buildDifficultySliderRow(
-            label: l10n.hard,
-            color: AppColors.red,
-            value: hard,
-            min: medium + 1,
-            max: DifficultySettings.maxGridSize,
-            onChanged: ds.setHard,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDifficultySliderRow({
-    required String label,
-    required Color color,
-    required int value,
-    required int min,
-    required int max,
-    required void Function(int) onChanged,
-  }) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 64,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.deepPurple,
-            ),
-          ),
-        ),
-        Expanded(
-          child: SliderTheme(
-            data: SliderThemeData(
-              activeTrackColor: color,
-              thumbColor: color,
-              inactiveTrackColor: color.withValues(alpha: 0.25),
-              overlayColor: color.withValues(alpha: 0.20),
-              trackHeight: 4,
-            ),
-            child: Slider(
-              value: value.toDouble(),
-              min: min.toDouble(),
-              max: max.toDouble(),
-              divisions: max > min ? max - min : 1,
-              onChanged: max > min ? (v) => onChanged(v.round()) : null,
-            ),
-          ),
-        ),
-        SizedBox(
-          width: 36,
-          child: Text(
-            '${value}×$value',
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.deepPurple,
-            ),
-          ),
-        ),
-      ],
     );
   }
 

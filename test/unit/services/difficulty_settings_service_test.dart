@@ -110,90 +110,85 @@ void main() {
     test('notifies listeners on valid change', () async {
       final settings = await DifficultySettings.load();
       var notified = false;
-      settings.addListener(() => notified = true);
-      settings.setEasy(2);
+      settings
+        ..addListener(() => notified = true)
+        ..setEasy(2);
       expect(notified, isTrue);
     });
 
     test('does not notify listeners on invalid change', () async {
       final settings = await DifficultySettings.load();
       var notified = false;
-      settings.addListener(() => notified = true);
-      settings.setEasy(999);
+      settings
+        ..addListener(() => notified = true)
+        ..setEasy(999);
       expect(notified, isFalse);
     });
   });
 
   group('DifficultySettings.setMedium', () {
     test('updates medium grid size when value is valid', () async {
-      final settings = DifficultySettings(easy: 2, medium: 5, hard: 9);
-      settings.setMedium(4);
+      final settings = DifficultySettings(easy: 2, medium: 5, hard: 9)..setMedium(4);
       expect(settings.mediumGridSize, 4);
     });
 
     test('ignores value equal to easy', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setMedium(3);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setMedium(3);
       expect(settings.mediumGridSize, 5);
     });
 
     test('ignores value less than easy', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setMedium(2);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setMedium(2);
       expect(settings.mediumGridSize, 5);
     });
 
     test('ignores value equal to hard', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setMedium(7);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setMedium(7);
       expect(settings.mediumGridSize, 5);
     });
 
     test('ignores value greater than hard', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setMedium(8);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setMedium(8);
       expect(settings.mediumGridSize, 5);
     });
 
     test('notifies listeners on valid change', () async {
       final settings = DifficultySettings(easy: 2, medium: 5, hard: 9);
       var notified = false;
-      settings.addListener(() => notified = true);
-      settings.setMedium(4);
+      settings
+        ..addListener(() => notified = true)
+        ..setMedium(4);
       expect(notified, isTrue);
     });
   });
 
   group('DifficultySettings.setHard', () {
     test('updates hard grid size when value is valid', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setHard(9);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setHard(9);
       expect(settings.hardGridSize, 9);
     });
 
     test('ignores value equal to medium', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setHard(5);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setHard(5);
       expect(settings.hardGridSize, 7);
     });
 
     test('ignores value less than medium', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setHard(4);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setHard(4);
       expect(settings.hardGridSize, 7);
     });
 
     test('ignores value exceeding maximum', () async {
-      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
-      settings.setHard(10);
+      final settings = DifficultySettings(easy: 3, medium: 5, hard: 7)..setHard(10);
       expect(settings.hardGridSize, 7);
     });
 
     test('notifies listeners on valid change', () async {
       final settings = DifficultySettings(easy: 3, medium: 5, hard: 7);
       var notified = false;
-      settings.addListener(() => notified = true);
-      settings.setHard(9);
+      settings
+        ..addListener(() => notified = true)
+        ..setHard(9);
       expect(notified, isTrue);
     });
   });
@@ -203,6 +198,43 @@ void main() {
       final settings = await DifficultySettings.load();
       expect(settings.easyGridSize, lessThan(settings.mediumGridSize));
       expect(settings.mediumGridSize, lessThan(settings.hardGridSize));
+    });
+  });
+
+  group('DifficultySettings persistence round-trip', () {
+    test('setEasy persists value across a subsequent load', () async {
+      final settings = await DifficultySettings.load();
+      settings.setEasy(2);
+      // Allow the unawaited _save() to complete.
+      await Future<void>.delayed(Duration.zero);
+      final reloaded = await DifficultySettings.load();
+      expect(reloaded.easyGridSize, 2);
+    });
+
+    test('setMedium persists value across a subsequent load', () async {
+      SharedPreferences.setMockInitialValues({
+        'difficulty_easy': 3,
+        'difficulty_medium': 4,
+        'difficulty_hard': 9,
+      });
+      final settings = await DifficultySettings.load();
+      settings.setMedium(6);
+      await Future<void>.delayed(Duration.zero);
+      final reloaded = await DifficultySettings.load();
+      expect(reloaded.mediumGridSize, 6);
+    });
+
+    test('setHard persists value across a subsequent load', () async {
+      SharedPreferences.setMockInitialValues({
+        'difficulty_easy': 3,
+        'difficulty_medium': 4,
+        'difficulty_hard': 5,
+      });
+      final settings = await DifficultySettings.load();
+      settings.setHard(8);
+      await Future<void>.delayed(Duration.zero);
+      final reloaded = await DifficultySettings.load();
+      expect(reloaded.hardGridSize, 8);
     });
   });
 }
