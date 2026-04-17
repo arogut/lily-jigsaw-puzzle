@@ -8,9 +8,15 @@ import 'package:lily_jigsaw_puzzle/screens/difficulty_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/splash_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 LocaleNotifier _makeLocaleNotifier() => LocaleNotifier(const Locale('en'));
+DifficultySettings _makeDifficultySettings() => DifficultySettings(
+      easy: DifficultySettings.defaultEasy,
+      medium: DifficultySettings.defaultMedium,
+      hard: DifficultySettings.defaultHard,
+    );
 
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -27,7 +33,10 @@ void main() {
 
   testWidgets('Splash screen renders the game title', (tester) async {
     await tester.pumpWidget(
-      _wrap(SplashScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(SplashScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pump(const Duration(milliseconds: 900));
     expect(find.text("Lily's Puzzle"), findsWidgets);
@@ -41,7 +50,10 @@ void main() {
     // Use a large screen so layout doesn't overflow in the test environment.
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pump();
     // Names were removed; each card shows only a photo thumbnail.
@@ -54,7 +66,10 @@ void main() {
   testWidgets('Image selection screen shows the title', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pump();
     expect(find.text('Choose a Puzzle!'), findsWidgets);
@@ -70,6 +85,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pump();
@@ -87,6 +103,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pump();
@@ -102,6 +119,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pump();
@@ -111,7 +129,10 @@ void main() {
   testWidgets('Image selection navigates to difficulty screen on tap', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pump();
     await tester.tap(find.byType(Image).first);
@@ -123,7 +144,10 @@ void main() {
   testWidgets('Settings screen is reachable from image selection screen', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pump();
     await tester.tap(find.text('Settings'));
@@ -139,11 +163,14 @@ void main() {
     final catUuid = PuzzleImageData.all
         .firstWhere((i) => i.assetPath.contains('puzzle-1'))
         .uuid;
-    await CompletionService().recordCompletion(catUuid, 7); // 3 stars
+    await CompletionService().recordCompletion(catUuid, 3); // 3 stars (hard)
 
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     // Let the FutureBuilder resolve.
     await tester.pumpAndSettle();
@@ -156,7 +183,10 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.star_rounded), findsNothing);
@@ -165,7 +195,10 @@ void main() {
 
   testWidgets('JigsawApp builds without error', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(JigsawApp(localeNotifier: _makeLocaleNotifier()));
+    await tester.pumpWidget(JigsawApp(
+      localeNotifier: _makeLocaleNotifier(),
+      difficultySettings: _makeDifficultySettings(),
+    ));
     await tester.pump();
     // SplashScreen is the initial route
     expect(find.byType(MaterialApp), findsOneWidget);
@@ -176,7 +209,10 @@ void main() {
   testWidgets('JigsawApp rebuilds when locale changes', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final notifier = _makeLocaleNotifier();
-    await tester.pumpWidget(JigsawApp(localeNotifier: notifier));
+    await tester.pumpWidget(JigsawApp(
+      localeNotifier: notifier,
+      difficultySettings: _makeDifficultySettings(),
+    ));
     await tester.pump();
     notifier.setLocale(const Locale('de'));
     await tester.pump();
@@ -194,6 +230,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     // Let async getStars complete so the mounted setState branch is hit
@@ -210,6 +247,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pump();
@@ -229,6 +267,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pump();
@@ -244,7 +283,10 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pump();
     // Navigate to Settings
@@ -262,7 +304,10 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pumpAndSettle();
     // Navigate to DifficultyScreen
@@ -284,16 +329,17 @@ void main() {
       uuid: 'test-uuid-cat',
     );
     // Record 3-star completion to unlock Hard
-    await CompletionService().recordCompletion(catImage.uuid, 7);
+    await CompletionService().recordCompletion(catImage.uuid, 3);
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
       _wrap(DifficultyScreen(
         selectedImage: catImage,
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pumpAndSettle();
-    // Hard is now unlocked → tapping it calls _go(context, 7)
+    // Hard is now unlocked → tapping it calls _go(context, hardGridSize, 3)
     await tester.tap(find.text('Hard'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -314,6 +360,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pump();
@@ -332,7 +379,10 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(
-      _wrap(ImageSelectionScreen(localeNotifier: _makeLocaleNotifier())),
+      _wrap(ImageSelectionScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+      )),
     );
     await tester.pump();
     // Start a gesture on the first image card then cancel
@@ -357,6 +407,7 @@ void main() {
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
       )),
     );
     await tester.pump();

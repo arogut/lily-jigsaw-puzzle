@@ -8,9 +8,14 @@
   "easy": "Fácil",
   "medium": "Medio",
   "hard": "Difícil",
-  "easyDesc": "9 piezas (3×3)",
-  "mediumDesc": "25 piezas (5×5)",
-  "hardDesc": "49 piezas (7×7)",
+  "difficultyTitle": "Dificultad",
+  "difficultyPiecesDesc": "{count} piezas ({n}×{n})",
+  "@difficultyPiecesDesc": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "n": {"type": "int"}
+    }
+  },
   "youDidIt": "¡Lo lograste!",
   "puzzleComplete": "¡Puzzle completo!",
   "playAgain": "Jugar de nuevo",

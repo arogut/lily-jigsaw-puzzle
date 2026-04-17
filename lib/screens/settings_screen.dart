@@ -6,14 +6,21 @@ import 'package:flutter/services.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/screens/difficulty_sliders_section.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
 class SettingsScreen extends StatefulWidget {
 
-  const SettingsScreen({required this.localeNotifier, super.key});
+  const SettingsScreen({
+    required this.localeNotifier,
+    required this.difficultySettings,
+    super.key,
+  });
   final LocaleNotifier localeNotifier;
+  final DifficultySettings difficultySettings;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -263,6 +270,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // Difficulty section
+          _buildSectionLabel(l10n.difficultyTitle),
+          const SizedBox(height: 12),
+          DifficultySlidersSection(settings: widget.difficultySettings),
+
+          const SizedBox(height: 24),
+
           // Reset progress section
           _buildSectionLabel(l10n.resetProgress),
           const SizedBox(height: 12),
@@ -293,6 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
+          const SizedBox(height: 16),
         ],
       ),
     );

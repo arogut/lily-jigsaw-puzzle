@@ -8,12 +8,18 @@ import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/painters/logo_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
+import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
 class SplashScreen extends StatefulWidget {
 
-  const SplashScreen({required this.localeNotifier, super.key});
+  const SplashScreen({
+    required this.localeNotifier,
+    required this.difficultySettings,
+    super.key,
+  });
   final LocaleNotifier localeNotifier;
+  final DifficultySettings difficultySettings;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -65,7 +71,10 @@ class _SplashScreenState extends State<SplashScreen>
       unawaited(Navigator.of(context).pushReplacement(
         PageRouteBuilder<void>(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              ImageSelectionScreen(localeNotifier: widget.localeNotifier),
+              ImageSelectionScreen(
+            localeNotifier: widget.localeNotifier,
+            difficultySettings: widget.difficultySettings,
+          ),
           transitionsBuilder: (context, anim, secondaryAnimation, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),

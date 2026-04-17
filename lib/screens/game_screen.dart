@@ -32,10 +32,17 @@ const _kScatterSettleMs = 300;
 class GameScreen extends StatefulWidget {
 
   const GameScreen({
-    required this.selectedImage, required this.gridSize, required this.localeNotifier, super.key,
+    required this.selectedImage,
+    required this.gridSize,
+    required this.difficultyStars,
+    required this.localeNotifier,
+    super.key,
   });
   final PuzzleImageData selectedImage;
   final int gridSize;
+
+  /// Stars awarded for completing this difficulty (1 = easy, 2 = medium, 3 = hard).
+  final int difficultyStars;
   final LocaleNotifier localeNotifier;
 
   @override
@@ -614,7 +621,7 @@ class _GameScreenState extends State<GameScreen>
   Future<void> _recordCompletion() async {
     await CompletionService().recordCompletion(
       widget.selectedImage.uuid,
-      widget.gridSize,
+      widget.difficultyStars,
     );
   }
 

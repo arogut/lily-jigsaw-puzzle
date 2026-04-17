@@ -33,13 +33,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hard => 'Schwer';
 
   @override
-  String get easyDesc => '9 Teile (3×3)';
+  String get difficultyTitle => 'Schwierigkeit';
 
   @override
-  String get mediumDesc => '25 Teile (5×5)';
-
-  @override
-  String get hardDesc => '49 Teile (7×7)';
+  String difficultyPiecesDesc(int count, int n) => '$count Teile ($n×$n)';
 
   @override
   String get youDidIt => 'Geschafft!';
