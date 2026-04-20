@@ -7,24 +7,15 @@ import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:flutter/services.dart';
 
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
-import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
-import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
-import 'package:lily_jigsaw_puzzle/painters/board_grid_painter.dart';
-import 'package:lily_jigsaw_puzzle/painters/board_shadow_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
-import 'package:lily_jigsaw_puzzle/painters/hint_glow_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
+import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
-import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
-import 'package:lily_jigsaw_puzzle/widgets/tray_label.dart';
-import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
-
-const _kEdgePad = 20.0;
 
 // Brief pause after scatter animation before entering playing phase.
 const _kScatterSettleMs = 300;
@@ -117,7 +108,7 @@ class _GameScreenState extends State<GameScreen>
 
   Future<void> _loadImage() async {
     final size = MediaQuery.of(context).size;
-    final targetW = ((size.width / 2) - 2 * _kEdgePad).round().clamp(64, 2048);
+    final targetW = ((size.width / 2) - 2 * kEdgePad).round().clamp(64, 2048);
 
     final data = await rootBundle.load(widget.selectedImage.assetPath);
     final codec = await ui.instantiateImageCodec(
@@ -134,10 +125,10 @@ class _GameScreenState extends State<GameScreen>
 
   void _initGame() {
     final size = MediaQuery.of(context).size;
-    const boardOffset = Offset(_kEdgePad, _kEdgePad);
+    const boardOffset = Offset(kEdgePad, kEdgePad);
     final boardSize = Size(
-      size.width / 2 - 2 * _kEdgePad,
-      size.height - 2 * _kEdgePad,
+      size.width / 2 - 2 * kEdgePad,
+      size.height - 2 * kEdgePad,
     );
 
     _gameState = GameState(
@@ -155,9 +146,9 @@ class _GameScreenState extends State<GameScreen>
   // ── Tray bounds used by physics ──────────────────────────────────────────
 
   Rect _trayBounds(Size screenSize) => Rect.fromLTRB(
-        screenSize.width / 2 + _kEdgePad,
+        screenSize.width / 2 + kEdgePad,
         0,
-        screenSize.width - _kEdgePad,
+        screenSize.width - kEdgePad,
         screenSize.height,
       );
 
@@ -170,7 +161,8 @@ class _GameScreenState extends State<GameScreen>
     // Animate from board positions to spread positions across the right tray.
     _scatterTargets = _gameState!.computeScatterTargets(size);
 
-    setState(() => _gameState!.phase = GamePhase.scattering);
+    _gameState!.beginScattering();
+    setState(() {}); // phase change → shadow layer + board grid update
 
     _scatterController
       ..reset()
@@ -264,6 +256,61 @@ class _GameScreenState extends State<GameScreen>
     return null;
   }
 
+  // ── Drag handlers ─────────────────────────────────────────────────────────
+
+  void _onPanStart(DragStartDetails d) {
+    final gs = _gameState!;
+    final idx = _hitTestPiece(d.localPosition);
+    if (idx == null) return;
+    // When a hint is active, only the hinted piece can be touched.
+    if (gs.hasActiveHint && !gs.pieces[idx].isHinted) return;
+    unawaited(HapticFeedback.lightImpact());
+    gs.startDrag(idx);
+    _dragCrossedLeft = false;
+    _paintTick.value++;
+  }
+
+  void _onPanUpdate(DragUpdateDetails d) {
+    final gs = _gameState!;
+    if (gs.draggingIndex == null) return;
+    gs.updateDrag(d.delta);
+    final piece = gs.pieces[gs.draggingIndex!];
+    if (piece.currentPosition.dx < MediaQuery.of(context).size.width / 2) {
+      _dragCrossedLeft = true;
+    }
+    _paintTick.value++;
+  }
+
+  void _onPanEnd(DragEndDetails d) {
+    final gs = _gameState!;
+    if (gs.draggingIndex == null) return;
+    final piece = gs.pieces[gs.draggingIndex!];
+    if ((piece.currentPosition - piece.targetPosition).distance <= kSnapThreshold) {
+      // Snapped into place.
+      gs.endDrag();
+      unawaited(SoundService().playSnap());
+      if (gs.phase == GamePhase.won) {
+        unawaited(_recordCompletion());
+        unawaited(SoundService().playWin());
+        _startConfetti();
+      } else {
+        setState(() {}); // update tray label
+      }
+    } else if (_dragCrossedLeft) {
+      // Piece was dragged to the board side but not placed — shake + fly-back.
+      unawaited(HapticFeedback.mediumImpact());
+      unawaited(SoundService().playWrong());
+      gs.endDragNoPlace();
+      _startReturnAnimation(piece);
+    } else {
+      // Piece never left the tray — apply momentum.
+      gs.endDragNoPlace();
+      if (!_snapToTrayIfOutside(piece, MediaQuery.of(context).size)) {
+        _paintTick.value++;
+      }
+    }
+  }
+
   // ── Return animation ──────────────────────────────────────────────────────
 
   void _onReturnTick() {
@@ -285,7 +332,7 @@ class _GameScreenState extends State<GameScreen>
   void _startReturnAnimation(PuzzlePiece piece) {
     final size = MediaQuery.of(context).size;
     final gs = _gameState!;
-    const margin = _kEdgePad;
+    const margin = kEdgePad;
     final rng = Random();
     final trayX = (size.width / 2 + margin) +
         rng.nextDouble() *
@@ -326,7 +373,45 @@ class _GameScreenState extends State<GameScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF9BC8E8),
-      body: _uiImage == null ? _buildLoading() : _buildGame(),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    final img = _uiImage;
+    if (img == null) return _buildLoading();
+
+    final gs = _gameState;
+    if (gs == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _gameState == null) _initGame();
+      });
+      return _buildLoading();
+    }
+
+    final isPlaying = gs.phase == GamePhase.playing;
+    final canUseHint = isPlaying && gs.hintsRemaining > 0 && !gs.hasActiveHint;
+
+    return GameBoardView(
+      gameState: gs,
+      uiImage: img,
+      paintTick: _paintTick,
+      hintController: _hintController,
+      confettiParticles: _confettiParticles,
+      confettiController: _confettiController,
+      showWinOverlay: _showWinOverlay,
+      onBack: () => Navigator.of(context).popUntil((r) => r.isFirst),
+      onPlayAgain: _restartGame,
+      onNewPuzzle: () => Navigator.of(context).popUntil((r) => r.isFirst),
+      onPanStart: isPlaying ? _onPanStart : null,
+      onPanUpdate: isPlaying ? _onPanUpdate : null,
+      onPanEnd: isPlaying ? _onPanEnd : null,
+      onHint: canUseHint
+          ? () {
+              gs.activateHint();
+              setState(() {});
+            }
+          : null,
     );
   }
 
@@ -336,267 +421,6 @@ class _GameScreenState extends State<GameScreen>
       child: const Center(
         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 4),
       ),
-    );
-  }
-
-  Widget _buildGame() {
-    if (_gameState == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _gameState == null) _initGame();
-      });
-      return _buildLoading();
-    }
-
-    final gs = _gameState!;
-    final l10n = AppLocalizations.of(context)!;
-    final boardW = gs.boardSize.width;
-    final boardH = gs.boardSize.height;
-    final boardOffX = gs.boardOffset.dx;
-    final boardOffY = gs.boardOffset.dy;
-    final dividerX = boardOffX + boardW + _kEdgePad;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final canUseHint = gs.phase == GamePhase.playing &&
-        gs.hintsRemaining > 0 &&
-        !gs.hasActiveHint;
-
-    return Stack(
-      children: [
-        // ── Panel backgrounds ───────────────────────────────────────────────
-        Positioned.fill(
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFB8DEFF), Color(0xFF8EC8F8)],
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFD8BAFF), Color(0xFFFFABD0)],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // ── Board grid ghost ────────────────────────────────────────────────
-        Positioned(
-          left: boardOffX, top: boardOffY, width: boardW, height: boardH,
-          child: CustomPaint(painter: BoardGridPainter(gs.gridSize)),
-        ),
-
-        // ── Shadow hints ────────────────────────────────────────────────────
-        if (gs.phase == GamePhase.scattering || gs.phase == GamePhase.playing)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: BoardShadowPainter(
-                  pieces: gs.pieces,
-                  pieceWidth: gs.pieceWidth,
-                  pieceHeight: gs.pieceHeight,
-                ),
-              ),
-            ),
-          ),
-
-        // ── Divider ─────────────────────────────────────────────────────────
-        Positioned(
-          left: dividerX - 3, top: 0, bottom: 0, width: 6,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.hotPink,
-                  Color(0xFFFFD93D),
-                  AppColors.green,
-                  AppColors.blue,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 6,
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // ── ALL PIECES — single CustomPaint + single GestureDetector ────────
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onPanStart: gs.phase == GamePhase.playing
-                ? (d) {
-                    final idx = _hitTestPiece(d.localPosition);
-                    if (idx != null) {
-                      // When a hint is active, only the hinted piece can be touched.
-                      if (gs.hasActiveHint && !gs.pieces[idx].isHinted) return;
-                      unawaited(HapticFeedback.lightImpact());
-                      gs.startDrag(idx);
-                      _dragCrossedLeft = false;
-                      _paintTick.value++;
-                    }
-                  }
-                : null,
-            onPanUpdate: gs.phase == GamePhase.playing
-                ? (d) {
-                    if (gs.draggingIndex == null) return;
-                    gs.updateDrag(d.delta);
-                    // Track whether the piece ever crossed to the board (left) side
-                    final piece = gs.pieces[gs.draggingIndex!];
-                    if (piece.currentPosition.dx < screenWidth / 2) {
-                      _dragCrossedLeft = true;
-                    }
-                    _paintTick.value++;
-                  }
-                : null,
-            onPanEnd: gs.phase == GamePhase.playing
-                ? (d) {
-                    if (gs.draggingIndex == null) return;
-                    final piece = gs.pieces[gs.draggingIndex!];
-                    const snapThreshold = 40.0;
-                    if ((piece.currentPosition - piece.targetPosition)
-                            .distance <=
-                        snapThreshold) {
-                      // Snapped into place.
-                      gs.endDrag();
-                      unawaited(SoundService().playSnap());
-                      if (gs.phase == GamePhase.won) {
-                        unawaited(_recordCompletion());
-                        unawaited(SoundService().playWin());
-                        _startConfetti();
-                      } else {
-                        setState(() {}); // update tray label
-                      }
-                    } else if (_dragCrossedLeft) {
-                      // Piece was dragged to the board side but not placed — shake + fly-back
-                      unawaited(HapticFeedback.mediumImpact());
-                      unawaited(SoundService().playWrong());
-                      gs.endDragNoPlace();
-                      _startReturnAnimation(piece);
-                    } else {
-                      // Piece never left the tray — apply momentum.
-                      gs.endDragNoPlace();
-                      if (!_snapToTrayIfOutside(piece, MediaQuery.of(context).size)) {
-                        _paintTick.value++;
-                      }
-                    }
-                  }
-                : null,
-            child: CustomPaint(
-              painter: AllPiecesPainter(
-                pieces: gs.pieces,
-                image: _uiImage!,
-                pieceWidth: gs.pieceWidth,
-                pieceHeight: gs.pieceHeight,
-                repaintNotifier: _paintTick,
-                hasActiveHint: gs.hasActiveHint,
-              ),
-            ),
-          ),
-        ),
-
-        // ── Hint glow overlay (on top of pieces so border is visible) ────────
-        if (gs.phase == GamePhase.playing && gs.hasActiveHint)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: HintGlowPainter(
-                  pieces: gs.pieces,
-                  pieceWidth: gs.pieceWidth,
-                  pieceHeight: gs.pieceHeight,
-                  animation: _hintController,
-                ),
-              ),
-            ),
-          ),
-
-        // ── Back button ─────────────────────────────────────────────────────
-        Positioned(
-          left: 8, top: 8,
-          child: GameButton(
-            label: l10n.back,
-            icon: Icons.arrow_back_rounded,
-            color: AppColors.mediumPurple,
-            width: 120,
-            height: 44,
-            fontSize: 15,
-            onPressed: () =>
-                Navigator.of(context).popUntil((r) => r.isFirst),
-          ),
-        ),
-
-        // ── Right-side controls: hint button + tray label ────────────────────
-        Positioned(
-          right: _kEdgePad, top: 8,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Opacity(
-                  opacity: canUseHint ? 1.0 : 0.5,
-                  child: GameButton(
-                    label: '${l10n.hint} (${gs.hintsRemaining})',
-                    icon: Icons.lightbulb_outline,
-                    color: AppColors.amber,
-                    width: 120,
-                    height: 44,
-                    fontSize: 15,
-                    enabled: canUseHint,
-                    onPressed: canUseHint
-                        ? () {
-                            gs.activateHint();
-                            setState(() {});
-                          }
-                        : () {},
-                  ),
-                ),
-              ),
-              TrayLabel(
-                placed: gs.pieces.where((p) => p.isPlaced).length,
-                total: gs.pieces.length,
-              ),
-            ],
-          ),
-        ),
-
-        // ── Confetti ────────────────────────────────────────────────────────
-        if (gs.phase == GamePhase.won && !_showWinOverlay)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: ConfettiPainter(
-                  particles: _confettiParticles,
-                  animation: _confettiController,
-                ),
-              ),
-            ),
-          ),
-
-        // ── Win overlay ─────────────────────────────────────────────────────
-        if (gs.phase == GamePhase.won && _showWinOverlay)
-          WinOverlay(
-            onPlayAgain: _restartGame,
-            onNewPuzzle: () =>
-                Navigator.of(context).popUntil((r) => r.isFirst),
-          ),
-      ],
     );
   }
 

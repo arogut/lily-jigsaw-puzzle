@@ -4,11 +4,17 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
+export 'package:lily_jigsaw_puzzle/models/game_phase.dart';
+import 'package:lily_jigsaw_puzzle/models/game_phase.dart';
+import 'package:lily_jigsaw_puzzle/models/puzzle_builder.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
 // ── Physics constants ──────────────────────────────────────────────────────
 const double _kLiftScale = 1.08;
-const double _kSnapThreshold = 40;
+
+/// Distance in logical pixels within which a dropped piece snaps to its slot.
+const double kSnapThreshold = 40;
+
 const double _kMagnetRadius = 80;
 
 // Velocity friction: vel *= (1 - _kFriction * dt). Half-life ≈ 0.1 seconds.
@@ -22,10 +28,12 @@ const double _kMinVelocity = 5;
 
 // ──────────────────────────────────────────────────────────────────────────
 
-enum GamePhase { loading, assembled, scattering, playing, won }
-
+/// Holds the complete mutable state of an in-progress puzzle game.
+///
+/// Extends [ChangeNotifier] so listeners can react to phase transitions and
+/// drag events without polling.
 class GameState extends ChangeNotifier {
-
+  /// Creates a [GameState] and immediately initialises pieces from [puzzleImage].
   GameState({
     required this.puzzleImage,
     required this.gridSize,
@@ -34,23 +42,34 @@ class GameState extends ChangeNotifier {
   }) {
     _initialize();
   }
+
   final ui.Image puzzleImage;
   final int gridSize;
   final Size boardSize;
   final Offset boardOffset;
 
-  late List<PuzzlePiece> pieces;
-  GamePhase phase = GamePhase.loading;
-  int? draggingIndex;
-  int hintsRemaining = 3;
+  late List<PuzzlePiece> _pieces;
 
-  late double pieceWidth;
-  late double pieceHeight;
+  /// Ordered list of puzzle pieces — rendered and hit-tested back-to-front.
+  List<PuzzlePiece> get pieces => _pieces;
 
-  // hConnectors[r][c]: edge between row r and row r+1, col c
-  late List<List<EdgeType>> _hConnectors;
-  // vConnectors[r][c]: edge between col c and col c+1, row r
-  late List<List<EdgeType>> _vConnectors;
+  GamePhase _phase = GamePhase.loading;
+
+  /// Current game phase driving active interactions and visible layers.
+  GamePhase get phase => _phase;
+
+  int? _draggingIndex;
+
+  /// Index into [pieces] of the piece currently being dragged, or null.
+  int? get draggingIndex => _draggingIndex;
+
+  int _hintsRemaining = 3;
+
+  /// Remaining hint activations available to the player.
+  int get hintsRemaining => _hintsRemaining;
+
+  late final double pieceWidth;
+  late final double pieceHeight;
 
   // Velocity tracking during drag.
   Offset _dragVelocity = Offset.zero;
@@ -60,92 +79,23 @@ class GameState extends ChangeNotifier {
   Offset _rawDragPosition = Offset.zero;
 
   void _initialize() {
-    pieceWidth = boardSize.width / gridSize;
-    pieceHeight = boardSize.height / gridSize;
-
-    _buildConnectors();
-    _buildPieces();
-    phase = GamePhase.assembled;
-    notifyListeners();
-  }
-
-  void _buildConnectors() {
-    final rng = Random();
-    // Horizontal connectors: (gridSize-1) rows of gridSize columns
-    _hConnectors = List.generate(
-      gridSize - 1,
-      (_) => List.generate(gridSize, (_) => rng.nextBool() ? EdgeType.tab : EdgeType.blank),
+    final result = PuzzleBuilder.build(
+      gridSize: gridSize,
+      boardSize: boardSize,
+      boardOffset: boardOffset,
     );
-    // Vertical connectors: gridSize rows of (gridSize-1) columns
-    _vConnectors = List.generate(
-      gridSize,
-      (_) => List.generate(gridSize - 1, (_) => rng.nextBool() ? EdgeType.tab : EdgeType.blank),
-    );
-  }
-
-  void _buildPieces() {
-    pieces = [];
-    for (var r = 0; r < gridSize; r++) {
-      for (var c = 0; c < gridSize; c++) {
-        final target = boardOffset + Offset(c * pieceWidth, r * pieceHeight);
-        pieces.add(
-          PuzzlePiece(
-            row: r,
-            col: c,
-            gridSize: gridSize,
-            edges: _edgesFor(r, c),
-            targetPosition: target,
-            currentPosition: target,
-          ),
-        );
-      }
-    }
-  }
-
-  PieceEdges _edgesFor(int r, int c) {
-    // Top edge
-    EdgeType top;
-    if (r == 0) {
-      top = EdgeType.flat;
-    } else {
-      // complement of the bottom edge of (r-1, c)
-      top = _hConnectors[r - 1][c] == EdgeType.tab ? EdgeType.blank : EdgeType.tab;
-    }
-
-    // Bottom edge
-    EdgeType bottom;
-    if (r == gridSize - 1) {
-      bottom = EdgeType.flat;
-    } else {
-      bottom = _hConnectors[r][c];
-    }
-
-    // Left edge
-    EdgeType left;
-    if (c == 0) {
-      left = EdgeType.flat;
-    } else {
-      // complement of the right edge of (r, c-1)
-      left = _vConnectors[r][c - 1] == EdgeType.tab ? EdgeType.blank : EdgeType.tab;
-    }
-
-    // Right edge
-    EdgeType right;
-    if (c == gridSize - 1) {
-      right = EdgeType.flat;
-    } else {
-      right = _vConnectors[r][c];
-    }
-
-    return PieceEdges(top: top, right: right, bottom: bottom, left: left);
+    pieceWidth = result.pieceWidth;
+    pieceHeight = result.pieceHeight;
+    _pieces = result.pieces;
+    _phase = GamePhase.assembled;
   }
 
   /// Called per-frame during scatter animation — bypasses notifyListeners for performance.
   void setPiecePosition(int index, Offset position) {
-    pieces[index].currentPosition = position;
+    _pieces[index].currentPosition = position;
   }
 
-  /// Sets scatter random target positions spread across the right-half tray area.
+  /// Returns random scatter target positions spread across the right-half tray.
   List<Offset> computeScatterTargets(Size screenSize) {
     final rng = Random();
     const margin = 20.0;
@@ -153,7 +103,7 @@ class GameState extends ChangeNotifier {
     final trayRight = screenSize.width - margin - pieceWidth;
     const trayTop = margin;
     final trayBottom = screenSize.height - margin - pieceHeight;
-    return List.generate(pieces.length, (i) {
+    return List.generate(_pieces.length, (i) {
       return Offset(
         trayLeft + rng.nextDouble() * (trayRight - trayLeft).clamp(0, double.infinity),
         trayTop + rng.nextDouble() * (trayBottom - trayTop).clamp(0, double.infinity),
@@ -161,32 +111,43 @@ class GameState extends ChangeNotifier {
     });
   }
 
+  /// Transitions to [GamePhase.scattering].
+  ///
+  /// Does not notify listeners — the scatter animation drives repaints
+  /// directly via the screen's repaint notifier.
+  void beginScattering() {
+    _phase = GamePhase.scattering;
+  }
+
+  /// Transitions to [GamePhase.playing] and notifies listeners.
   void beginPlaying() {
-    phase = GamePhase.playing;
+    _phase = GamePhase.playing;
     notifyListeners();
   }
 
   // ── Drag lifecycle ────────────────────────────────────────────────────────
 
+  /// Lifts [pieces[index]] to the top of the render stack and begins tracking drag.
   void startDrag(int index) {
     _dragVelocity = Offset.zero;
     _lastDragTime = DateTime.now();
 
     // Move primary piece to end of list so it renders on top.
-    final piece = pieces[index];
-    pieces.remove(piece);
+    final piece = _pieces[index];
+    _pieces.remove(piece);
     piece
       ..isDragging = true
       ..scale = _kLiftScale
       ..velocity = Offset.zero;
-    pieces.add(piece);
-    draggingIndex = pieces.length - 1;
+    _pieces.add(piece);
+    _draggingIndex = _pieces.length - 1;
     _rawDragPosition = piece.currentPosition;
     notifyListeners();
   }
 
+  /// Moves the dragged piece by [delta] and applies magnetic pull near its target.
   void updateDrag(Offset delta) {
-    if (draggingIndex == null) return;
+    if (_draggingIndex == null) return;
 
     // Track velocity using an exponential moving average.
     final now = DateTime.now();
@@ -200,7 +161,7 @@ class GameState extends ChangeNotifier {
     _lastDragTime = now;
 
     _rawDragPosition += delta;
-    final piece = pieces[draggingIndex!];
+    final piece = _pieces[_draggingIndex!];
     piece.currentPosition =
         _rawDragPosition + _magneticOffset(_rawDragPosition, piece.targetPosition);
     notifyListeners();
@@ -224,21 +185,22 @@ class GameState extends ChangeNotifier {
   /// in the wrong position and the view will animate it back, or when it stays
   /// in the tray with momentum.
   void endDragNoPlace() {
-    if (draggingIndex == null) return;
-    pieces[draggingIndex!]
+    if (_draggingIndex == null) return;
+    _pieces[_draggingIndex!]
       ..isDragging = false
       ..scale = 1.0
       ..velocity = _clampVelocity(_dragVelocity);
-    draggingIndex = null;
+    _draggingIndex = null;
   }
 
+  /// Ends the drag, snapping the piece into place if within [kSnapThreshold].
   void endDrag() {
-    if (draggingIndex == null) return;
-    final piece = pieces[draggingIndex!]
+    if (_draggingIndex == null) return;
+    final piece = _pieces[_draggingIndex!]
       ..isDragging = false
       ..scale = 1.0;
 
-    if ((piece.currentPosition - piece.targetPosition).distance <= _kSnapThreshold) {
+    if ((piece.currentPosition - piece.targetPosition).distance <= kSnapThreshold) {
       piece
         ..currentPosition = piece.targetPosition
         ..isPlaced = true
@@ -249,11 +211,11 @@ class GameState extends ChangeNotifier {
       piece.velocity = _clampVelocity(_dragVelocity);
     }
 
-    draggingIndex = null;
+    _draggingIndex = null;
     notifyListeners();
 
-    if (pieces.every((p) => p.isPlaced)) {
-      phase = GamePhase.won;
+    if (_pieces.every((p) => p.isPlaced)) {
+      _phase = GamePhase.won;
       notifyListeners();
     }
   }
@@ -265,7 +227,7 @@ class GameState extends ChangeNotifier {
   bool stepPhysics(double dt, Rect trayBounds) {
     var changed = false;
 
-    for (final piece in pieces) {
+    for (final piece in _pieces) {
       if (piece.isPlaced || piece.isDragging) continue;
 
       var vel = piece.velocity;
@@ -321,24 +283,26 @@ class GameState extends ChangeNotifier {
     return vel / d * _kMaxVelocity;
   }
 
-  bool get hasActiveHint => pieces.any((p) => p.isHinted);
+  /// True when a hint is currently active (one piece is highlighted).
+  bool get hasActiveHint => _pieces.any((p) => p.isHinted);
 
+  /// Highlights a random unplaced piece and decrements [hintsRemaining].
   void activateHint() {
-    if (hintsRemaining <= 0) return;
+    if (_hintsRemaining <= 0) return;
     _clearHint();
     // Only hint unplaced, non-dragging pieces.
-    final unplaced = pieces
+    final unplaced = _pieces
         .where((p) => !p.isPlaced && !p.isDragging)
         .toList();
     if (unplaced.isEmpty) return;
     final rng = Random();
     unplaced[rng.nextInt(unplaced.length)].isHinted = true;
-    hintsRemaining--;
+    _hintsRemaining--;
     notifyListeners();
   }
 
   void _clearHint() {
-    for (final piece in pieces) {
+    for (final piece in _pieces) {
       piece.isHinted = false;
     }
   }
