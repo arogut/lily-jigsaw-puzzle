@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
-import 'package:lily_jigsaw_puzzle/models/game_phase.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_grid_painter.dart';
@@ -16,7 +15,7 @@ import 'package:lily_jigsaw_puzzle/widgets/tray_label.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
 /// Padding between the board/tray and the screen edge, in logical pixels.
-const kEdgePad = 20.0;
+const double kEdgePad = 20.0;
 
 /// Renders the full game UI for an active puzzle session.
 ///
