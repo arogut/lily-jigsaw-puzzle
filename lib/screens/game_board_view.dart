@@ -15,12 +15,12 @@ import 'package:lily_jigsaw_puzzle/widgets/tray_label.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
 /// Padding between the board/tray and the screen edge, in logical pixels.
-const double kEdgePad = 20.0;
+const double kEdgePad = 20;
 
 /// Renders the full game UI for an active puzzle session.
 ///
 /// Stateless — all mutable state lives in [GameState] and the animation
-/// controllers owned by the parent [GameScreen].
+/// controllers owned by the parent GameScreen.
 class GameBoardView extends StatelessWidget {
   const GameBoardView({
     required this.gameState,

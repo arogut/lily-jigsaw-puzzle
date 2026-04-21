@@ -56,8 +56,8 @@ Future<void> _pumpUntilPlaying(WidgetTester tester) async {
   // Run through the 1.5 s scatter animation.
   await tester.pump(const Duration(milliseconds: 1500));
 
-  // Process the scatter-complete setState (phase → playing).
-  await tester.pump();
+  // Advance past the 300 ms scatter-settle delay (phase → playing).
+  await tester.pump(const Duration(milliseconds: 400));
 }
 
 void main() {
@@ -144,6 +144,73 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
 
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('shows Back button in playing state', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+    expect(find.text('Back'), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('shows hint button in playing state', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+    expect(find.byIcon(Icons.lightbulb_outline), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('tapping hint button activates hint and decrements count',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+    expect(find.text('Hint (3)'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.lightbulb_outline));
+    await tester.pump();
+    expect(find.text('Hint (2)'), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('pan gesture in playing phase runs without error', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+    // Simulate a drag in the right tray area where pieces are scattered.
+    final gesture = await tester.startGesture(const Offset(960, 400));
+    await tester.pump();
+    await gesture.moveBy(const Offset(20, 10));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+    expect(find.byType(Scaffold), findsOneWidget);
     await tester.binding.setSurfaceSize(null);
   });
 }

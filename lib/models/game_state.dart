@@ -4,10 +4,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
-export 'package:lily_jigsaw_puzzle/models/game_phase.dart';
 import 'package:lily_jigsaw_puzzle/models/game_phase.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_builder.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
+
+export 'package:lily_jigsaw_puzzle/models/game_phase.dart';
 
 // ── Physics constants ──────────────────────────────────────────────────────
 const double _kLiftScale = 1.08;

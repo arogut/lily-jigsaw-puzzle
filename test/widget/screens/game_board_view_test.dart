@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
-import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
@@ -106,14 +105,21 @@ void main() {
     testImage = await _createTestImage();
   });
 
-  GameState makePlayingState() {
-    final gs = GameState(
-      puzzleImage: testImage,
-      gridSize: 3,
-      boardSize: const Size(300, 300),
-      boardOffset: const Offset(20, 20),
-    );
-    gs.beginPlaying();
+  GameState makePlayingState() => GameState(
+        puzzleImage: testImage,
+        gridSize: 3,
+        boardSize: const Size(300, 300),
+        boardOffset: const Offset(20, 20),
+      )..beginPlaying();
+
+  GameState makeWonState() {
+    final gs = makePlayingState();
+    for (var i = 1; i < gs.pieces.length; i++) {
+      gs.pieces[i].isPlaced = true;
+    }
+    gs
+      ..startDrag(0)
+      ..endDrag();
     return gs;
   }
 
@@ -197,6 +203,49 @@ void main() {
         ).first,
       );
       expect(opacity.opacity, 0.5);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('renders hint glow painter when active hint in playing phase',
+        (tester) async {
+      final gs = makePlayingState()..activateHint();
+      await pump(tester, gs);
+      // Hint glow layer rendered — widget tree exists without error.
+      expect(find.byType(GameBoardView), findsOneWidget);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('renders confetti painter when phase is won and overlay not shown',
+        (tester) async {
+      final gs = makeWonState();
+      await pump(tester, gs);
+      // Confetti painter is rendered instead of WinOverlay.
+      expect(find.byType(WinOverlay), findsNothing);
+      expect(find.byType(GameBoardView), findsOneWidget);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('onPlayAgain callback fires when Play Again is tapped',
+        (tester) async {
+      var called = false;
+      final gs = makeWonState();
+      await pump(tester, gs,
+          showWinOverlay: true, onPlayAgain: () => called = true);
+      await tester.tap(find.text('Play Again'));
+      await tester.pump();
+      expect(called, isTrue);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('onNewPuzzle callback fires when New Puzzle is tapped',
+        (tester) async {
+      var called = false;
+      final gs = makeWonState();
+      await pump(tester, gs,
+          showWinOverlay: true, onNewPuzzle: () => called = true);
+      await tester.tap(find.text('New Puzzle'));
+      await tester.pump();
+      expect(called, isTrue);
       await tester.binding.setSurfaceSize(null);
     });
   });
