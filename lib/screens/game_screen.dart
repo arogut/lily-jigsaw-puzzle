@@ -17,9 +17,6 @@ import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 
-// Brief pause after scatter animation before entering playing phase.
-const _kScatterSettleMs = 300;
-
 class GameScreen extends StatefulWidget {
 
   const GameScreen({
@@ -201,16 +198,16 @@ class _GameScreenState extends State<GameScreen>
       _lastPhysicsTime = null;
       if (!_physicsTicker.isActive) unawaited(_physicsTicker.start());
 
-      // Brief pause before entering playing phase.
-      Future.delayed(
-        const Duration(milliseconds: _kScatterSettleMs),
-        () {
-          if (mounted && _gameState != null) {
-            _gameState!.beginPlaying();
-            setState(() {}); // phase change → shadow layer + hint button update
-          }
-        },
-      );
+      // Transition to playing on the next rendered frame.
+      // Using addPostFrameCallback instead of Future.delayed so the phase
+      // change fires reliably inside pump() during tests and leaves no
+      // pending Timer that would fail _verifyInvariants cleanup checks.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _gameState != null) {
+          _gameState!.beginPlaying();
+          setState(() {}); // phase change → shadow layer + hint button update
+        }
+      });
     }
   }
 
