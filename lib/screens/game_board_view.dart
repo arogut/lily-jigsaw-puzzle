@@ -184,30 +184,33 @@ class GameBoardView extends StatelessWidget {
   Widget _buildRightControls(GameState gs, AppLocalizations l10n) => Positioned(
         right: kEdgePad,
         top: 8,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Opacity(
-                opacity: onHint != null ? 1.0 : 0.5,
-                child: GameButton(
-                  label: '${l10n.hint} (${gs.hintsRemaining})',
-                  icon: Icons.lightbulb_outline,
-                  color: AppColors.amber,
-                  width: 120,
-                  height: 44,
-                  fontSize: 15,
-                  enabled: onHint != null,
-                  onPressed: onHint ?? () {},
+        child: ListenableBuilder(
+          listenable: gs,
+          builder: (context, _) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Opacity(
+                  opacity: onHint != null ? 1.0 : 0.5,
+                  child: GameButton(
+                    label: '${l10n.hint} (${gs.hintsRemaining})',
+                    icon: Icons.lightbulb_outline,
+                    color: AppColors.amber,
+                    width: 120,
+                    height: 44,
+                    fontSize: 15,
+                    enabled: onHint != null,
+                    onPressed: onHint ?? () {},
+                  ),
                 ),
               ),
-            ),
-            TrayLabel(
-              placed: gs.pieces.where((p) => p.isPlaced).length,
-              total: gs.pieces.length,
-            ),
-          ],
+              TrayLabel(
+                placed: gs.pieces.where((p) => p.isPlaced).length,
+                total: gs.pieces.length,
+              ),
+            ],
+          ),
         ),
       );
 }
