@@ -56,8 +56,8 @@ Future<void> _pumpUntilPlaying(WidgetTester tester) async {
   // Run through the 1.5 s scatter animation.
   await tester.pump(const Duration(milliseconds: 1500));
 
-  // Advance past the 300 ms scatter-settle delay (phase → playing).
-  await tester.pump(const Duration(milliseconds: 400));
+  // Pump one frame so addPostFrameCallback fires the playing phase transition.
+  await tester.pump();
 }
 
 void main() {

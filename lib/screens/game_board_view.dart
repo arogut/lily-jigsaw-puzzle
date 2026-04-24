@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/panel_backgrounds.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
@@ -40,18 +41,43 @@ class GameBoardView extends StatelessWidget {
     super.key,
   });
 
+  /// Active puzzle state; drives all phase checks, board geometry, and piece rendering.
   final GameState gameState;
+
+  /// Decoded puzzle image rendered across all piece faces.
   final ui.Image uiImage;
+
+  /// Repaint notifier incremented by the parent whenever pieces move.
   final ValueNotifier<int> paintTick;
+
+  /// Animation driving the hint-glow pulse effect.
   final Animation<double> hintController;
+
+  /// Particle list fed to [ConfettiPainter] when the puzzle is won.
   final List<ConfettiParticle> confettiParticles;
+
+  /// Animation driving the confetti particle simulation.
   final Animation<double> confettiController;
+
+  /// When `true`, shows [WinOverlay]; when `false`, shows the confetti layer.
   final bool showWinOverlay;
+
+  /// Called when the user taps the back button.
   final VoidCallback onBack;
+
+  /// Called when the user taps "Play Again" from the win overlay.
   final VoidCallback onPlayAgain;
+
+  /// Called when the user taps "New Puzzle" from the win overlay.
   final VoidCallback onNewPuzzle;
+
+  /// Called at the start of a drag gesture over the piece layer.
   final GestureDragStartCallback? onPanStart;
+
+  /// Called as a drag gesture moves over the piece layer.
   final GestureDragUpdateCallback? onPanUpdate;
+
+  /// Called when a drag gesture ends over the piece layer.
   final GestureDragEndCallback? onPanEnd;
 
   /// Null when hints are unavailable — drives both the enabled state and
@@ -70,7 +96,7 @@ class GameBoardView extends StatelessWidget {
 
     return Stack(
       children: [
-        const Positioned.fill(child: _PanelBackgrounds()),
+        const Positioned.fill(child: PanelBackgrounds()),
         Positioned(
           left: boardOffX, top: boardOffY, width: boardW, height: boardH,
           child: CustomPaint(painter: BoardGridPainter(gs.gridSize)),
@@ -212,37 +238,5 @@ class GameBoardView extends StatelessWidget {
             ],
           ),
         ),
-      );
-}
-
-class _PanelBackgrounds extends StatelessWidget {
-  const _PanelBackgrounds();
-
-  @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFB8DEFF), Color(0xFF8EC8F8)],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFD8BAFF), Color(0xFFFFABD0)],
-                ),
-              ),
-            ),
-          ),
-        ],
       );
 }
