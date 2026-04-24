@@ -198,16 +198,14 @@ class _GameScreenState extends State<GameScreen>
       _lastPhysicsTime = null;
       if (!_physicsTicker.isActive) unawaited(_physicsTicker.start());
 
-      // Transition to playing on the next rendered frame.
-      // Using addPostFrameCallback instead of Future.delayed so the phase
-      // change fires reliably inside pump() during tests and leaves no
-      // pending Timer that would fail _verifyInvariants cleanup checks.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _gameState != null) {
-          _gameState!.beginPlaying();
-          setState(() {}); // phase change → shadow layer + hint button update
-        }
-      });
+      // Transition to playing immediately. Calling setState() here (inside a
+      // Ticker/transient-callback phase) is safe: dirty elements are rebuilt
+      // by handleDrawFrame() in the same pump, so the hint button becomes
+      // enabled within the same pump() call that completes the scatter animation.
+      if (mounted && _gameState != null) {
+        _gameState!.beginPlaying();
+        setState(() {}); // phase change → shadow layer + hint button update
+      }
     }
   }
 

@@ -56,7 +56,7 @@ Future<void> _pumpUntilPlaying(WidgetTester tester) async {
   // Run through the 1.5 s scatter animation.
   await tester.pump(const Duration(milliseconds: 1500));
 
-  // Pump one frame so addPostFrameCallback fires the playing phase transition.
+  // Pump one frame so the physics ticker's first tick fires.
   await tester.pump();
 }
 
