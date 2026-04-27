@@ -53,8 +53,10 @@ Future<void> _pumpUntilPlaying(WidgetTester tester) async {
   // Advance past the 1 s pre-scatter delay.
   await tester.pump(const Duration(seconds: 1, milliseconds: 100));
 
-  // Run through the 1.5 s scatter animation.
-  await tester.pump(const Duration(milliseconds: 1500));
+  // Run through the 1.5 s scatter animation. The animation needs at least two
+  // frame pumps to complete: one to start (forward) and one to finish (completed).
+  await tester.pump(const Duration(milliseconds: 100));  // first tick: forward
+  await tester.pump(const Duration(milliseconds: 1500)); // second tick: completed
 
   // Pump one frame so the physics ticker's first tick fires.
   await tester.pump();
