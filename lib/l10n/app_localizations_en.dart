@@ -36,7 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get difficultyTitle => 'Difficulty';
 
   @override
-  String difficultyPiecesDesc(int count, int n) => '$count pieces ($n×$n)';
+  String difficultyPiecesDesc(int count, int n) {
+    return '$count pieces ($n×$n)';
+  }
 
   @override
   String get youDidIt => 'You Did It!';
