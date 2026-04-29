@@ -213,8 +213,7 @@ void main() {
 
   group('win condition', () {
     test('phase becomes won when all pieces are placed', () {
-      final gs = makeState()
-        ..phase = GamePhase.playing;
+      final gs = makeState()..beginPlaying();
       // Mark all pieces except the first as already placed.
       for (var i = 1; i < gs.pieces.length; i++) {
         gs.pieces[i].isPlaced = true;
@@ -229,7 +228,7 @@ void main() {
 
     test('phase does not become won when pieces remain unplaced', () {
       final gs = makeState()
-        ..phase = GamePhase.playing
+        ..beginPlaying()
         ..startDrag(0);
       final piece = gs.pieces.last;
       piece.currentPosition = piece.targetPosition + const Offset(200, 200);
@@ -247,6 +246,18 @@ void main() {
         ..beginPlaying();
       expect(gs.phase, GamePhase.playing);
       expect(notified, isTrue);
+    });
+  });
+
+  group('beginScattering', () {
+    test('sets phase to scattering without notifying listeners', () {
+      final gs = makeState();
+      var notified = false;
+      gs
+        ..addListener(() => notified = true)
+        ..beginScattering();
+      expect(gs.phase, GamePhase.scattering);
+      expect(notified, isFalse);
     });
   });
 
@@ -295,18 +306,18 @@ void main() {
     });
 
     test('activateHint marks one piece as hinted', () {
-      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      final gs = makeState()..beginPlaying()..activateHint();
       expect(gs.pieces.where((p) => p.isHinted).length, 1);
     });
 
     test('activateHint decrements hintsRemaining', () {
-      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      final gs = makeState()..beginPlaying()..activateHint();
       expect(gs.hintsRemaining, 2);
     });
 
     test('activateHint does not activate when hintsRemaining is 0', () {
       final gs = makeState()
-        ..phase = GamePhase.playing
+        ..beginPlaying()
         ..activateHint()
         ..activateHint()
         ..activateHint();
@@ -318,7 +329,7 @@ void main() {
 
     test('activateHint replaces existing hint with a new one', () {
       final gs = makeState()
-        ..phase = GamePhase.playing
+        ..beginPlaying()
         ..activateHint()
         ..activateHint();
       // Only one piece should be hinted
@@ -328,12 +339,12 @@ void main() {
     });
 
     test('hasActiveHint is true after activateHint', () {
-      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      final gs = makeState()..beginPlaying()..activateHint();
       expect(gs.hasActiveHint, isTrue);
     });
 
     test('endDrag clears hint when hinted piece is placed', () {
-      final gs = makeState()..phase = GamePhase.playing..activateHint();
+      final gs = makeState()..beginPlaying()..activateHint();
       final hinted = gs.pieces.firstWhere((p) => p.isHinted);
       // Find hinted piece index and drag it to its target
       final idx = gs.pieces.indexOf(hinted);
@@ -346,7 +357,7 @@ void main() {
     });
 
     test('activateHint notifies listeners', () {
-      final gs = makeState()..phase = GamePhase.playing;
+      final gs = makeState()..beginPlaying();
       var notified = false;
       gs
         ..addListener(() => notified = true)
@@ -355,7 +366,7 @@ void main() {
     });
 
     test('activateHint does not hint placed pieces', () {
-      final gs = makeState()..phase = GamePhase.playing;
+      final gs = makeState()..beginPlaying();
       // Place all but one piece
       for (var i = 0; i < gs.pieces.length - 1; i++) {
         gs.pieces[i].isPlaced = true;
@@ -398,7 +409,7 @@ void main() {
     });
 
     test('stepPhysics zeroes negligible velocity', () {
-      final gs = makeState()..phase = GamePhase.scattering;
+      final gs = makeState()..beginScattering();
       gs.pieces[0].velocity = const Offset(1, 0); // below min threshold
       const trayBounds = Rect.fromLTRB(300, 0, 600, 300);
       gs.stepPhysics(1, trayBounds);
