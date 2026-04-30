@@ -45,8 +45,10 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
           child: Column(
             children: [
               const SizedBox(height: 14),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: AppTheme.glassCard(radius: 24),
                 child: Row(
                   children: [
                     GameButton(
@@ -136,6 +138,7 @@ class _ImageCardState extends State<_ImageCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
+  int _stars = 0;
 
   @override
   void initState() {
@@ -144,6 +147,18 @@ class _ImageCardState extends State<_ImageCard>
         vsync: this, duration: const Duration(milliseconds: 110));
     _scale = Tween<double>(begin: 1, end: 0.93)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    unawaited(_loadStars());
+  }
+
+  @override
+  void didUpdateWidget(_ImageCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    unawaited(_loadStars());
+  }
+
+  Future<void> _loadStars() async {
+    final s = await CompletionService().getStars(widget.image.uuid);
+    if (mounted) setState(() => _stars = s);
   }
 
   @override
@@ -180,10 +195,15 @@ class _ImageCardState extends State<_ImageCard>
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
+            border: _stars == 3
+                ? Border.all(color: AppColors.gold, width: 2.5)
+                : null,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.28),
-                blurRadius: 12,
+                color: _stars == 3
+                    ? AppColors.gold.withValues(alpha: 0.45)
+                    : Colors.black.withValues(alpha: 0.28),
+                blurRadius: _stars == 3 ? 20 : 12,
                 offset: const Offset(0, 6),
               ),
               BoxShadow(
@@ -196,23 +216,50 @@ class _ImageCardState extends State<_ImageCard>
           child: PuzzleThumbnail(
             assetPath: widget.image.assetPath,
             cornerRadius: 20,
-            overlay: Positioned(
-              top: 5,
-              right: 5,
-              child: FutureBuilder<int>(
-                future: CompletionService().getStars(widget.image.uuid),
-                builder: (context, snap) {
-                  final stars = snap.data ?? 0;
-                  if (stars == 0) return const SizedBox.shrink();
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(
-                      stars,
-                      (_) => const Star3d(size: 56),
+            overlay: Stack(
+              children: [
+                // Image name label — dark gradient scrim at the bottom
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(10, 28, 10, 7),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [Color(0xBB000000), Color(0x00000000)],
+                      ),
                     ),
-                  );
-                },
-              ),
+                    child: Text(
+                      widget.image.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x88000000),
+                            offset: Offset(0, 1),
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Star badges at top-right
+                if (_stars > 0)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(_stars, (_) => const Star3d(size: 26)),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

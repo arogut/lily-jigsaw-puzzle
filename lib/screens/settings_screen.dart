@@ -314,14 +314,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSectionLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w800,
-        color: AppColors.deepPurple,
-        letterSpacing: 0.5,
-      ),
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 22,
+          decoration: BoxDecoration(
+            color: AppColors.mediumPurple,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.deepPurple,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
     );
   }
 }
