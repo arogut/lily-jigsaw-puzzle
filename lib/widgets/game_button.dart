@@ -65,7 +65,7 @@ class _GameButtonState extends State<GameButton> {
   @override
   Widget build(BuildContext context) {
     final shadowColor = widget.shadowColor ?? _darken(widget.color);
-    const bottomPad = 6.0;
+    const bottomPad = 7.0;
     final shift = _pressed ? bottomPad : 0.0;
     final actualWidth = _computeWidth();
 
@@ -95,14 +95,14 @@ class _GameButtonState extends State<GameButton> {
                 margin: const EdgeInsets.only(top: bottomPad),
                 decoration: BoxDecoration(
                   color: shadowColor,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
             ),
 
             // Main button face
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 60),
+              duration: const Duration(milliseconds: 80),
               curve: Curves.easeOut,
               top: shift,
               left: 0,
@@ -111,14 +111,14 @@ class _GameButtonState extends State<GameButton> {
               child: Container(
                 decoration: BoxDecoration(
                   color: widget.color,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.40),
-                    width: 1.5,
+                    color: Colors.white.withValues(alpha: 0.45),
+                    width: 2,
                   ),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(18),
                   child: Stack(
                     children: [
                       // Top gloss highlight
@@ -126,17 +126,17 @@ class _GameButtonState extends State<GameButton> {
                         top: 0,
                         left: 0,
                         right: 0,
-                        height: widget.height * 0.44,
+                        height: widget.height * 0.52,
                         child: const DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Color(0x55FFFFFF), Color(0x08FFFFFF)],
+                              colors: [Color(0x60FFFFFF), Color(0x08FFFFFF)],
                             ),
                             borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(17),
-                              topRight: Radius.circular(17),
+                              topLeft: Radius.circular(18),
+                              topRight: Radius.circular(18),
                             ),
                           ),
                         ),

@@ -325,15 +325,38 @@ class _DifficultyOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (locked) Opacity(opacity: 0.45, child: button) else button,
-        const SizedBox(height: 4),
-        Text(
-          description,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppColors.deepPurple.withValues(alpha: 0.70),
+        if (locked)
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Opacity(opacity: 0.40, child: button),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lock_rounded, color: Colors.white, size: 26),
+              ),
+            ],
+          )
+        else
+          button,
+        const SizedBox(height: 5),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: locked ? 0.20 : 0.40),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.deepPurple.withValues(alpha: locked ? 0.35 : 0.85),
+            ),
           ),
         ),
       ],
