@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/star_3d.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
@@ -43,10 +44,9 @@ class WinOverlay extends StatelessWidget {
       onTap: () {},
       child: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xBB000040), Color(0xBB000020)],
+          gradient: RadialGradient(
+            radius: 1.4,
+            colors: [Color(0xCC100040), Color(0xDD000020)],
           ),
         ),
         child: Center(
@@ -61,14 +61,14 @@ class WinOverlay extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.hotPink.withValues(alpha: 0.50),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
+                  color: AppColors.hotPink.withValues(alpha: 0.55),
+                  blurRadius: 36,
+                  offset: const Offset(0, 12),
                 ),
               ],
               border: Border.all(
-                color: AppColors.hotPink.withValues(alpha: 0.50),
-                width: 2.5,
+                color: AppColors.hotPink.withValues(alpha: 0.60),
+                width: 3,
               ),
             ),
             child: Column(
@@ -84,6 +84,17 @@ class WinOverlay extends StatelessWidget {
                     fontSize: subtitleFontSize,
                     fontWeight: FontWeight.w600,
                     color: AppColors.deepPurple.withValues(alpha: 0.70),
+                  ),
+                ),
+                SizedBox(height: compact ? 12 : 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    3,
+                    (_) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Star3d(size: compact ? 28 : 38),
+                    ),
                   ),
                 ),
                 SizedBox(height: btnGap),

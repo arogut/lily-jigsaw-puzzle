@@ -51,6 +51,23 @@ abstract final class AppColors {
   static const Color amber = Color(0xFFFFB300);
 }
 
+/// Shared 8-pt spacing constants.
+abstract final class AppSpacing {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 16;
+  static const double lg = 24;
+  static const double xl = 32;
+}
+
+/// Shared border-radius constants.
+abstract final class AppRadius {
+  static const double sm = 10;
+  static const double md = 16;
+  static const double lg = 20;
+  static const double xl = 28;
+}
+
 /// Shared decoration constants.
 abstract final class AppTheme {
   /// The standard three-stop background gradient used on most screens.
@@ -62,4 +79,21 @@ abstract final class AppTheme {
       stops: [0.0, 0.50, 1.0],
     ),
   );
+
+  /// Semi-transparent white card with a bright border — glassmorphism style.
+  static BoxDecoration glassCard({double radius = AppRadius.lg}) => BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.60),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      );
 }

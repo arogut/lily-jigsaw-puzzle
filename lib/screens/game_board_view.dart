@@ -162,10 +162,10 @@ class GameBoardView extends StatelessWidget {
   }
 
   Widget _buildDivider(double x) => Positioned(
-        left: x - 3,
+        left: x - 4,
         top: 0,
         bottom: 0,
-        width: 6,
+        width: 8,
         child: Container(
           decoration: BoxDecoration(
             gradient: const LinearGradient(
