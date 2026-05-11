@@ -4,40 +4,40 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 
 void main() {
   group('AppColors', () {
-    test('deepPurple is Color(0xFF6A1B9A)', () {
-      expect(AppColors.deepPurple, const Color(0xFF6A1B9A));
+    test('deepPurple is Color(0xFF5B2D8E)', () {
+      expect(AppColors.deepPurple, const Color(0xFF5B2D8E));
     });
 
-    test('mediumPurple is Color(0xFF9B59B6)', () {
-      expect(AppColors.mediumPurple, const Color(0xFF9B59B6));
+    test('mediumPurple is Color(0xFF9B6DD4)', () {
+      expect(AppColors.mediumPurple, const Color(0xFF9B6DD4));
     });
 
-    test('hotPink is Color(0xFFFF6B9D)', () {
-      expect(AppColors.hotPink, const Color(0xFFFF6B9D));
+    test('hotPink is pastelPink Color(0xFFFA9AC1)', () {
+      expect(AppColors.hotPink, const Color(0xFFFA9AC1));
     });
 
-    test('skyBlue is Color(0xFF87CEEB)', () {
-      expect(AppColors.skyBlue, const Color(0xFF87CEEB));
+    test('skyBlue is Color(0xFF80D4F7)', () {
+      expect(AppColors.skyBlue, const Color(0xFF80D4F7));
     });
 
-    test('lavender is Color(0xFFB39DDB)', () {
-      expect(AppColors.lavender, const Color(0xFFB39DDB));
+    test('lavender is Color(0xFFCEB4F0)', () {
+      expect(AppColors.lavender, const Color(0xFFCEB4F0));
     });
 
-    test('babyPink is Color(0xFFFFABD0)', () {
-      expect(AppColors.babyPink, const Color(0xFFFFABD0));
+    test('babyPink is Color(0xFFFFCCE5)', () {
+      expect(AppColors.babyPink, const Color(0xFFFFCCE5));
     });
 
-    test('green is Color(0xFF6BCB77)', () {
-      expect(AppColors.green, const Color(0xFF6BCB77));
+    test('green is mintGreen Color(0xFF99EEC4)', () {
+      expect(AppColors.green, const Color(0xFF99EEC4));
     });
 
-    test('red is Color(0xFFFF6B6B)', () {
-      expect(AppColors.red, const Color(0xFFFF6B6B));
+    test('red is Color(0xFFFF7BAC)', () {
+      expect(AppColors.red, const Color(0xFFFF7BAC));
     });
 
-    test('blue is Color(0xFF4D96FF)', () {
-      expect(AppColors.blue, const Color(0xFF4D96FF));
+    test('blue is skyBlue Color(0xFF80D4F7)', () {
+      expect(AppColors.blue, const Color(0xFF80D4F7));
     });
 
     test('gold is Color(0xFFFFD700)', () {

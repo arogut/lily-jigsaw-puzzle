@@ -1,3 +1,4 @@
+import 'dart:convert' show utf8;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -98,10 +99,24 @@ void main() {
     rootBundle.clear();
     // Return our tiny PNG for every asset-bundle lookup so rootBundle.load()
     // resolves instantly with decodable bytes.
+    // The asset manifest (AssetManifest.bin) must return a valid
+    // StandardMessageCodec-encoded empty map — returning PNG bytes for it
+    // causes a "Message corrupted" FormatException when Image.asset widgets
+    // (e.g. GameButton backgrounds) are pumped.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler(
       'flutter/assets',
-      (_) async => ByteData.sublistView(pngBytes),
+      (ByteData? message) async {
+        final key = message != null
+            ? utf8.decode(message.buffer.asUint8List(), allowMalformed: true)
+                .replaceAll('\x00', '')
+            : '';
+        if (key == 'AssetManifest.bin') {
+          return const StandardMessageCodec()
+              .encodeMessage(<String, Object?>{});
+        }
+        return ByteData.sublistView(pngBytes);
+      },
     );
   });
 

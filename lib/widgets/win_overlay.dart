@@ -90,8 +90,7 @@ class WinOverlay extends StatelessWidget {
                 GameButton(
                   label: l10n.playAgain,
                   icon: Icons.replay_rounded,
-                  color: AppColors.green,
-                  shadowColor: AppColors.greenShadow,
+                  variant: GameButtonVariant.mint,
                   width: btnWidth,
                   height: btnHeight,
                   onPressed: onPlayAgain,
@@ -100,8 +99,7 @@ class WinOverlay extends StatelessWidget {
                 GameButton(
                   label: l10n.newPuzzle,
                   icon: Icons.home_rounded,
-                  color: AppColors.blue,
-                  shadowColor: AppColors.blueShadow,
+                  variant: GameButtonVariant.blue,
                   width: btnWidth,
                   height: btnHeight,
                   onPressed: onNewPuzzle,

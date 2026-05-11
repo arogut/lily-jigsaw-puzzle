@@ -6,10 +6,8 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
-import 'package:lily_jigsaw_puzzle/painters/logo_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
-import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
 class SplashScreen extends StatefulWidget {
 
@@ -98,9 +96,8 @@ class _SplashScreenState extends State<SplashScreen>
     // 440 is the natural content height at 1× (logo + gaps + title + dots).
     final scale = (size.height / 440).clamp(0.0, 1.0);
     final logoBox = 230.0 * scale;
-    final titleFontSize = 48.0 * scale;
     final subtitleFontSize = 18.0 * scale;
-    final gapAfterLogo = 32.0 * scale;
+    final gapAfterLogo = 16.0 * scale;
     final gapAfterTitle = 14.0 * scale;
     final gapBeforeDots = 48.0 * scale;
 
@@ -125,25 +122,33 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Logo
+                      // Smiley puzzle mascot
                       Transform.scale(
                         scale: _scaleIn.value,
                         child: SizedBox(
                           width: logoBox,
                           height: logoBox,
-                          child: CustomPaint(
-                            painter: LogoPainter(size: logoBox * 0.87),
+                          child: Image.asset(
+                            'assets/ui/smiley_puzzle.png',
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),
 
                       SizedBox(height: gapAfterLogo),
 
-                      // Title with gradient + outline
-                      GradientTitle(
-                        text: "Lily's Puzzle",
-                        fontSize: titleFontSize,
-                        strokeWidth: 7,
+                      // Logo text image — height-constrained so the Column
+                      // never overflows on short screens (the image is wide
+                      // with a 902:489 aspect ratio, so an unconstrained width
+                      // alone produces an unexpectedly tall layout).
+                      Transform.scale(
+                        scale: _scaleIn.value,
+                        child: Image.asset(
+                          'assets/ui/logo.png',
+                          width: size.width * 0.62 * scale,
+                          height: 80.0 * scale,
+                          fit: BoxFit.contain,
+                        ),
                       ),
 
                       SizedBox(height: gapAfterTitle),

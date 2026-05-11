@@ -154,8 +154,7 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 3-D base layer — starts edgeDepth from the top so the face above
-        // fully covers it except at the bottom edge.
+        // 3-D base layer.
         Positioned(
           top: widget.edgeDepth,
           left: 0,
@@ -164,7 +163,7 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
           child: DecoratedBox(decoration: baseDecoration),
         ),
 
-        // Image face — a properly rounded rectangle (all four corners).
+        // Image face — clipped to rounded rectangle.
         Positioned(
           top: 0,
           left: 0,
@@ -177,40 +176,18 @@ class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
               children: [
                 Image.asset(widget.assetPath, fit: BoxFit.cover),
 
-                // Top gloss highlight (mimics GameButton's sheen).
-                const Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 32,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x50FFFFFF), Color(0x00FFFFFF)],
-                      ),
-                    ),
-                  ),
-                ),
-
                 if (widget.overlay != null) widget.overlay!,
-
-                // White border on the face — same visual language as
-                // GameButton's face border.
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: br,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.40),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
+          ),
+        ),
+
+        // Rainbow border frame overlay — sits above the image, sized to
+        // perfectly frame it. The frame image has transparent centre.
+        Positioned.fill(
+          child: Image.asset(
+            'assets/ui/thumbnail_border.png',
+            fit: BoxFit.fill,
           ),
         ),
       ],

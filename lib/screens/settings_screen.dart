@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     GameButton(
                       label: l10n.back,
                       icon: Icons.arrow_back_rounded,
-                      color: AppColors.mediumPurple,
+                      variant: GameButtonVariant.blue,
                       width: 120,
                       height: 46,
                       fontSize: 16,
@@ -194,8 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             GameButton(
               label: l10n.confirm,
               icon: Icons.check_rounded,
-              color: AppColors.green,
-              shadowColor: AppColors.greenShadow,
+              variant: GameButtonVariant.mint,
               width: 200,
               height: 52,
               fontSize: 18,
@@ -283,8 +282,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GameButton(
             label: l10n.resetProgress,
             icon: Icons.delete_sweep_rounded,
-            color: AppColors.red,
-            shadowColor: AppColors.redShadow,
+            variant: GameButtonVariant.pink,
             height: 56,
             fontSize: 18,
             onPressed: () => unawaited(_resetProgress()),

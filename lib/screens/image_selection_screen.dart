@@ -52,8 +52,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                     GameButton(
                       label: l10n.quit,
                       icon: Icons.exit_to_app_rounded,
-                      color: AppColors.red,
-                      shadowColor: AppColors.redShadow,
+                      variant: GameButtonVariant.pink,
                       width: 110,
                       height: 44,
                       fontSize: 15,
@@ -63,8 +62,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                     GameButton(
                       label: l10n.settings,
                       icon: Icons.settings_rounded,
-                      color: AppColors.mediumPurple,
-                      shadowColor: AppColors.deepPurple,
+                      variant: GameButtonVariant.blue,
                       width: 110,
                       height: 44,
                       fontSize: 15,

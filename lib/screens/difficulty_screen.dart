@@ -87,7 +87,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
             child: GameButton(
               label: l10n.back,
               icon: Icons.arrow_back_rounded,
-              color: AppColors.mediumPurple,
+              variant: GameButtonVariant.blue,
               width: 120,
               height: 46,
               fontSize: 16,
@@ -111,8 +111,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
           description: l10n.difficultyPiecesDesc(ds.easyGridSize * ds.easyGridSize, ds.easyGridSize),
           button: GameButton(
             label: l10n.easy,
-            color: AppColors.green,
-            shadowColor: AppColors.greenShadow,
+            variant: GameButtonVariant.mint,
             width: 260,
             height: 64,
             fontSize: 22,
@@ -126,8 +125,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
           locked: mediumLocked,
           button: GameButton(
             label: l10n.medium,
-            color: AppColors.orange,
-            shadowColor: AppColors.orangeShadow,
+            variant: GameButtonVariant.yellow,
             width: 260,
             height: 64,
             fontSize: 22,
@@ -141,8 +139,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
           locked: hardLocked,
           button: GameButton(
             label: l10n.hard,
-            color: AppColors.red,
-            shadowColor: AppColors.redShadow,
+            variant: GameButtonVariant.pink,
             width: 260,
             height: 64,
             fontSize: 22,
@@ -179,7 +176,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
             child: GameButton(
               label: l10n.back,
               icon: Icons.arrow_back_rounded,
-              color: AppColors.mediumPurple,
+              variant: GameButtonVariant.blue,
               width: 100,
               height: 36,
               fontSize: 13,
@@ -218,8 +215,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                         description: l10n.difficultyPiecesDesc(ds.easyGridSize * ds.easyGridSize, ds.easyGridSize),
                         button: GameButton(
                           label: l10n.easy,
-                          color: AppColors.green,
-                          shadowColor: AppColors.greenShadow,
+                          variant: GameButtonVariant.mint,
                           width: 180,
                           height: btnHeight,
                           fontSize: btnFontSize,
@@ -232,8 +228,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                         locked: mediumLocked,
                         button: GameButton(
                           label: l10n.medium,
-                          color: AppColors.orange,
-                          shadowColor: AppColors.orangeShadow,
+                          variant: GameButtonVariant.yellow,
                           width: 180,
                           height: btnHeight,
                           fontSize: btnFontSize,
@@ -246,8 +241,7 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                         locked: hardLocked,
                         button: GameButton(
                           label: l10n.hard,
-                          color: AppColors.red,
-                          shadowColor: AppColors.redShadow,
+                          variant: GameButtonVariant.pink,
                           width: 180,
                           height: btnHeight,
                           fontSize: btnFontSize,
