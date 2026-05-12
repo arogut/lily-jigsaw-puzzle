@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
-import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/screens/difficulty_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/splash_screen.dart';

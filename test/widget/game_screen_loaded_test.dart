@@ -106,7 +106,7 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler(
       'flutter/assets',
-      (ByteData? message) async {
+      (message) async {
         final key = message != null
             ? utf8.decode(message.buffer.asUint8List(), allowMalformed: true)
                 .replaceAll('\x00', '')

@@ -91,7 +91,9 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                       crossAxisCount: 3,
                       crossAxisSpacing: 14,
                       mainAxisSpacing: 14,
-                      childAspectRatio: 4 / 3,
+                      // Match the thumbnail border image's natural ratio (654×648)
+                      // so the border never stretches non-uniformly.
+                      childAspectRatio: 654 / 648,
                     ),
                     itemCount: PuzzleImageData.all.length,
                     itemBuilder: (context, index) {
@@ -194,6 +196,7 @@ class _ImageCardState extends State<_ImageCard>
           child: PuzzleThumbnail(
             assetPath: widget.image.assetPath,
             cornerRadius: 20,
+            edgeDepth: 0,
             overlay: Positioned(
               top: 5,
               right: 5,

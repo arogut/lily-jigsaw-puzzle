@@ -93,12 +93,10 @@ class _SplashScreenState extends State<SplashScreen>
     final size = MediaQuery.of(context).size;
 
     // Scale content proportionally so it fits on small landscape screens.
-    // 440 is the natural content height at 1× (logo + gaps + title + dots).
-    final scale = (size.height / 440).clamp(0.0, 1.0);
-    final logoBox = 230.0 * scale;
+    // 340 is the natural content height at 1× (logo + gaps + subtitle + dots).
+    final scale = (size.height / 340).clamp(0.0, 1.0);
     final subtitleFontSize = 18.0 * scale;
-    final gapAfterLogo = 16.0 * scale;
-    final gapAfterTitle = 14.0 * scale;
+    final gapAfterTitle = 20.0 * scale;
     final gapBeforeDots = 48.0 * scale;
 
     return Scaffold(
@@ -122,31 +120,13 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Smiley puzzle mascot
-                      Transform.scale(
-                        scale: _scaleIn.value,
-                        child: SizedBox(
-                          width: logoBox,
-                          height: logoBox,
-                          child: Image.asset(
-                            'assets/ui/smiley_puzzle.png',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: gapAfterLogo),
-
-                      // Logo text image — height-constrained so the Column
-                      // never overflows on short screens (the image is wide
-                      // with a 902:489 aspect ratio, so an unconstrained width
-                      // alone produces an unexpectedly tall layout).
+                      // Logo image — wide pill with natural 902:489 aspect ratio.
+                      // Width drives the size; height follows proportionally.
                       Transform.scale(
                         scale: _scaleIn.value,
                         child: Image.asset(
                           'assets/ui/logo.png',
-                          width: size.width * 0.62 * scale,
-                          height: 80.0 * scale,
+                          width: size.width * 0.85 * scale,
                           fit: BoxFit.contain,
                         ),
                       ),
