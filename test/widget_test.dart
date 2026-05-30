@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
@@ -39,7 +40,7 @@ void main() {
       )),
     );
     await tester.pump(const Duration(milliseconds: 900));
-    expect(find.text("Lily's Puzzle"), findsWidgets);
+    expect(find.text('Put the pieces together!'), findsWidgets);
     // Drain all pending timers: splash (5 s) + PaletteGenerator (15 s) after
     // navigating to ImageSelectionScreen.
     await tester.pump(const Duration(seconds: 6));
@@ -135,7 +136,7 @@ void main() {
       )),
     );
     await tester.pump();
-    await tester.tap(find.byType(Image).first);
+    await tester.tap(find.byType(PuzzleThumbnail).first);
     await tester.pumpAndSettle();
     expect(find.text('Pick Difficulty'), findsWidgets);
     await tester.binding.setSurfaceSize(null);
@@ -311,7 +312,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     // Navigate to DifficultyScreen
-    await tester.tap(find.byType(Image).first);
+    await tester.tap(find.byType(PuzzleThumbnail).first);
     await tester.pumpAndSettle();
     expect(find.text('Pick Difficulty'), findsWidgets);
     // Pop back to ImageSelectionScreen via Back button
@@ -385,9 +386,9 @@ void main() {
       )),
     );
     await tester.pump();
-    // Start a gesture on the first image card then cancel
+    // Start a gesture on the first puzzle card then cancel
     final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(Image).first),
+      tester.getCenter(find.byType(PuzzleThumbnail).first),
     );
     await tester.pump();
     await gesture.cancel();

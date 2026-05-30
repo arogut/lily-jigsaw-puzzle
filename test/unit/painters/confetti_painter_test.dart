@@ -15,16 +15,14 @@ void main() {
         size: 10,
         rotSpeed: 2,
         wobblePhase: 0,
-        isRect: true,
+        shape: ConfettiShape.star,
       );
       expect(particle.x, 0.5);
-      expect(particle.isRect, isTrue);
+      expect(particle.shape, ConfettiShape.star);
     });
 
     test('non-const constructor is callable at runtime', () {
-      // Use a non-const initializer so the constructor call cannot be const,
-      // exercising it at runtime.
-      final isRect = [false].first;
+      final shape = [ConfettiShape.heart].first;
       final particle = ConfettiParticle(
         x: 0.3,
         speed: 0.5,
@@ -33,14 +31,14 @@ void main() {
         size: 8,
         rotSpeed: 1.5,
         wobblePhase: 1,
-        isRect: isRect,
+        shape: shape,
       );
-      expect(particle.isRect, isFalse);
+      expect(particle.shape, ConfettiShape.heart);
     });
   });
 
   group('ConfettiPainter', () {
-    test('paints rect particle without error at mid-animation', () {
+    test('paints star particle without error at mid-animation', () {
       const animation = AlwaysStoppedAnimation<double>(0.5);
       final particles = [
         const ConfettiParticle(
@@ -51,7 +49,7 @@ void main() {
           size: 10,
           rotSpeed: 2,
           wobblePhase: 0,
-          isRect: true,
+          shape: ConfettiShape.star,
         ),
       ];
       final painter = ConfettiPainter(particles: particles, animation: animation);
@@ -61,7 +59,7 @@ void main() {
       recorder.endRecording().dispose();
     });
 
-    test('paints oval particle without error at mid-animation', () {
+    test('paints heart particle without error at mid-animation', () {
       const animation = AlwaysStoppedAnimation<double>(0.5);
       final particles = [
         const ConfettiParticle(
@@ -72,7 +70,28 @@ void main() {
           size: 8,
           rotSpeed: 3,
           wobblePhase: 1,
-          isRect: false,
+          shape: ConfettiShape.heart,
+        ),
+      ];
+      final painter = ConfettiPainter(particles: particles, animation: animation);
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      painter.paint(canvas, const Size(400, 600));
+      recorder.endRecording().dispose();
+    });
+
+    test('paints squiggle particle without error at mid-animation', () {
+      const animation = AlwaysStoppedAnimation<double>(0.5);
+      final particles = [
+        const ConfettiParticle(
+          x: 0.6,
+          speed: 0.9,
+          startDelay: 0,
+          color: Color(0xFFFFFF00),
+          size: 12,
+          rotSpeed: 1,
+          wobblePhase: 0.5,
+          shape: ConfettiShape.squiggle,
         ),
       ];
       final painter = ConfettiPainter(particles: particles, animation: animation);
@@ -93,7 +112,7 @@ void main() {
           size: 10,
           rotSpeed: 1,
           wobblePhase: 0,
-          isRect: true,
+          shape: ConfettiShape.star,
         ),
       ];
       final painter = ConfettiPainter(particles: particles, animation: animation);
@@ -114,7 +133,7 @@ void main() {
           size: 12,
           rotSpeed: 2,
           wobblePhase: 0,
-          isRect: false,
+          shape: ConfettiShape.heart,
         ),
       ];
       final painter = ConfettiPainter(particles: particles, animation: animation);
@@ -150,7 +169,7 @@ void main() {
           size: 14,
           rotSpeed: 4,
           wobblePhase: 0.5,
-          isRect: true,
+          shape: ConfettiShape.star,
         ),
         const ConfettiParticle(
           x: 0.7,
@@ -160,7 +179,7 @@ void main() {
           size: 9,
           rotSpeed: 2.5,
           wobblePhase: 1.2,
-          isRect: false,
+          shape: ConfettiShape.squiggle,
         ),
       ];
       final painter = ConfettiPainter(particles: particles, animation: animation);

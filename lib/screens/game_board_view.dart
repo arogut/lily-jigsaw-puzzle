@@ -133,9 +133,7 @@ class GameBoardView extends StatelessWidget {
           child: GameButton(
             label: l10n.back,
             icon: Icons.arrow_back_rounded,
-            color: AppColors.mediumPurple,
-            width: 120,
-            height: 44,
+            variant: GameButtonVariant.blue,
             fontSize: 15,
             onPressed: onBack,
           ),
@@ -222,9 +220,7 @@ class GameBoardView extends StatelessWidget {
                   child: GameButton(
                     label: '${l10n.hint} (${gs.hintsRemaining})',
                     icon: Icons.lightbulb_outline,
-                    color: AppColors.amber,
-                    width: 120,
-                    height: 44,
+                    variant: GameButtonVariant.yellow,
                     fontSize: 15,
                     enabled: onHint != null,
                     onPressed: onHint ?? () {},

@@ -462,30 +462,11 @@ class _GameScreenState extends State<GameScreen>
 
   void _startConfetti() {
     _physicsTicker.stop();
-    _confettiParticles = _generateConfetti(250);
+    _confettiParticles = generateConfettiParticles(250);
     setState(() {}); // show confetti layer
     _confettiController.reset();
     unawaited(_confettiController.forward().then((_) {
       if (mounted) setState(() => _showWinOverlay = true);
     }));
-  }
-
-  List<ConfettiParticle> _generateConfetti(int count) {
-    final rng = Random();
-    const colors = [
-      AppColors.red, Color(0xFFFFD93D), AppColors.green,
-      AppColors.blue, AppColors.hotPink, AppColors.lavender,
-      AppColors.orange, Color(0xFF00E5FF), Colors.white,
-    ];
-    return List.generate(count, (_) => ConfettiParticle(
-      x: rng.nextDouble(),
-      speed: 0.40 + rng.nextDouble() * 0.90,
-      startDelay: rng.nextDouble() * 0.30,
-      color: colors[rng.nextInt(colors.length)],
-      size: 6.0 + rng.nextDouble() * 16.0,
-      rotSpeed: 2.0 + rng.nextDouble() * 6.0,
-      wobblePhase: rng.nextDouble() * 2 * pi,
-      isRect: rng.nextBool(),
-    ));
   }
 }

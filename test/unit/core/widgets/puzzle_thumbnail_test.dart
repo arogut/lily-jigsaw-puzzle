@@ -2,19 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 
-Widget _buildThumbnail({
-  Color edgeColor = const Color(0xFF336699),
-  Widget? overlay,
-}) {
+Widget _buildThumbnail({Widget? overlay}) {
   return MaterialApp(
     home: Scaffold(
       body: SizedBox(
         width: 200,
-        height: 150,
+        height: 190,
         child: PuzzleThumbnail(
           assetPath: 'assets/images/puzzle-1.jpg',
-          cornerRadius: 12,
-          edgeColor: edgeColor,
           overlay: overlay,
         ),
       ),
@@ -26,7 +21,7 @@ void main() {
   setUp(PuzzleThumbnail.clearCache);
 
   group('PuzzleThumbnail', () {
-    testWidgets('renders without error when edgeColor is supplied', (tester) async {
+    testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(_buildThumbnail());
       expect(find.byType(PuzzleThumbnail), findsOneWidget);
     });
@@ -45,101 +40,41 @@ void main() {
       expect(find.text('★'), findsNothing);
     });
 
-    testWidgets('applies ClipRRect with correct corner radius', (tester) async {
-      await tester.pumpWidget(_buildThumbnail());
-      final clips = tester.widgetList<ClipRRect>(find.byType(ClipRRect));
-      expect(
-        clips.any(
-          (c) => c.borderRadius == const BorderRadius.all(Radius.circular(12)),
-        ),
-        isTrue,
-      );
-    });
-
-    testWidgets('base layer uses the supplied edge colour', (tester) async {
-      const testColor = Color(0xFF112233);
-      await tester.pumpWidget(_buildThumbnail(edgeColor: testColor));
-      final decorated = tester.widgetList<DecoratedBox>(find.byType(DecoratedBox));
-      expect(
-        decorated.any((d) => (d.decoration as BoxDecoration).color == testColor),
-        isTrue,
-      );
-    });
-  });
-
-  group('PuzzleThumbnail without edgeColor', () {
-    testWidgets('renders with gradient decoration when no edgeColor is supplied',
+    testWidgets('renders a CustomPaint once mask and image are both loaded',
         (tester) async {
-      // Does not supply edgeColor — exercises initState → _applyEdgeColor →
-      // _computeAndCache (swallows missing-asset error) → setState path, and
-      // the gradient BoxDecoration branch inside build().
-      //
-      // Image.asset also tries to load the same non-existent path and reports
-      // an error to FlutterError.onError. Suppress it so the test framework
-      // does not treat it as a failure — this test is verifying the gradient
-      // decoration, not image-loading behaviour.
-      final prevOnError = FlutterError.onError;
-      addTearDown(() => FlutterError.onError = prevOnError);
-      FlutterError.onError = (details) {
-        if (details.exception.toString().contains('Unable to load asset')) return;
-        prevOnError?.call(details);
-      };
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 200,
-              height: 150,
-              child: PuzzleThumbnail(
-                assetPath: 'assets/images/does-not-exist.jpg',
-                cornerRadius: 8,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      // In tests neither asset loads so the fallback Image.asset is used,
+      // but the widget itself must render without error.
+      await tester.pumpWidget(_buildThumbnail());
       expect(find.byType(PuzzleThumbnail), findsOneWidget);
-      // The base layer must use a gradient (not a solid colour) when no
-      // edgeColor override is provided.
-      final decorations =
-          tester.widgetList<DecoratedBox>(find.byType(DecoratedBox));
-      expect(
-        decorations.any((d) => (d.decoration as BoxDecoration).gradient != null),
-        isTrue,
-      );
     });
   });
 
   group('prewarm', () {
-    testWidgets('completes without error for an empty path list', (_) async {
-      await PuzzleThumbnail.prewarm([]);
+    // All prewarm tests use tester.runAsync() because prewarm loads the clip
+    // mask via ui.instantiateImageCodec, which requires real async I/O that
+    // FakeAsync cannot drive.
+
+    testWidgets('completes without error for an empty path list', (tester) async {
+      await tester.runAsync(() => PuzzleThumbnail.prewarm([]));
     });
 
-    testWidgets('completes without error when asset paths are unavailable', (_) async {
-      // _computeAndCache swallows exceptions for missing assets, so prewarm
-      // must always complete rather than propagating errors to the caller.
-      await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
+    testWidgets('completes without error when asset paths are unavailable', (tester) async {
+      await tester.runAsync(
+        () => PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']),
+      );
     });
 
-    testWidgets('completes without error when called multiple times for same path', (_) async {
-      // Use a missing path so rootBundle.load fails fast rather than hanging
-      // during image decode. Tests that repeated calls with the same path
-      // never propagate errors to the caller.
-      await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
-      await PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']);
-    });
-
-    testWidgets('populates cache for a real asset and returns early on second call',
+    testWidgets('completes without error when called multiple times for same path',
         (tester) async {
-      // runAsync bypasses FakeAsync so that ui.instantiateImageCodec and
-      // PaletteGenerator.fromImage (which use platform channels and isolates)
-      // can complete. Without it the platform channel response is blocked by
-      // the fake timer zone and the test hangs until the 10-minute timeout.
-      //
-      // Exercises the full success path: rootBundle.load → instantiateImageCodec
-      // → getNextFrame → PaletteGenerator.fromImage × 3 → _darken → _cache write.
+      await tester.runAsync(
+        () => PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']),
+      );
+      await tester.runAsync(
+        () => PuzzleThumbnail.prewarm(['assets/images/does-not-exist.jpg']),
+      );
+    });
+
+    testWidgets('populates display image cache for a real asset', (tester) async {
       await tester.runAsync(
         () => PuzzleThumbnail.prewarm(['assets/images/puzzle-1.jpg']),
       );

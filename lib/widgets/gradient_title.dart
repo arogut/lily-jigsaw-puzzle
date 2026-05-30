@@ -35,7 +35,7 @@ class GradientTitle extends StatelessWidget {
         ),
         ShaderMask(
           shaderCallback: (b) => const LinearGradient(
-            colors: [Color(0xFFFFD93D), AppColors.hotPink],
+            colors: [AppColors.sunnyYellow, AppColors.mintGreen, AppColors.skyBlue, AppColors.pastelPink],
           ).createShader(b),
           child: Text(
             text,

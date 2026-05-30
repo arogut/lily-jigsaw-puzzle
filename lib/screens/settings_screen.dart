@@ -95,16 +95,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     GameButton(
                       label: l10n.back,
                       icon: Icons.arrow_back_rounded,
-                      color: AppColors.mediumPurple,
-                      width: 120,
-                      height: 46,
+                      variant: GameButtonVariant.blue,
                       fontSize: 16,
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
                       child: Center(child: GradientTitle(text: l10n.settingsTitle)),
                     ),
-                    const SizedBox(width: 120),
+                    const SizedBox(width: 138),
                   ],
                 ),
               ),
@@ -194,11 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             GameButton(
               label: l10n.confirm,
               icon: Icons.check_rounded,
-              color: AppColors.green,
-              shadowColor: AppColors.greenShadow,
-              width: 200,
-              height: 52,
-              fontSize: 18,
+              variant: GameButtonVariant.mint,
               onPressed: () => _checkAnswer(context),
             ),
           ],
@@ -283,10 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           GameButton(
             label: l10n.resetProgress,
             icon: Icons.delete_sweep_rounded,
-            color: AppColors.red,
-            shadowColor: AppColors.redShadow,
-            height: 56,
-            fontSize: 18,
+            variant: GameButtonVariant.pink,
             onPressed: () => unawaited(_resetProgress()),
           ),
           if (_resetDone) ...[
