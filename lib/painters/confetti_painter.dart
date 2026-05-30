@@ -116,11 +116,11 @@ class ConfettiPainter extends CustomPainter {
 /// Generates a list of randomised confetti particles using the pastel palette.
 List<ConfettiParticle> generateConfettiParticles(int count) {
   const colors = [
-    Color(0xFFFA9AC1), // pastel pink
-    Color(0xFF80D4F7), // sky blue
-    Color(0xFF99EEC4), // mint
-    Color(0xFFFEE668), // sunny yellow
-    Color(0xFFCEB4F0), // lavender
+    AppColors.pastelPink,
+    AppColors.skyBlue,
+    AppColors.mintGreen,
+    AppColors.sunnyYellow,
+    AppColors.lavender,
   ];
   const shapes = ConfettiShape.values;
   final rng = Random();

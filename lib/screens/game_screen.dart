@@ -470,6 +470,5 @@ class _GameScreenState extends State<GameScreen>
     }));
   }
 
-  List<ConfettiParticle> _generateConfetti(int count) =>
-      generateConfettiParticles(count);
+    _confettiParticles = generateConfettiParticles(count);
 }
