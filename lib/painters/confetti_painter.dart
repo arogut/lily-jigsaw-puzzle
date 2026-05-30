@@ -1,6 +1,7 @@
 import 'dart:math' show Random, cos, pi, sin;
 
 import 'package:flutter/material.dart';
+import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 
 /// Shape of a single confetti particle.
 enum ConfettiShape { star, heart, squiggle }
