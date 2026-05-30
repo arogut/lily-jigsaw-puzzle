@@ -462,13 +462,11 @@ class _GameScreenState extends State<GameScreen>
 
   void _startConfetti() {
     _physicsTicker.stop();
-    _confettiParticles = _generateConfetti(250);
+    _confettiParticles = generateConfettiParticles(250);
     setState(() {}); // show confetti layer
     _confettiController.reset();
     unawaited(_confettiController.forward().then((_) {
       if (mounted) setState(() => _showWinOverlay = true);
     }));
   }
-
-    _confettiParticles = generateConfettiParticles(count);
 }
