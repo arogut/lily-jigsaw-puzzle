@@ -16,19 +16,26 @@ extension _VariantAsset on GameButtonVariant {
       };
 }
 
-/// Pill-shaped button using the design's pastel image assets.
+// Natural asset dimensions. The 9-patch slice caps are fixed; only the
+// horizontal centre strip stretches to accommodate the label.
+const _kBtnH = 61.0;
+const _kCapW = 32.0; // left/right end-cap width — not stretched
+const _kMinW = 138.0; // natural asset width, enforced as minimum button width
+const _kSlice = Rect.fromLTWH(32, 2, 74, 57);
+
+/// Pill-shaped button backed by the design's pastel image assets (138×61 px).
 ///
-/// Stretches horizontally via 9-patch centerSlice so rounded corners stay
-/// sharp at any width. Scales down 4% on press for tactile feedback.
+/// Height is always [_kBtnH] (the natural asset height). Width auto-sizes to
+/// the label and icon using 9-patch centre stretching, so the rounded pill
+/// caps and the drop-shadow rows are never distorted. Scales down on press
+/// for tactile feedback.
 class GameButton extends StatefulWidget {
   const GameButton({
     required this.label,
     required this.onPressed,
     required this.variant,
     super.key,
-    this.width = 240,
-    this.height = 60,
-    this.fontSize = 20,
+    this.fontSize = 18,
     this.icon,
     this.enabled = true,
   });
@@ -36,8 +43,6 @@ class GameButton extends StatefulWidget {
   final String label;
   final VoidCallback onPressed;
   final GameButtonVariant variant;
-  final double width;
-  final double height;
   final double fontSize;
   final IconData? icon;
   final bool enabled;
@@ -49,36 +54,8 @@ class GameButton extends StatefulWidget {
 class _GameButtonState extends State<GameButton> {
   bool _pressed = false;
 
-  double _computeWidth() {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: widget.label,
-        style: TextStyle(
-          fontSize: widget.fontSize,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.5,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    const hPad = 32.0;
-    final iconW = widget.icon != null ? (widget.fontSize + 6 + 8) : 0.0;
-    final contentW = tp.width + iconW + hPad;
-    return contentW > widget.width ? contentW : widget.width;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final actualWidth = _computeWidth();
-
-    // The pill images are ≈139×61 px. Left/right caps are ~32 px each;
-    // the 75 px centre strip stretches horizontally. The 2 px top/bottom
-    // margins stay fixed so the pill silhouette never distorts vertically.
-    const sliceL = 32.0;
-    const sliceT = 2.0;
-    const sliceW = 75.0;
-    const sliceH = 57.0;
-
     return GestureDetector(
       onTapDown: widget.enabled
           ? (_) {
@@ -97,23 +74,25 @@ class _GameButtonState extends State<GameButton> {
       child: AnimatedScale(
         scale: _pressed ? 0.96 : 1.0,
         duration: const Duration(milliseconds: 60),
-        child: SizedBox(
-          width: actualWidth,
-          height: widget.height,
-          child: Image.asset(
-            widget.variant.assetPath,
-            fit: BoxFit.fill,
-            centerSlice: const Rect.fromLTWH(sliceL, sliceT, sliceW, sliceH),
-            frameBuilder: (context, child, frame, _) => Stack(
-              fit: StackFit.expand,
-              alignment: Alignment.center,
-              children: [
-                child,
-                Align(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+        // IntrinsicWidth lets the button grow to fit its label; the
+        // ConstrainedBox enforces the natural asset width as a floor.
+        child: IntrinsicWidth(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: _kMinW),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(widget.variant.assetPath),
+                  centerSlice: _kSlice,
+                  fit: BoxFit.fill,
+                ),
+              ),
+              child: SizedBox(
+                height: _kBtnH,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: _kCapW),
+                  child: Center(
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (widget.icon != null) ...[
@@ -151,7 +130,7 @@ class _GameButtonState extends State<GameButton> {
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

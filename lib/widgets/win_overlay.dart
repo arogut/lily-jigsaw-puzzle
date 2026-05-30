@@ -32,8 +32,6 @@ class WinOverlay extends StatelessWidget {
     final emojiFontSize = compact ? 40.0 : 72.0;
     final titleFontSize = compact ? 24.0 : 34.0;
     final subtitleFontSize = compact ? 13.0 : 16.0;
-    final btnHeight = compact ? 44.0 : 56.0;
-    final btnWidth = compact ? 190.0 : 220.0;
     final gap = compact ? 6.0 : 10.0;
     final subtitleGap = compact ? 4.0 : 8.0;
     final btnGap = compact ? 16.0 : 28.0;
@@ -91,8 +89,6 @@ class WinOverlay extends StatelessWidget {
                   label: l10n.playAgain,
                   icon: Icons.replay_rounded,
                   variant: GameButtonVariant.mint,
-                  width: btnWidth,
-                  height: btnHeight,
                   onPressed: onPlayAgain,
                 ),
                 SizedBox(height: gap),
@@ -100,8 +96,6 @@ class WinOverlay extends StatelessWidget {
                   label: l10n.newPuzzle,
                   icon: Icons.home_rounded,
                   variant: GameButtonVariant.blue,
-                  width: btnWidth,
-                  height: btnHeight,
                   onPressed: onNewPuzzle,
                 ),
               ],

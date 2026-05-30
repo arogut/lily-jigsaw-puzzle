@@ -3,194 +3,179 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:palette_generator/palette_generator.dart';
 
-/// A 3-D cartoon-style puzzle thumbnail matching the visual language of
-/// GameButton.
+/// Displays a puzzle image clipped to the inner hole of the rainbow border
+/// frame (thumbnail_border.png), with an optional overlay widget on top.
 ///
-/// The "raised edge" at the bottom is tinted with an ambilight gradient
-/// derived by sampling three points along the bottom edge of the image:
-/// bottom-left corner, bottom-center, and bottom-right corner. These become
-/// the gradient stops (left → center → right), giving each card a unique,
-/// physical feel. Palette extraction is cached per asset path so each image
-/// is sampled only once per app session.
-///
-/// Supply [edgeColor] in tests (or to hard-code a colour) to bypass the async
-/// palette computation.
+/// The clip mask (thumbnail_clip.png) is derived once via BFS from the
+/// border's transparent inner hole and cached statically. Both the mask and
+/// the decoded puzzle image are loaded asynchronously; until they are ready
+/// the widget falls back to a plain Image.asset.
 class PuzzleThumbnail extends StatefulWidget {
   const PuzzleThumbnail({
     required this.assetPath,
-    required this.cornerRadius,
     super.key,
     this.overlay,
-    this.edgeDepth = 10.0,
-    this.edgeColor,
   });
 
   /// Asset path of the puzzle image (e.g. `'assets/images/puzzle-1.jpg'`).
   final String assetPath;
 
-  /// Corner radius applied to both the card and the image clip.
-  final double cornerRadius;
-
-  /// Optional widget layered on top of the image (e.g. star indicators).
+  /// Optional widget layered on top of the border frame (e.g. star indicators).
   final Widget? overlay;
 
-  /// Height of the visible 3-D edge in logical pixels.
-  final double edgeDepth;
+  // Display-quality decoded images for the masked painter. Null entry means
+  // decode failed (asset missing); absence means not yet attempted.
+  static final Map<String, ui.Image?> _displayImageCache = {};
 
-  /// Override the computed edge colour — useful in widget tests that cannot
-  /// load real asset images.
-  final Color? edgeColor;
+  // Clip mask derived from the transparent inner hole of thumbnail_border.png.
+  static ui.Image? _clipMask;
 
-  // Per-asset palette cache: maps asset path to [leftColor, centerColor, rightColor].
-  static final Map<String, List<Color>> _cache = {};
-
-  /// Removes all cached palette entries (intended for testing only).
+  /// Removes all cached entries (intended for testing only).
   @visibleForTesting
-  static void clearCache() => _cache.clear();
+  static void clearCache() {
+    _displayImageCache.clear();
+    _clipMask = null;
+  }
 
-  /// Pre-computes and caches edge colours for [paths] in parallel.
-  ///
-  /// Call this early (e.g. during the splash screen) so thumbnails render with
-  /// their final colour immediately when the image selection screen first appears.
-  static Future<void> prewarm(List<String> paths) =>
-      Future.wait(paths.map(_computeAndCache));
+  static Future<void> _loadClipMask() async {
+    if (_clipMask != null) return;
+    try {
+      final data = await rootBundle.load('assets/ui/thumbnail_clip.png');
+      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      _clipMask = (await codec.getNextFrame()).image;
+    } on Object catch (_) {
+      // Asset unavailable in tests — mask stays null; puzzle renders unclipped.
+    }
+  }
 
-  // Decodes the image once at thumbnail size, then samples three bottom-edge
-  // regions in parallel — avoiding three separate fromImageProvider calls
-  // (each of which would decode the image independently).
-  static Future<void> _computeAndCache(String path) async {
-    if (_cache.containsKey(path)) return;
-
+  static Future<ui.Image?> _fetchDisplayImage(String path) async {
+    if (_displayImageCache.containsKey(path)) return _displayImageCache[path];
     try {
       final bytes = await rootBundle.load(path);
       final codec = await ui.instantiateImageCodec(
         bytes.buffer.asUint8List(),
-        targetWidth: 120,
-        targetHeight: 90,
+        targetWidth: 600,
       );
       final image = (await codec.getNextFrame()).image;
-
-      // Ambilight effect: sample bottom-left, bottom-center, bottom-right.
-      final List<PaletteGenerator> palettes;
-      try {
-        palettes = await Future.wait([
-          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(0, 63, 40, 27)),
-          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(40, 63, 40, 27)),
-          PaletteGenerator.fromImage(image, region: const Rect.fromLTWH(80, 63, 40, 27)),
-        ]);
-      } finally {
-        image.dispose();
-      }
-
-      const fallback = Color(0xFF555555);
-      _cache[path] = palettes.map((p) {
-        final base = p.vibrantColor?.color ?? p.dominantColor?.color;
-        return base != null ? _darken(base) : fallback;
-      }).toList();
+      _displayImageCache[path] = image;
+      return image;
     } on Object catch (_) {
-      // Asset unavailable or decode error (e.g. in tests) — fallback colour used in build().
+      _displayImageCache[path] = null;
+      return null;
     }
   }
 
-  static Color _darken(Color c, [double amount = 0.20]) {
-    final hsl = HSLColor.fromColor(c);
-    return hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0)).toColor();
-  }
+  /// Pre-loads the clip mask and decodes [paths] at display quality so that
+  /// thumbnails render masked immediately when the image selection screen appears.
+  ///
+  /// Call early (e.g. during the splash screen) with all puzzle image paths.
+  static Future<void> prewarm(List<String> paths) => Future.wait([
+        _loadClipMask(),
+        ...paths.map(_fetchDisplayImage),
+      ]);
 
   @override
   State<PuzzleThumbnail> createState() => _PuzzleThumbnailState();
 }
 
 class _PuzzleThumbnailState extends State<PuzzleThumbnail> {
-  /// Three gradient stops [left, center, right] resolved from the image edges.
-  /// Null while loading (or when `edgeColor` override is used).
-  List<Color>? _gradientColors;
+  ui.Image? _displayImage;
 
   @override
   void initState() {
     super.initState();
-    if (widget.edgeColor == null) {
-      unawaited(_applyEdgeColor());
-    }
+    if (PuzzleThumbnail._clipMask == null) unawaited(_loadMaskAndRebuild());
+    unawaited(_loadDisplayImage());
   }
 
-  // Reads the cached result (or waits for it to be computed) then rebuilds.
-  Future<void> _applyEdgeColor() async {
-    await PuzzleThumbnail._computeAndCache(widget.assetPath);
-    if (mounted) {
-      setState(() => _gradientColors = PuzzleThumbnail._cache[widget.assetPath]);
-    }
+  Future<void> _loadMaskAndRebuild() async {
+    await PuzzleThumbnail._loadClipMask();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadDisplayImage() async {
+    final img = await PuzzleThumbnail._fetchDisplayImage(widget.assetPath);
+    if (mounted) setState(() => _displayImage = img);
   }
 
   @override
   Widget build(BuildContext context) {
-    final br = BorderRadius.circular(widget.cornerRadius);
+    final mask = PuzzleThumbnail._clipMask;
+    final puzzleImage = _displayImage;
 
-    // Base decoration: solid colour when an override is supplied (e.g. tests),
-    // otherwise a left→center→right gradient built from the ambilight palette.
-    const fallback = Color(0xFF555555);
-    final BoxDecoration baseDecoration;
-    if (widget.edgeColor != null) {
-      baseDecoration = BoxDecoration(color: widget.edgeColor, borderRadius: br);
-    } else {
-      final stops = _gradientColors ?? [fallback, fallback, fallback];
-      baseDecoration = BoxDecoration(
-        gradient: LinearGradient(
-          colors: stops,
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        borderRadius: br,
-      );
-    }
+    final imageLayer = mask != null && puzzleImage != null
+        ? CustomPaint(
+            painter: _MaskedPuzzlePainter(
+              puzzleImage: puzzleImage,
+              maskImage: mask,
+            ),
+          )
+        : Image.asset(widget.assetPath, fit: BoxFit.cover);
 
-    // The layout mirrors GameButton:
-    //   - A 3-D base layer (the ambilight gradient) fills the card from
-    //     edgeDepth downward — peeking out at the bottom.
-    //   - The image face sits on top, sized to leave edgeDepth exposed at the
-    //     bottom, and is clipped to a full rounded rectangle so all four
-    //     corners are rounded (not just the top ones).
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 3-D base layer.
-        Positioned(
-          top: widget.edgeDepth,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: DecoratedBox(decoration: baseDecoration),
-        ),
+        // Puzzle image clipped to the border's inner hole.
+        imageLayer,
 
-        // Image face — clipped to rounded rectangle.
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: widget.edgeDepth,
-          child: ClipRRect(
-            borderRadius: br,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(widget.assetPath, fit: BoxFit.cover),
+        // Rainbow border frame — sits above the masked image.
+        Image.asset('assets/ui/thumbnail_border.png', fit: BoxFit.fill),
 
-                if (widget.overlay != null) widget.overlay!,
-              ],
-            ),
-          ),
-        ),
-
-        // Rainbow border frame overlay — sits above the image, sized to
-        // perfectly frame it. The frame image has transparent centre.
-        Positioned.fill(
-          child: Image.asset(
-            'assets/ui/thumbnail_border.png',
-            fit: BoxFit.fill,
-          ),
-        ),
+        // Optional overlay (e.g. star indicators) — above the frame.
+        if (widget.overlay != null) widget.overlay!,
       ],
     );
   }
+}
+
+// Draws the puzzle image clipped to the inner hole defined by maskImage.
+// Uses saveLayer + dstIn so coordinates are unambiguously in canvas logical pixels.
+class _MaskedPuzzlePainter extends CustomPainter {
+  const _MaskedPuzzlePainter({
+    required this.puzzleImage,
+    required this.maskImage,
+  });
+
+  final ui.Image puzzleImage;
+  final ui.Image maskImage;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dst = Offset.zero & size;
+    final puzzleSrc = Rect.fromLTWH(
+      0,
+      0,
+      puzzleImage.width.toDouble(),
+      puzzleImage.height.toDouble(),
+    );
+    final maskSrc = Rect.fromLTWH(
+      0,
+      0,
+      maskImage.width.toDouble(),
+      maskImage.height.toDouble(),
+    );
+
+    canvas
+      ..saveLayer(dst, Paint())
+      ..drawImageRect(
+        puzzleImage,
+        puzzleSrc,
+        dst,
+        Paint()..filterQuality = FilterQuality.medium,
+      )
+      ..drawImageRect(
+        maskImage,
+        maskSrc,
+        dst,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..filterQuality = FilterQuality.medium,
+      )
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(_MaskedPuzzlePainter old) =>
+      old.puzzleImage != puzzleImage || old.maskImage != maskImage;
 }

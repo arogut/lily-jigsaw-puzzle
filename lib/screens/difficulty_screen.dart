@@ -75,80 +75,80 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
     bool hardLocked,
     DifficultySettings ds,
   ) {
-    return Column(
-      children: [
-        const SizedBox(height: 14),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 14),
 
-        // Back button
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 14),
-            child: GameButton(
-              label: l10n.back,
-              icon: Icons.arrow_back_rounded,
-              variant: GameButtonVariant.blue,
-              width: 120,
-              height: 46,
-              fontSize: 16,
-              onPressed: () => Navigator.of(context).pop(),
+          // Back button
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 14),
+              child: GameButton(
+                label: l10n.back,
+                icon: Icons.arrow_back_rounded,
+                variant: GameButtonVariant.blue,
+                fontSize: 16,
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(height: 18),
+          const SizedBox(height: 18),
 
-        // Image preview with decorative frame
-        _buildThumbnailBox(width: 280, height: 200),
-
-        const SizedBox(height: 26),
-
-        GradientTitle(text: l10n.pickDifficulty),
-
-        const SizedBox(height: 26),
-
-        _DifficultyOption(
-          description: l10n.difficultyPiecesDesc(ds.easyGridSize * ds.easyGridSize, ds.easyGridSize),
-          button: GameButton(
-            label: l10n.easy,
-            variant: GameButtonVariant.mint,
-            width: 260,
-            height: 64,
-            fontSize: 22,
-            onPressed: () => _go(context, ds.easyGridSize, 1),
+          // Image preview — constrained width, height locked to border ratio.
+          SizedBox(
+            width: 280,
+            child: AspectRatio(
+              aspectRatio: 644 / 608,
+              child: PuzzleThumbnail(assetPath: widget.selectedImage.assetPath),
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
 
-        _DifficultyOption(
-          description: l10n.difficultyPiecesDesc(ds.mediumGridSize * ds.mediumGridSize, ds.mediumGridSize),
-          locked: mediumLocked,
-          button: GameButton(
-            label: l10n.medium,
-            variant: GameButtonVariant.yellow,
-            width: 260,
-            height: 64,
-            fontSize: 22,
-            onPressed: mediumLocked ? () {} : () => _go(context, ds.mediumGridSize, 2),
+          const SizedBox(height: 26),
+
+          GradientTitle(text: l10n.pickDifficulty),
+
+          const SizedBox(height: 26),
+
+          _DifficultyOption(
+            description: l10n.difficultyPiecesDesc(ds.easyGridSize * ds.easyGridSize, ds.easyGridSize),
+            button: GameButton(
+              label: l10n.easy,
+              variant: GameButtonVariant.mint,
+              fontSize: 22,
+              onPressed: () => _go(context, ds.easyGridSize, 1),
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
+          const SizedBox(height: 14),
 
-        _DifficultyOption(
-          description: l10n.difficultyPiecesDesc(ds.hardGridSize * ds.hardGridSize, ds.hardGridSize),
-          locked: hardLocked,
-          button: GameButton(
-            label: l10n.hard,
-            variant: GameButtonVariant.pink,
-            width: 260,
-            height: 64,
-            fontSize: 22,
-            onPressed: hardLocked ? () {} : () => _go(context, ds.hardGridSize, 3),
+          _DifficultyOption(
+            description: l10n.difficultyPiecesDesc(ds.mediumGridSize * ds.mediumGridSize, ds.mediumGridSize),
+            locked: mediumLocked,
+            button: GameButton(
+              label: l10n.medium,
+              variant: GameButtonVariant.yellow,
+              fontSize: 22,
+              onPressed: mediumLocked ? () {} : () => _go(context, ds.mediumGridSize, 2),
+            ),
           ),
-        ),
+          const SizedBox(height: 14),
 
-        const SizedBox(height: 24),
-      ],
+          _DifficultyOption(
+            description: l10n.difficultyPiecesDesc(ds.hardGridSize * ds.hardGridSize, ds.hardGridSize),
+            locked: hardLocked,
+            button: GameButton(
+              label: l10n.hard,
+              variant: GameButtonVariant.pink,
+              fontSize: 22,
+              onPressed: hardLocked ? () {} : () => _go(context, ds.hardGridSize, 3),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 
@@ -163,8 +163,9 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
     bool hardLocked,
     DifficultySettings ds,
   ) {
-    final btnHeight = (constraints.maxHeight * 0.18).clamp(38.0, 52.0);
-    final btnFontSize = (btnHeight * 0.38).clamp(13.0, 18.0);
+    // Derive button width from available height so the asset ratio is preserved.
+    final desiredBtnH = (constraints.maxHeight * 0.18).clamp(38.0, 52.0);
+    final btnFontSize = (desiredBtnH * 0.38).clamp(13.0, 18.0);
 
     return Column(
       children: [
@@ -177,8 +178,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
               label: l10n.back,
               icon: Icons.arrow_back_rounded,
               variant: GameButtonVariant.blue,
-              width: 100,
-              height: 36,
               fontSize: 13,
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -196,8 +195,8 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                 Expanded(
                   child: Center(
                     child: AspectRatio(
-                      aspectRatio: 4 / 3,
-                      child: _buildThumbnailBox(cornerRadius: 18),
+                      aspectRatio: 644 / 608,
+                      child: PuzzleThumbnail(assetPath: widget.selectedImage.assetPath),
                     ),
                   ),
                 ),
@@ -216,8 +215,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                         button: GameButton(
                           label: l10n.easy,
                           variant: GameButtonVariant.mint,
-                          width: 180,
-                          height: btnHeight,
                           fontSize: btnFontSize,
                           onPressed: () => _go(context, ds.easyGridSize, 1),
                         ),
@@ -229,8 +226,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                         button: GameButton(
                           label: l10n.medium,
                           variant: GameButtonVariant.yellow,
-                          width: 180,
-                          height: btnHeight,
                           fontSize: btnFontSize,
                           onPressed: mediumLocked ? () {} : () => _go(context, ds.mediumGridSize, 2),
                         ),
@@ -242,8 +237,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
                         button: GameButton(
                           label: l10n.hard,
                           variant: GameButtonVariant.pink,
-                          width: 180,
-                          height: btnHeight,
                           fontSize: btnFontSize,
                           onPressed: hardLocked ? () {} : () => _go(context, ds.hardGridSize, 3),
                         ),
@@ -256,36 +249,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  /// Decorated thumbnail box. When [width] and [height] are omitted the
-  /// widget expands to fill its parent (use inside [AspectRatio] or [SizedBox]).
-  Widget _buildThumbnailBox({double? width, double? height, double cornerRadius = 24}) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(cornerRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.30),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.40),
-            blurRadius: 6,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: PuzzleThumbnail(
-          assetPath: widget.selectedImage.assetPath,
-          cornerRadius: cornerRadius,
-        ),
-      ),
     );
   }
 

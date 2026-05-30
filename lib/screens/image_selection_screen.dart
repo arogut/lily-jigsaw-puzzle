@@ -53,8 +53,6 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                       label: l10n.quit,
                       icon: Icons.exit_to_app_rounded,
                       variant: GameButtonVariant.pink,
-                      width: 110,
-                      height: 44,
                       fontSize: 15,
                       onPressed: SystemNavigator.pop,
                     ),
@@ -63,8 +61,6 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                       label: l10n.settings,
                       icon: Icons.settings_rounded,
                       variant: GameButtonVariant.blue,
-                      width: 110,
-                      height: 44,
                       fontSize: 15,
                       onPressed: () {
                         unawaited(
@@ -88,12 +84,12 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                     padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
+                      crossAxisCount: 4,
                       crossAxisSpacing: 14,
                       mainAxisSpacing: 14,
-                      // Match the thumbnail border image's natural ratio (654×648)
+                      // Match the thumbnail border image's natural ratio (644×608)
                       // so the border never stretches non-uniformly.
-                      childAspectRatio: 654 / 648,
+                      childAspectRatio: 644 / 608,
                     ),
                     itemCount: PuzzleImageData.all.length,
                     itemBuilder: (context, index) {
@@ -177,26 +173,8 @@ class _ImageCardState extends State<_ImageCard>
         animation: _scale,
         builder: (_, child) =>
             Transform.scale(scale: _scale.value, child: child),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.28),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: Colors.white.withValues(alpha: 0.35),
-                blurRadius: 4,
-                offset: const Offset(0, -1),
-              ),
-            ],
-          ),
-          child: PuzzleThumbnail(
+        child: PuzzleThumbnail(
             assetPath: widget.image.assetPath,
-            cornerRadius: 20,
-            edgeDepth: 0,
             overlay: Positioned(
               top: 5,
               right: 5,
@@ -217,7 +195,6 @@ class _ImageCardState extends State<_ImageCard>
             ),
           ),
         ),
-      ),
     );
   }
 }
