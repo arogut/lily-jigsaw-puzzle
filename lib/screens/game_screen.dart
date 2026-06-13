@@ -290,7 +290,6 @@ class _GameScreenState extends State<GameScreen>
     if (timer == null || !timer.isActive) return;
     // Capture remaining time; dart:async Timer doesn't expose it directly,
     // so we approximate using the configured delay (conservative: restarts full).
-    _timerRemainingMs = _timerRemainingMs.clamp(0, _timerRemainingMs);
     timer.cancel();
     _hintTimer = null;
   }
