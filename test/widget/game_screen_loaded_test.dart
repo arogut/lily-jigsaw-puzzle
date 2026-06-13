@@ -635,6 +635,119 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
+  // ── T018: App lifecycle pause / resume ───────────────────────────────────
+
+  testWidgets('timed mode: pausing app suspends hint timer so it does not fire',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 5),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Timer is running; pause the app — this cancels the timer via _pauseHintTimer.
+    // ignore: invalid_use_of_protected_member — tests must reach the protected
+    // binding method to simulate platform lifecycle events without a real device.
+    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    // Advance past the 5-second delay — the paused timer must NOT fire.
+    await tester.pump(const Duration(seconds: 5));
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 0.5,
+        reason: 'hint must remain waiting after timer was paused');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('timed mode: inactive app lifecycle suspends hint timer',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 5),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Inactive (e.g. notification shade) — same pause-timer path as paused.
+    // ignore: invalid_use_of_protected_member — see pause test for rationale.
+    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+
+    // Timer paused; advancing past the delay must NOT activate the hint.
+    await tester.pump(const Duration(seconds: 5));
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 0.5,
+        reason: 'hint must remain waiting after inactive-paused timer');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'timed mode: resuming app after pause restarts timer and hint fires after delay',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 5),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Pause then immediately resume — _resumeHintTimer restarts the full delay.
+    // ignore: invalid_use_of_protected_member — see pause test for rationale.
+    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    // ignore: invalid_use_of_protected_member — see pause test for rationale.
+    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    // After resuming, the timer restarts from the configured delay (5 s).
+    // Advancing that far should fire the timer and activate the hint.
+    await tester.pump(const Duration(seconds: 5));
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 1.0,
+        reason: 'hint must be active after restarted timer fires');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
   testWidgets('tapping Play Again from win overlay restarts the game', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(_wrap(GameScreen(

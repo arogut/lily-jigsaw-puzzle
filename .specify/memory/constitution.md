@@ -90,6 +90,9 @@ check MUST be fixed before merge — never bypassed.
   `mocktail` where needed.
 - **Code style**: [Dart style guide](https://dart.dev/effective-dart/style); lints from
   `analysis_options.yaml` (based on `very_good_analysis`).
+- **Documentation**: every public API — class, constructor, method, and field — MUST have a
+  `///` doc comment. This is a hard requirement enforced by the analysis options and code review.
+  Missing doc comments on public symbols are grounds for PR rejection.
 
 ## Development Workflow & Quality Gates
 

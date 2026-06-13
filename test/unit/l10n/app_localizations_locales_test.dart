@@ -43,6 +43,11 @@ void _exerciseAllStrings(AppLocalizations l10n) {
   expect(l10n.langEnglish, isNotEmpty);
   expect(l10n.langGerman, isNotEmpty);
   expect(l10n.langSpanish, isNotEmpty);
+  expect(l10n.hint, isNotEmpty);
+  expect(l10n.hintsSection, isNotEmpty);
+  expect(l10n.hintsImmediate, isNotEmpty);
+  expect(l10n.hintsDelayLabel, isNotEmpty);
+  expect(l10n.hintsDelayError, isNotEmpty);
 }
 
 void main() {
