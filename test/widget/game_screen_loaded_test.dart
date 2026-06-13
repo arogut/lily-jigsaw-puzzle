@@ -651,9 +651,7 @@ void main() {
     await _pumpUntilPlaying(tester);
 
     // Timer is running; pause the app — this cancels the timer via _pauseHintTimer.
-    // ignore: invalid_use_of_protected_member — tests must reach the protected
-    // binding method to simulate platform lifecycle events without a real device.
-    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
 
     // Advance past the 5-second delay — the paused timer must NOT fire.
@@ -687,8 +685,7 @@ void main() {
     await _pumpUntilPlaying(tester);
 
     // Inactive (e.g. notification shade) — same pause-timer path as paused.
-    // ignore: invalid_use_of_protected_member — see pause test for rationale.
-    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
 
     // Timer paused; advancing past the delay must NOT activate the hint.
@@ -723,11 +720,9 @@ void main() {
     await _pumpUntilPlaying(tester);
 
     // Pause then immediately resume — _resumeHintTimer restarts the full delay.
-    // ignore: invalid_use_of_protected_member — see pause test for rationale.
-    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
-    // ignore: invalid_use_of_protected_member — see pause test for rationale.
-    await tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
 
     // After resuming, the timer restarts from the configured delay (5 s).

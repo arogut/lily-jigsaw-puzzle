@@ -21,7 +21,7 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (_) async => null);
 
-    await app.main();
+    app.main();
     await tester.pump();
 
     expect(find.byType(MaterialApp), findsOneWidget);
