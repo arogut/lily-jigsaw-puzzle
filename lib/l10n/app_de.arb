@@ -48,5 +48,9 @@
   "langEnglish": "English",
   "langGerman": "Deutsch",
   "langSpanish": "Español",
-  "hint": "Tipp"
+  "hint": "Tipp",
+  "hintsSection": "Hinweise",
+  "hintsImmediate": "Immer aktiv",
+  "hintsDelayLabel": "Entsperrzeit (Sekunden)",
+  "hintsDelayError": "Bitte eine positive Zahl eingeben"
 }

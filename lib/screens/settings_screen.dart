@@ -9,6 +9,7 @@ import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/screens/difficulty_sliders_section.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
@@ -17,10 +18,14 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.localeNotifier,
     required this.difficultySettings,
+    required this.hintSettings,
     super.key,
   });
   final LocaleNotifier localeNotifier;
   final DifficultySettings difficultySettings;
+
+  /// Hint unlock configuration; passed to the Hints settings section.
+  final HintSettings hintSettings;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -36,6 +41,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Settings state
   bool _resetDone = false;
+  late TextEditingController _delayController;
+  String? _delayError;
 
   @override
   void initState() {
@@ -43,11 +50,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final rng = Random();
     _a = 1 + rng.nextInt(9);
     _b = 1 + rng.nextInt(9);
+    _delayController = TextEditingController(
+      text: widget.hintSettings.unlockDelaySeconds.toString(),
+    );
   }
 
   @override
   void dispose() {
     _answerController.dispose();
+    _delayController.dispose();
     super.dispose();
   }
 
@@ -264,6 +275,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // Hints section
+          _buildSectionLabel(l10n.hintsSection),
+          const SizedBox(height: 12),
+          _buildHintsSection(l10n),
+
+          const SizedBox(height: 24),
+
           // Difficulty section
           _buildSectionLabel(l10n.difficultyTitle),
           const SizedBox(height: 12),
@@ -301,6 +319,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
         ],
       ),
+    );
+  }
+
+  void _submitDelay(AppLocalizations l10n) {
+    final value = int.tryParse(_delayController.text.trim()) ?? 0;
+    if (value < 1) {
+      setState(() => _delayError = l10n.hintsDelayError);
+      return;
+    }
+    widget.hintSettings.setUnlockDelay(value: value);
+    setState(() => _delayError = null);
+  }
+
+  Widget _buildHintsSection(AppLocalizations l10n) {
+    final isImmediate = widget.hintSettings.immediateMode;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Checkbox(
+              value: isImmediate,
+              onChanged: (v) {
+                widget.hintSettings.setImmediateMode(value: v ?? false);
+                setState(() => _delayError = null);
+              },
+              activeColor: AppColors.mediumPurple,
+            ),
+            Text(
+              l10n.hintsImmediate,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.deepPurple,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _delayController,
+          enabled: !isImmediate,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: InputDecoration(
+            labelText: l10n.hintsDelayLabel,
+            errorText: _delayError,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide:
+                  const BorderSide(color: AppColors.mediumPurple, width: 2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide:
+                  const BorderSide(color: AppColors.deepPurple, width: 2.5),
+            ),
+          ),
+          onSubmitted: (_) => _submitDelay(l10n),
+        ),
+      ],
     );
   }
 

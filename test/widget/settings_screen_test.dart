@@ -5,6 +5,7 @@ import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/screens/settings_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 LocaleNotifier _makeLocaleNotifier() => LocaleNotifier(const Locale('en'));
@@ -13,6 +14,8 @@ DifficultySettings _makeDifficultySettings() => DifficultySettings(
       medium: DifficultySettings.defaultMedium,
       hard: DifficultySettings.defaultHard,
     );
+HintSettings _makeHintSettings() =>
+    HintSettings(immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
 
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -56,6 +59,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -68,6 +72,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -79,6 +84,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -96,6 +102,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -112,6 +119,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -128,6 +136,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -144,14 +153,17 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
 
     await _unlockSettings(tester);
 
+    await tester.ensureVisible(find.text('Reset Progress').last);
     await tester.tap(find.text('Reset Progress').last);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
     expect(find.text('Progress reset!'), findsOneWidget);
   });
 
@@ -160,6 +172,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -174,6 +187,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -191,6 +205,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: localeNotifier,
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -207,6 +222,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -223,6 +239,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -241,6 +258,7 @@ void main() {
       _wrap(SettingsScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: ds,
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -251,5 +269,174 @@ void main() {
     expect(find.text('3×3'), findsOneWidget);
     expect(find.text('4×4'), findsOneWidget);
     expect(find.text('5×5'), findsOneWidget);
+  });
+
+  // ── T021: Hints section tests ─────────────────────────────────────────────
+
+  testWidgets('Settings panel shows Hints section after unlock', (tester) async {
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    expect(find.text('Hints'), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('Immediate checkbox starts unchecked when immediateMode is false',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: HintSettings(
+            immediateMode: false,
+            unlockDelaySeconds: HintSettings.defaultDelay),
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox));
+    expect(checkbox.value, isFalse);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('Immediate checkbox starts checked when immediateMode is true',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: HintSettings(
+            immediateMode: true,
+            unlockDelaySeconds: HintSettings.defaultDelay),
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox));
+    expect(checkbox.value, isTrue);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('Delay text field is enabled when immediateMode is false',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: HintSettings(
+            immediateMode: false,
+            unlockDelaySeconds: HintSettings.defaultDelay),
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    // After unlocking, two TextFields exist: the math-gate answer field is gone,
+    // only the delay field remains.
+    expect(find.byType(TextField), findsOneWidget);
+    final tf = tester.widget<TextField>(find.byType(TextField));
+    expect(tf.enabled, isNot(false));
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('Delay text field is disabled when immediateMode is true',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: HintSettings(
+            immediateMode: true,
+            unlockDelaySeconds: HintSettings.defaultDelay),
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    final tf = tester.widget<TextField>(find.byType(TextField));
+    expect(tf.enabled, false);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('Entering valid delay and submitting updates HintSettings',
+      (tester) async {
+    final hs = HintSettings(
+        immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: hs,
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), '30');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    expect(hs.unlockDelaySeconds, 30);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('Entering 0 delay shows error and does not update HintSettings',
+      (tester) async {
+    final hs = HintSettings(
+        immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: hs,
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), '0');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    expect(find.text('Enter a positive number'), findsOneWidget);
+    expect(hs.unlockDelaySeconds, HintSettings.defaultDelay);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('Toggling Immediate checkbox updates HintSettings', (tester) async {
+    final hs = HintSettings(
+        immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: hs,
+      )),
+    );
+    await tester.pump();
+    await _unlockSettings(tester);
+    await tester.pump();
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+
+    expect(hs.immediateMode, isTrue);
+    await tester.binding.setSurfaceSize(null);
   });
 }

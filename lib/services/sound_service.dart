@@ -12,6 +12,8 @@ class SoundService {
   Future<void> playWrong() => _play('sounds/wrong.wav');
   Future<void> playWin() => _play('sounds/win.wav');
   Future<void> playClick() => _play('sounds/click.wav');
+  Future<void> playHintAvailable() => _play('sounds/hint_available.wav');
+  Future<void> playHintsExhausted() => _play('sounds/hints_exhausted.wav');
 
   Future<void> _play(String asset) async {
     final player = AudioPlayer();

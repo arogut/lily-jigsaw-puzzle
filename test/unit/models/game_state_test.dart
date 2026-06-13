@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
+import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
 /// Creates a small solid-colour ui.Image for testing without asset loading.
@@ -25,11 +26,16 @@ void main() {
     testImage = await _createTestImage();
   });
 
-  GameState makeState({int gridSize = 3, Size boardSize = const Size(300, 300)}) {
+  GameState makeState({
+    int gridSize = 3,
+    Size boardSize = const Size(300, 300),
+    bool immediateMode = false,
+  }) {
     return GameState(
       puzzleImage: testImage,
       gridSize: gridSize,
       boardSize: boardSize,
+      immediateMode: immediateMode,
     );
   }
 
@@ -295,58 +301,24 @@ void main() {
   });
 
   group('hint system', () {
-    test('hintsRemaining starts at 3', () {
-      final gs = makeState();
-      expect(gs.hintsRemaining, 3);
-    });
-
     test('hasActiveHint is false initially', () {
       final gs = makeState();
       expect(gs.hasActiveHint, isFalse);
     });
 
-    test('activateHint marks one piece as hinted', () {
-      final gs = makeState()..beginPlaying()..activateHint();
+    test('activateHint marks one piece as hinted in immediate mode', () {
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
       expect(gs.pieces.where((p) => p.isHinted).length, 1);
-    });
-
-    test('activateHint decrements hintsRemaining', () {
-      final gs = makeState()..beginPlaying()..activateHint();
-      expect(gs.hintsRemaining, 2);
-    });
-
-    test('activateHint does not activate when hintsRemaining is 0', () {
-      final gs = makeState()
-        ..beginPlaying()
-        ..activateHint()
-        ..activateHint()
-        ..activateHint();
-      expect(gs.hintsRemaining, 0);
-      gs.activateHint();
-      expect(gs.hintsRemaining, 0);
-      expect(gs.pieces.where((p) => p.isHinted).length, 1);
-    });
-
-    test('activateHint replaces existing hint with a new one', () {
-      final gs = makeState()
-        ..beginPlaying()
-        ..activateHint()
-        ..activateHint();
-      // Only one piece should be hinted
-      expect(gs.pieces.where((p) => p.isHinted).length, 1);
-      // Could be same or different piece but only one at a time
-      expect(gs.hintsRemaining, 1);
     });
 
     test('hasActiveHint is true after activateHint', () {
-      final gs = makeState()..beginPlaying()..activateHint();
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
       expect(gs.hasActiveHint, isTrue);
     });
 
     test('endDrag clears hint when hinted piece is placed', () {
-      final gs = makeState()..beginPlaying()..activateHint();
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
       final hinted = gs.pieces.firstWhere((p) => p.isHinted);
-      // Find hinted piece index and drag it to its target
       final idx = gs.pieces.indexOf(hinted);
       gs.startDrag(idx);
       final dragged = gs.pieces.last;
@@ -357,7 +329,7 @@ void main() {
     });
 
     test('activateHint notifies listeners', () {
-      final gs = makeState()..beginPlaying();
+      final gs = makeState(immediateMode: true)..beginPlaying();
       var notified = false;
       gs
         ..addListener(() => notified = true)
@@ -366,18 +338,106 @@ void main() {
     });
 
     test('activateHint does not hint placed pieces', () {
-      final gs = makeState()..beginPlaying();
-      // Place all but one piece
+      final gs = makeState(immediateMode: true)..beginPlaying();
       for (var i = 0; i < gs.pieces.length - 1; i++) {
         gs.pieces[i].isPlaced = true;
       }
       gs.activateHint();
-      // The only hinted piece should be the unplaced one
       final hinted = gs.pieces.where((p) => p.isHinted).toList();
       expect(hinted.length, 1);
       expect(hinted.first.isPlaced, isFalse);
     });
+  });
 
+  group('hint slot system', () {
+    test('currentHintSlot is waiting in timed mode on construction', () {
+      final gs = makeState();
+      expect(gs.currentHintSlot, HintSlotState.waiting);
+    });
+
+    test('currentHintSlot is available in immediate mode on construction', () {
+      final gs = makeState(immediateMode: true);
+      expect(gs.currentHintSlot, HintSlotState.available);
+    });
+
+    test('immediate mode: after activating hint 1, slot 2 is still available', () {
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
+      expect(gs.currentHintSlot, HintSlotState.available);
+    });
+
+    test('immediate mode: after activating hints 1 and 2, slot 3 is still available', () {
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
+      // Activate hint 2: must place hinted piece first to clear isHinted
+      gs.pieces.firstWhere((p) => p.isHinted).isHinted = false;
+      gs.activateHint();
+      expect(gs.currentHintSlot, HintSlotState.available);
+    });
+
+    test('markNextSlotAvailable transitions first waiting slot to available', () {
+      final gs = makeState()..markNextSlotAvailable();
+      expect(gs.currentHintSlot, HintSlotState.available);
+    });
+
+    test('markNextSlotAvailable is no-op when no waiting slots remain', () {
+      final gs = makeState(immediateMode: true)..markNextSlotAvailable();
+      expect(gs.currentHintSlot, HintSlotState.available);
+    });
+
+    test('activateHint transitions available slot to used and sets hintedPieceIndex', () {
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
+      expect(gs.hintedPieceIndex, isNotNull);
+    });
+
+    test('activateHint is no-op when currentHintSlot is waiting', () {
+      final gs = makeState()..activateHint(); // timed mode: currentHintSlot == waiting
+      // No piece should be hinted
+      expect(gs.hasActiveHint, isFalse);
+      expect(gs.currentHintSlot, HintSlotState.waiting);
+    });
+
+    test('isHintedPiecePlaced is false when no hint is active', () {
+      final gs = makeState();
+      expect(gs.isHintedPiecePlaced, isFalse);
+    });
+
+    test('isHintedPiecePlaced is true after hinted piece snapped via endDrag', () {
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
+      final hinted = gs.pieces.firstWhere((p) => p.isHinted);
+      final idx = gs.pieces.indexOf(hinted);
+      gs.startDrag(idx);
+      gs.pieces.last.currentPosition = gs.pieces.last.targetPosition;
+      gs.endDrag();
+      expect(gs.isHintedPiecePlaced, isTrue);
+    });
+
+    test('isHintedPiecePlaced is false when a different piece snaps', () {
+      final gs = makeState(immediateMode: true)..beginPlaying()..activateHint();
+      // Snap a non-hinted piece
+      final nonHintedIdx = gs.pieces.indexWhere((p) => !p.isHinted && !p.isPlaced);
+      gs.startDrag(nonHintedIdx);
+      gs.pieces.last.currentPosition = gs.pieces.last.targetPosition;
+      gs.endDrag();
+      expect(gs.isHintedPiecePlaced, isFalse);
+    });
+
+    test('currentHintSlot returns null when all 3 slots are used', () {
+      final gs = makeState(immediateMode: true)..beginPlaying();
+      // Use all 3 hints
+      for (var i = 0; i < 3; i++) {
+        gs.activateHint();
+        gs.pieces.firstWhere((p) => p.isHinted).isHinted = false;
+      }
+      expect(gs.currentHintSlot, isNull);
+    });
+
+    test('markNextSlotAvailable notifies listeners', () {
+      final gs = makeState();
+      var notified = false;
+      gs
+        ..addListener(() => notified = true)
+        ..markNextSlotAvailable();
+      expect(notified, isTrue);
+    });
   });
 
   group('lift effect', () {

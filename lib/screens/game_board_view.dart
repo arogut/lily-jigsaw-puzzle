@@ -6,6 +6,7 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/panel_backgrounds.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
+import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_grid_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_shadow_painter.dart';
@@ -34,10 +35,14 @@ class GameBoardView extends StatelessWidget {
     required this.onBack,
     required this.onPlayAgain,
     required this.onNewPuzzle,
+    required this.onHint,
     this.onPanStart,
     this.onPanUpdate,
     this.onPanEnd,
-    this.onHint,
+    this.currentHintSlot,
+    this.hintAvailableAnimation,
+    this.hintsExhaustedAnimation,
+    this.showHintArea = false,
     super.key,
   });
 
@@ -80,9 +85,26 @@ class GameBoardView extends StatelessWidget {
   /// Called when a drag gesture ends over the piece layer.
   final GestureDragEndCallback? onPanEnd;
 
-  /// Null when hints are unavailable — drives both the enabled state and
-  /// opacity of the hint button.
-  final VoidCallback? onHint;
+  /// Called when the user taps the hint button.
+  final VoidCallback onHint;
+
+  /// State of the current hint slot — drives hint button visibility and enabled state.
+  ///
+  /// `null` hides the button; [HintSlotState.waiting] shows it disabled;
+  /// [HintSlotState.available] shows it enabled.
+  final HintSlotState? currentHintSlot;
+
+  /// When non-null, wraps the hint button in a [ScaleTransition] for the
+  /// springy pop effect played when a hint becomes available.
+  final Animation<double>? hintAvailableAnimation;
+
+  /// When non-null, wraps the entire hint area in [ScaleTransition] +
+  /// [FadeTransition] for the exit effect played when all hints are exhausted.
+  final Animation<double>? hintsExhaustedAnimation;
+
+  /// When `true`, keeps the hint area in the widget tree even if
+  /// [currentHintSlot] is `null` (e.g. while the exit animation is playing).
+  final bool showHintArea;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +181,21 @@ class GameBoardView extends StatelessWidget {
     );
   }
 
+  Widget _buildHintButton(AppLocalizations l10n) {
+    final button = GameButton(
+      label: l10n.hint,
+      icon: Icons.lightbulb_outline,
+      variant: GameButtonVariant.yellow,
+      fontSize: 15,
+      enabled: currentHintSlot == HintSlotState.available,
+      onPressed:
+          currentHintSlot == HintSlotState.available ? onHint : () {},
+    );
+    final anim = hintAvailableAnimation;
+    if (anim == null) return button;
+    return ScaleTransition(scale: anim, child: button);
+  }
+
   Widget _buildDivider(double x) => Positioned(
         left: x - 3,
         top: 0,
@@ -205,6 +242,22 @@ class GameBoardView extends StatelessWidget {
         ),
       );
 
+  Widget _buildHintArea(AppLocalizations l10n) {
+    final area = Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Opacity(
+        opacity: currentHintSlot == HintSlotState.available ? 1.0 : 0.5,
+        child: _buildHintButton(l10n),
+      ),
+    );
+    final exitAnim = hintsExhaustedAnimation;
+    if (exitAnim == null) return area;
+    return ScaleTransition(
+      scale: exitAnim,
+      child: FadeTransition(opacity: exitAnim, child: area),
+    );
+  }
+
   Widget _buildRightControls(GameState gs, AppLocalizations l10n) => Positioned(
         right: kEdgePad,
         top: 8,
@@ -213,20 +266,8 @@ class GameBoardView extends StatelessWidget {
           builder: (context, _) => Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Opacity(
-                  opacity: onHint != null ? 1.0 : 0.5,
-                  child: GameButton(
-                    label: '${l10n.hint} (${gs.hintsRemaining})',
-                    icon: Icons.lightbulb_outline,
-                    variant: GameButtonVariant.yellow,
-                    fontSize: 15,
-                    enabled: onHint != null,
-                    onPressed: onHint ?? () {},
-                  ),
-                ),
-              ),
+              if (currentHintSlot != null || showHintArea)
+                _buildHintArea(l10n),
               TrayLabel(
                 placed: gs.pieces.where((p) => p.isPlaced).length,
                 total: gs.pieces.length,

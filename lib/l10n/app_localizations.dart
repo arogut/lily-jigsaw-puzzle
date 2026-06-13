@@ -323,6 +323,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hint'**
   String get hint;
+
+  /// No description provided for @hintsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Hints'**
+  String get hintsSection;
+
+  /// No description provided for @hintsImmediate.
+  ///
+  /// In en, this message translates to:
+  /// **'Always Active'**
+  String get hintsImmediate;
+
+  /// No description provided for @hintsDelayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock delay (seconds)'**
+  String get hintsDelayLabel;
+
+  /// No description provided for @hintsDelayError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive number'**
+  String get hintsDelayError;
 }
 
 class _AppLocalizationsDelegate

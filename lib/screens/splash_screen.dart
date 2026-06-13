@@ -8,16 +8,19 @@ import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 
 class SplashScreen extends StatefulWidget {
 
   const SplashScreen({
     required this.localeNotifier,
     required this.difficultySettings,
+    required this.hintSettings,
     super.key,
   });
   final LocaleNotifier localeNotifier;
   final DifficultySettings difficultySettings;
+  final HintSettings hintSettings;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -72,6 +75,7 @@ class _SplashScreenState extends State<SplashScreen>
               ImageSelectionScreen(
             localeNotifier: widget.localeNotifier,
             difficultySettings: widget.difficultySettings,
+            hintSettings: widget.hintSettings,
           ),
           transitionsBuilder: (context, anim, secondaryAnimation, child) =>
               FadeTransition(opacity: anim, child: child),

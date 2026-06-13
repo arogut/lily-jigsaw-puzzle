@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
+import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
@@ -36,6 +37,10 @@ class _BoardViewHarness extends StatefulWidget {
     this.onPlayAgain,
     this.onNewPuzzle,
     this.onHint,
+    this.currentHintSlot,
+    this.hintAvailableAnimation,
+    this.hintsExhaustedAnimation,
+    this.showHintArea,
   });
 
   final GameState gameState;
@@ -45,6 +50,10 @@ class _BoardViewHarness extends StatefulWidget {
   final VoidCallback? onPlayAgain;
   final VoidCallback? onNewPuzzle;
   final VoidCallback? onHint;
+  final HintSlotState? currentHintSlot;
+  final Animation<double>? hintAvailableAnimation;
+  final Animation<double>? hintsExhaustedAnimation;
+  final bool? showHintArea;
 
   @override
   State<_BoardViewHarness> createState() => _BoardViewHarnessState();
@@ -90,7 +99,11 @@ class _BoardViewHarnessState extends State<_BoardViewHarness>
           onBack: widget.onBack ?? () {},
           onPlayAgain: widget.onPlayAgain ?? () {},
           onNewPuzzle: widget.onNewPuzzle ?? () {},
-          onHint: widget.onHint,
+          currentHintSlot: widget.currentHintSlot,
+          hintAvailableAnimation: widget.hintAvailableAnimation,
+          hintsExhaustedAnimation: widget.hintsExhaustedAnimation,
+          showHintArea: widget.showHintArea ?? false,
+          onHint: widget.onHint ?? () {},
         ),
       );
 }
@@ -131,6 +144,10 @@ void main() {
     VoidCallback? onPlayAgain,
     VoidCallback? onNewPuzzle,
     VoidCallback? onHint,
+    HintSlotState? currentHintSlot,
+    Animation<double>? hintAvailableAnimation,
+    Animation<double>? hintsExhaustedAnimation,
+    bool showHintArea = false,
   }) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(_wrap(_BoardViewHarness(
@@ -141,6 +158,10 @@ void main() {
       onPlayAgain: onPlayAgain,
       onNewPuzzle: onNewPuzzle,
       onHint: onHint,
+      currentHintSlot: currentHintSlot,
+      hintAvailableAnimation: hintAvailableAnimation,
+      hintsExhaustedAnimation: hintsExhaustedAnimation,
+      showHintArea: showHintArea,
     )));
     await tester.pump();
   }
@@ -155,7 +176,7 @@ void main() {
 
     testWidgets('shows hint button in playing phase', (tester) async {
       final gs = makePlayingState();
-      await pump(tester, gs, onHint: () {});
+      await pump(tester, gs, currentHintSlot: HintSlotState.available);
       expect(find.byIcon(Icons.lightbulb_outline), findsOneWidget);
       await tester.binding.setSurfaceSize(null);
     });
@@ -193,9 +214,9 @@ void main() {
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('hint button is dimmed when onHint is null', (tester) async {
+    testWidgets('hint button is dimmed when currentHintSlot is waiting', (tester) async {
       final gs = makePlayingState();
-      await pump(tester, gs); // onHint = null → Opacity 0.5
+      await pump(tester, gs, currentHintSlot: HintSlotState.waiting);
       final opacity = tester.widget<Opacity>(
         find.ancestor(
           of: find.byIcon(Icons.lightbulb_outline),
@@ -206,12 +227,105 @@ void main() {
       await tester.binding.setSurfaceSize(null);
     });
 
+    testWidgets('hint button is fully opaque when currentHintSlot is available',
+        (tester) async {
+      final gs = makePlayingState();
+      await pump(tester, gs, currentHintSlot: HintSlotState.available);
+      final opacity = tester.widget<Opacity>(
+        find.ancestor(
+          of: find.byIcon(Icons.lightbulb_outline),
+          matching: find.byType(Opacity),
+        ).first,
+      );
+      expect(opacity.opacity, 1.0);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('hint button is absent when currentHintSlot is null', (tester) async {
+      final gs = makePlayingState();
+      await pump(tester, gs); // currentHintSlot defaults to null
+      expect(find.byIcon(Icons.lightbulb_outline), findsNothing);
+      await tester.binding.setSurfaceSize(null);
+    });
+
     testWidgets('renders hint glow painter when active hint in playing phase',
         (tester) async {
       final gs = makePlayingState()..activateHint();
       await pump(tester, gs);
       // Hint glow layer rendered — widget tree exists without error.
       expect(find.byType(GameBoardView), findsOneWidget);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets(
+        'hint button is wrapped in ScaleTransition when hintAvailableAnimation provided',
+        (tester) async {
+      final gs = makePlayingState();
+      await pump(
+        tester, gs,
+        currentHintSlot: HintSlotState.available,
+        hintAvailableAnimation: const AlwaysStoppedAnimation(1),
+      );
+      expect(
+        find.ancestor(
+          of: find.byIcon(Icons.lightbulb_outline),
+          matching: find.byType(ScaleTransition),
+        ),
+        findsWidgets,
+        reason: 'GameBoardView must wrap hint button in ScaleTransition for pop effect',
+      );
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets(
+        'hint area is wrapped in ScaleTransition and FadeTransition when hintsExhaustedAnimation provided',
+        (tester) async {
+      final gs = makePlayingState();
+      await pump(
+        tester, gs,
+        currentHintSlot: HintSlotState.available,
+        hintsExhaustedAnimation: const AlwaysStoppedAnimation(1),
+        showHintArea: true,
+      );
+      expect(
+        find.ancestor(
+          of: find.byIcon(Icons.lightbulb_outline),
+          matching: find.byType(FadeTransition),
+        ),
+        findsWidgets,
+        reason: 'hint area must be wrapped in FadeTransition for exit effect',
+      );
+      expect(
+        find.ancestor(
+          of: find.byIcon(Icons.lightbulb_outline),
+          matching: find.byType(ScaleTransition),
+        ),
+        findsWidgets,
+        reason: 'hint area must be wrapped in ScaleTransition for exit effect',
+      );
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('hint area is absent when showHintArea is false and currentHintSlot is null',
+        (tester) async {
+      final gs = makePlayingState();
+      await pump(
+        tester, gs,
+        // currentHintSlot: null (default), showHintArea: false (default)
+      );
+      expect(find.byIcon(Icons.lightbulb_outline), findsNothing);
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('hint area visible when showHintArea is true even if currentHintSlot is null',
+        (tester) async {
+      final gs = makePlayingState();
+      await pump(
+        tester, gs,
+        showHintArea: true,
+        hintsExhaustedAnimation: const AlwaysStoppedAnimation(0.5),
+      );
+      expect(find.byIcon(Icons.lightbulb_outline), findsOneWidget);
       await tester.binding.setSurfaceSize(null);
     });
 

@@ -5,9 +5,13 @@ import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_screen.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+
 LocaleNotifier _makeLocaleNotifier() => LocaleNotifier(const Locale('en'));
+HintSettings _makeHintSettings() =>
+    HintSettings(immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
 
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -39,6 +43,7 @@ void main() {
         gridSize: 3,
         difficultyStars: 1,
         localeNotifier: _makeLocaleNotifier(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     // First frame always shows loading indicator since image is async
@@ -56,6 +61,7 @@ void main() {
         gridSize: 3,
         difficultyStars: 1,
         localeNotifier: _makeLocaleNotifier(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     // Advance through: image load → 1 s delay → 1 500 ms scatter animation
@@ -76,6 +82,7 @@ void main() {
         gridSize: 3,
         difficultyStars: 1,
         localeNotifier: _makeLocaleNotifier(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -95,6 +102,7 @@ void main() {
         gridSize: 5,
         difficultyStars: 2,
         localeNotifier: _makeLocaleNotifier(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -104,4 +112,5 @@ void main() {
     expect(find.byType(Scaffold), findsOneWidget);
     await tester.binding.setSurfaceSize(null);
   });
+
 }

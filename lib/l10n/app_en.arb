@@ -48,5 +48,9 @@
   "langEnglish": "English",
   "langGerman": "Deutsch",
   "langSpanish": "Español",
-  "hint": "Hint"
+  "hint": "Hint",
+  "hintsSection": "Hints",
+  "hintsImmediate": "Always Active",
+  "hintsDelayLabel": "Unlock delay (seconds)",
+  "hintsDelayError": "Enter a positive number"
 }
