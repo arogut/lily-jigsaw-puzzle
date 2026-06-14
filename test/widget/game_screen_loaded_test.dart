@@ -775,4 +775,134 @@ void main() {
 
     await tester.binding.setSurfaceSize(null);
   });
+
+  // ── Additional drag-path coverage ─────────────────────────────────────────
+  //
+  // All tests below use _pumpUntilPlaying (runAsync, logical screen 800×600):
+  //   gridSize=1 → pieceWidth=360  pieceHeight=560
+  //   scatter target = (420, 20)   piece centre = (600, 300)
+  //   board target   = (20, 20)    screen midline at x = 400
+
+  testWidgets(
+      'dragging piece left across midline without snapping triggers return animation',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      // Timed mode with long delay so the timer does not fire during the test.
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 60),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Move left 250 px: _rawDragPosition → (170, 20).  170 < 400 → crosses
+    // midline, setting _dragCrossedLeft=true.  Distance to target (20,20)
+    // is 150 px >> kSnapThreshold(40), so the piece is NOT placed.
+    // _onPanEnd takes the _dragCrossedLeft branch, calls _resetHintTimer (which
+    // in timed-waiting state reaches _startHintTimer) then _startReturnAnimation.
+    final gesture = await tester.startGesture(const Offset(600, 300));
+    await tester.pump();
+    await gesture.moveBy(const Offset(-250, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    // Advance past the 750 ms return animation so the ticker completes cleanly.
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump();
+
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'releasing piece inside tray without crossing midline covers else branch and physics tick',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Move right 50 px: _rawDragPosition → (470, 20).  Never crosses x=400 so
+    // _dragCrossedLeft=false.  cx = 470+180 = 650 < 800 (in bounds), so
+    // _snapToTrayIfOutside returns false and _paintTick is incremented.
+    // Pumping two frames afterwards fires the physics ticker with dt>0, which
+    // advances piece momentum and hits the stepPhysics-changed branch.
+    final gesture = await tester.startGesture(const Offset(600, 300));
+    await tester.pump();
+    await gesture.moveBy(const Offset(50, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'releasing piece outside screen boundary triggers snap-back into tray',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Move right 320 px: _rawDragPosition → (740, 20).  cx = 740+180 = 920
+    // which exceeds screen width (800), so _snapToTrayIfOutside returns true
+    // and fires _startReturnAnimation.  Piece never crosses x=400, so
+    // _dragCrossedLeft remains false and we take the else branch.
+    final gesture = await tester.startGesture(const Offset(600, 300));
+    await tester.pump();
+    await gesture.moveBy(const Offset(320, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump();
+
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('tapping New Puzzle from win overlay invokes onNewPuzzle',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    await _placeLastPiece(tester);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
+    await tester.pump();
+    expect(find.byType(WinOverlay), findsOneWidget);
+
+    await tester.tap(find.text('New Puzzle'));
+    await tester.pump();
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
 }

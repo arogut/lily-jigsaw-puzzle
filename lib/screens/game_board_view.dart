@@ -188,8 +188,7 @@ class GameBoardView extends StatelessWidget {
       variant: GameButtonVariant.yellow,
       fontSize: 15,
       enabled: currentHintSlot == HintSlotState.available,
-      onPressed:
-          onPressed: onHint,
+      onPressed: onHint,
     );
     final anim = hintAvailableAnimation;
     if (anim == null) return button;
