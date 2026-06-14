@@ -250,7 +250,7 @@ void main() {
 
     testWidgets('renders hint glow painter when active hint in playing phase',
         (tester) async {
-      final gs = makePlayingState()..activateHint();
+      final gs = makePlayingState()..markNextSlotAvailable()..activateHint();
       await pump(tester, gs);
       // Hint glow layer rendered — widget tree exists without error.
       expect(find.byType(GameBoardView), findsOneWidget);
