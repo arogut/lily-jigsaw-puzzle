@@ -393,7 +393,7 @@ class _GameScreenState extends State<GameScreen>
     if (gs.draggingIndex == null) return;
     final piece = gs.pieces[gs.draggingIndex!];
     if ((piece.currentPosition - piece.targetPosition).distance <= kSnapThreshold) {
-      // Snapped into place — capture isHinted BEFORE endDrag() clears it.
+      // Snapped into place — check isHintedPiecePlaced after endDrag() while _hintedPiece ref is still valid.
       gs.endDrag();
       unawaited(SoundService().playSnap());
       if (gs.phase == GamePhase.won) {
