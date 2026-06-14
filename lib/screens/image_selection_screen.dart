@@ -12,6 +12,7 @@ import 'package:lily_jigsaw_puzzle/screens/difficulty_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/settings_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
@@ -21,10 +22,12 @@ class ImageSelectionScreen extends StatefulWidget {
   const ImageSelectionScreen({
     required this.localeNotifier,
     required this.difficultySettings,
+    required this.hintSettings,
     super.key,
   });
   final LocaleNotifier localeNotifier;
   final DifficultySettings difficultySettings;
+  final HintSettings hintSettings;
 
   @override
   State<ImageSelectionScreen> createState() => _ImageSelectionScreenState();
@@ -68,6 +71,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                             builder: (_) => SettingsScreen(
                               localeNotifier: widget.localeNotifier,
                               difficultySettings: widget.difficultySettings,
+                              hintSettings: widget.hintSettings,
                             ),
                           )).then((_) {
                             if (mounted) setState(() {});
@@ -97,6 +101,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                         image: PuzzleImageData.all[index],
                         localeNotifier: widget.localeNotifier,
                         difficultySettings: widget.difficultySettings,
+                        hintSettings: widget.hintSettings,
                       );
                     },
                   ),
@@ -119,10 +124,12 @@ class _ImageCard extends StatefulWidget {
     required this.image,
     required this.localeNotifier,
     required this.difficultySettings,
+    required this.hintSettings,
   });
   final PuzzleImageData image;
   final LocaleNotifier localeNotifier;
   final DifficultySettings difficultySettings;
+  final HintSettings hintSettings;
 
   @override
   State<_ImageCard> createState() => _ImageCardState();
@@ -156,6 +163,7 @@ class _ImageCardState extends State<_ImageCard>
         selectedImage: widget.image,
         localeNotifier: widget.localeNotifier,
         difficultySettings: widget.difficultySettings,
+        hintSettings: widget.hintSettings,
       ),
     )).then((_) {
       // Refresh star display when returning from the game.

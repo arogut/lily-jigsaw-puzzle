@@ -48,5 +48,9 @@
   "langEnglish": "English",
   "langGerman": "Deutsch",
   "langSpanish": "Español",
-  "hint": "Pista"
+  "hint": "Pista",
+  "hintsSection": "Pistas",
+  "hintsImmediate": "Siempre activo",
+  "hintsDelayLabel": "Tiempo de desbloqueo (segundos)",
+  "hintsDelayError": "Ingresa un número positivo"
 }

@@ -122,4 +122,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hint => 'Hint';
+
+  @override
+  String get hintsSection => 'Hints';
+
+  @override
+  String get hintsImmediate => 'Always Active';
+
+  @override
+  String get hintsDelayLabel => 'Unlock delay (seconds)';
+
+  @override
+  String get hintsDelayError => 'Enter a positive number';
 }

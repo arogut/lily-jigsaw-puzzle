@@ -48,5 +48,9 @@
   "langEnglish": "English",
   "langGerman": "Deutsch",
   "langSpanish": "Español",
-  "hint": "Podpowiedź"
+  "hint": "Podpowiedź",
+  "hintsSection": "Podpowiedzi",
+  "hintsImmediate": "Zawsze aktywne",
+  "hintsDelayLabel": "Czas odblokowania (sekundy)",
+  "hintsDelayError": "Wpisz liczbę większą od zera"
 }

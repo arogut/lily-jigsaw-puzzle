@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 import 'package:lily_jigsaw_puzzle/models/game_phase.dart';
+import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_builder.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
@@ -35,12 +36,20 @@ const double _kMinVelocity = 5;
 /// drag events without polling.
 class GameState extends ChangeNotifier {
   /// Creates a [GameState] and immediately initialises pieces from [puzzleImage].
+  ///
+  /// When [immediateMode] is true all three hint slots start as
+  /// [HintSlotState.available]; otherwise they start as [HintSlotState.waiting].
   GameState({
     required this.puzzleImage,
     required this.gridSize,
     required this.boardSize,
     this.boardOffset = Offset.zero,
+    this.immediateMode = false,
   }) {
+    _hintSlots = List.generate(
+      3,
+      (_) => immediateMode ? HintSlotState.available : HintSlotState.waiting,
+    );
     _initialize();
   }
 
@@ -48,6 +57,9 @@ class GameState extends ChangeNotifier {
   final int gridSize;
   final Size boardSize;
   final Offset boardOffset;
+
+  /// When true, all hint slots start in [HintSlotState.available].
+  final bool immediateMode;
 
   late List<PuzzlePiece> _pieces;
 
@@ -64,10 +76,25 @@ class GameState extends ChangeNotifier {
   /// Index into [pieces] of the piece currently being dragged, or null.
   int? get draggingIndex => _draggingIndex;
 
-  int _hintsRemaining = 3;
+  late List<HintSlotState> _hintSlots;
+  PuzzlePiece? _hintedPiece;
 
-  /// Remaining hint activations available to the player.
-  int get hintsRemaining => _hintsRemaining;
+  /// The state of the next available (non-used) hint slot, or null if all used.
+  HintSlotState? get currentHintSlot {
+    for (final s in _hintSlots) {
+      if (s != HintSlotState.used) return s;
+    }
+    return null;
+  }
+
+  /// Index of the currently hinted piece, or null when no hint is active.
+  ///
+  /// Computed from the piece reference — survives list reordering during drag.
+  int? get hintedPieceIndex =>
+      _hintedPiece == null ? null : _pieces.indexOf(_hintedPiece!);
+
+  /// True when a hint was used and the highlighted piece has been correctly placed.
+  bool get isHintedPiecePlaced => _hintedPiece != null && _hintedPiece!.isPlaced;
 
   late final double pieceWidth;
   late final double pieceHeight;
@@ -287,18 +314,39 @@ class GameState extends ChangeNotifier {
   /// True when a hint is currently active (one piece is highlighted).
   bool get hasActiveHint => _pieces.any((p) => p.isHinted);
 
-  /// Highlights a random unplaced piece and decrements [hintsRemaining].
+  /// Transitions the first [HintSlotState.waiting] slot to [HintSlotState.available].
+  ///
+  /// No-op when no waiting slots remain.
+  void markNextSlotAvailable() {
+    for (var i = 0; i < _hintSlots.length; i++) {
+      if (_hintSlots[i] == HintSlotState.waiting) {
+        _hintSlots[i] = HintSlotState.available;
+        notifyListeners();
+        return;
+      }
+    }
+  }
+
+  /// Activates the first [HintSlotState.available] hint slot: marks it used,
+  /// highlights a random unplaced piece, and records it as [_hintedPiece].
+  ///
+  /// No-op when [currentHintSlot] is not [HintSlotState.available].
   void activateHint() {
-    if (_hintsRemaining <= 0) return;
+    if (currentHintSlot != HintSlotState.available) return;
+    // Mark first available slot as used.
+    for (var i = 0; i < _hintSlots.length; i++) {
+      if (_hintSlots[i] == HintSlotState.available) {
+        _hintSlots[i] = HintSlotState.used;
+        break;
+      }
+    }
     _clearHint();
-    // Only hint unplaced, non-dragging pieces.
     final unplaced = _pieces
         .where((p) => !p.isPlaced && !p.isDragging)
         .toList();
     if (unplaced.isEmpty) return;
     final rng = Random();
-    unplaced[rng.nextInt(unplaced.length)].isHinted = true;
-    _hintsRemaining--;
+    _hintedPiece = unplaced[rng.nextInt(unplaced.length)]..isHinted = true;
     notifyListeners();
   }
 

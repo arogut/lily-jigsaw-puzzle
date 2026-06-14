@@ -25,5 +25,17 @@ void main() {
       wrongFuture.ignore();
       winFuture.ignore();
     });
+
+    test('playHintAvailable returns a future', () {
+      final future = SoundService().playHintAvailable();
+      expect(future, isNotNull);
+      future.ignore();
+    });
+
+    test('playHintsExhausted returns a future', () {
+      final future = SoundService().playHintsExhausted();
+      expect(future, isNotNull);
+      future.ignore();
+    });
   });
 }

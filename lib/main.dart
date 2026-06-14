@@ -7,6 +7,7 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/screens/splash_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocaleNotifier extends ChangeNotifier {
@@ -43,7 +44,12 @@ void main() async {
   ]);
   final localeNotifier = await LocaleNotifier.load();
   final difficultySettings = await DifficultySettings.load();
-  runApp(JigsawApp(localeNotifier: localeNotifier, difficultySettings: difficultySettings));
+  final hintSettings = await HintSettings.load();
+  runApp(JigsawApp(
+    localeNotifier: localeNotifier,
+    difficultySettings: difficultySettings,
+    hintSettings: hintSettings,
+  ));
 }
 
 class JigsawApp extends StatelessWidget {
@@ -51,10 +57,12 @@ class JigsawApp extends StatelessWidget {
   const JigsawApp({
     required this.localeNotifier,
     required this.difficultySettings,
+    required this.hintSettings,
     super.key,
   });
   final LocaleNotifier localeNotifier;
   final DifficultySettings difficultySettings;
+  final HintSettings hintSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +85,7 @@ class JigsawApp extends StatelessWidget {
           home: SplashScreen(
             localeNotifier: localeNotifier,
             difficultySettings: difficultySettings,
+            hintSettings: hintSettings,
           ),
         );
       },

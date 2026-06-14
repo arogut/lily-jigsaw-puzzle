@@ -122,4 +122,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get hint => 'Podpowiedź';
+
+  @override
+  String get hintsSection => 'Podpowiedzi';
+
+  @override
+  String get hintsImmediate => 'Zawsze aktywne';
+
+  @override
+  String get hintsDelayLabel => 'Czas odblokowania (sekundy)';
+
+  @override
+  String get hintsDelayError => 'Wpisz liczbę większą od zera';
 }

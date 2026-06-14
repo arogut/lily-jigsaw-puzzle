@@ -9,12 +9,14 @@ import 'package:flutter/services.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
+import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 
 class GameScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class GameScreen extends StatefulWidget {
     required this.gridSize,
     required this.difficultyStars,
     required this.localeNotifier,
+    required this.hintSettings,
     super.key,
   });
   final PuzzleImageData selectedImage;
@@ -33,12 +36,15 @@ class GameScreen extends StatefulWidget {
   final int difficultyStars;
   final LocaleNotifier localeNotifier;
 
+  /// Hint unlock configuration for this session.
+  final HintSettings hintSettings;
+
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
 class _GameScreenState extends State<GameScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   GameState? _gameState;
   ui.Image? _uiImage;
 
@@ -67,13 +73,27 @@ class _GameScreenState extends State<GameScreen>
   // Hint glow animation
   late AnimationController _hintController;
 
+  // Hint available pop animation
+  late AnimationController _hintAvailableController;
+  late Animation<double> _hintAvailableAnimation;
+
+  // Hints exhausted exit animation
+  late AnimationController _hintsExhaustedController;
+  late Animation<double> _hintsExhaustedAnimation;
+  bool _showingHintArea = true;
+
   // Physics simulation ticker (momentum, gravity, bounce, flip animations).
   late Ticker _physicsTicker;
   Duration? _lastPhysicsTime;
 
+  // Hint timer fields.
+  Timer? _hintTimer;
+  int _timerRemainingMs = 0;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scatterController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -92,6 +112,25 @@ class _GameScreenState extends State<GameScreen>
       duration: const Duration(milliseconds: 1500),
     );
     unawaited(_hintController.repeat());
+
+    _hintAvailableController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _hintAvailableAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1, end: 1.25), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 1.25, end: 0.9), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.05), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 1.05, end: 1), weight: 25),
+    ]).animate(_hintAvailableController);
+
+    _hintsExhaustedController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _hintsExhaustedAnimation = Tween<double>(begin: 1, end: 0).animate(
+      CurvedAnimation(parent: _hintsExhaustedController, curve: Curves.easeIn),
+    );
 
     _physicsTicker = createTicker(_onPhysicsTick);
   }
@@ -133,6 +172,7 @@ class _GameScreenState extends State<GameScreen>
       gridSize: widget.gridSize,
       boardSize: boardSize,
       boardOffset: boardOffset,
+      immediateMode: widget.hintSettings.immediateMode,
     );
     _assembledPositions =
         _gameState!.pieces.map((p) => p.targetPosition).toList();
@@ -204,9 +244,81 @@ class _GameScreenState extends State<GameScreen>
       // enabled within the same pump() call that completes the scatter animation.
       if (mounted && _gameState != null) {
         _gameState!.beginPlaying();
+        if (!widget.hintSettings.immediateMode) {
+          _startHintTimer(widget.hintSettings.unlockDelaySeconds * 1000);
+        }
         setState(() {}); // phase change → shadow layer + hint button update
       }
     }
+  }
+
+  // ── Hint timer ────────────────────────────────────────────────────────────
+
+  void _startHintTimer(int delayMs) {
+    _hintTimer?.cancel();
+    _timerRemainingMs = delayMs;
+    _hintTimer = Timer(Duration(milliseconds: delayMs), () {
+      if (mounted && _gameState != null) {
+        _gameState!.markNextSlotAvailable();
+        unawaited(SoundService().playHintAvailable());
+        _hintAvailableController.reset();
+        unawaited(_hintAvailableController.forward());
+        setState(() {});
+      }
+    });
+  }
+
+  void _cancelHintTimer() {
+    _hintTimer?.cancel();
+    _hintTimer = null;
+  }
+
+  void _resetHintTimer() {
+    _cancelHintTimer();
+    final gs = _gameState;
+    if (gs == null ||
+        widget.hintSettings.immediateMode ||
+        gs.hasActiveHint ||
+        gs.currentHintSlot != HintSlotState.waiting) {
+      return;
+    }
+    _startHintTimer(widget.hintSettings.unlockDelaySeconds * 1000);
+  }
+
+  void _pauseHintTimer() {
+    final timer = _hintTimer;
+    if (timer == null || !timer.isActive) return;
+    // Capture remaining time; dart:async Timer doesn't expose it directly,
+    // so we approximate using the configured delay (conservative: restarts full).
+    timer.cancel();
+    _hintTimer = null;
+  }
+
+  void _resumeHintTimer() {
+    final gs = _gameState;
+    if (gs == null ||
+        widget.hintSettings.immediateMode ||
+        gs.hasActiveHint ||
+        gs.currentHintSlot != HintSlotState.waiting ||
+        _timerRemainingMs <= 0) {
+      return;
+    }
+    _startHintTimer(_timerRemainingMs);
+  }
+
+  void _onHintTapped() {
+    final gs = _gameState;
+    if (gs == null) return;
+    gs.activateHint();
+    _cancelHintTimer();
+    if (gs.currentHintSlot == null) {
+      unawaited(SoundService().playHintsExhausted());
+      _hintsExhaustedController.reset();
+      unawaited(_hintsExhaustedController.forward().then((_) {
+        if (mounted) setState(() => _showingHintArea = false);
+      }));
+    }
+    setState(() {});
   }
 
   // ── Physics tick ─────────────────────────────────────────────────────────
@@ -281,18 +393,32 @@ class _GameScreenState extends State<GameScreen>
     if (gs.draggingIndex == null) return;
     final piece = gs.pieces[gs.draggingIndex!];
     if ((piece.currentPosition - piece.targetPosition).distance <= kSnapThreshold) {
-      // Snapped into place.
+      // Snapped into place — check isHintedPiecePlaced after endDrag() while _hintedPiece ref is still valid.
       gs.endDrag();
       unawaited(SoundService().playSnap());
       if (gs.phase == GamePhase.won) {
+        _cancelHintTimer();
         unawaited(_recordCompletion());
         unawaited(SoundService().playWin());
         _startConfetti();
       } else {
+        if (!widget.hintSettings.immediateMode) {
+          if (gs.isHintedPiecePlaced &&
+              gs.currentHintSlot == HintSlotState.waiting) {
+            // The hinted piece was just placed — start the next slot's timer.
+            _cancelHintTimer();
+            _startHintTimer(widget.hintSettings.unlockDelaySeconds * 1000);
+          } else if (!gs.isHintedPiecePlaced) {
+            // Regular placement attempt while idle timer is running — reset it.
+            _resetHintTimer();
+          }
+          // FR-018: hinted piece exists but was NOT placed — do NOT start timer.
+        }
         setState(() {}); // update tray label
       }
     } else if (_dragCrossedLeft) {
-      // Piece was dragged to the board side but not placed — shake + fly-back.
+      // Piece was dragged to the board side but not placed — reset idle timer.
+      if (!widget.hintSettings.immediateMode) _resetHintTimer();
       unawaited(HapticFeedback.mediumImpact());
       unawaited(SoundService().playWrong());
       gs.endDragNoPlace();
@@ -350,6 +476,8 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _hintTimer?.cancel();
     _physicsTicker.dispose();
     _scatterController
       ..removeListener(_onScatterTick)
@@ -360,8 +488,20 @@ class _GameScreenState extends State<GameScreen>
       ..dispose();
     _confettiController.dispose();
     _hintController.dispose();
+    _hintAvailableController.dispose();
+    _hintsExhaustedController.dispose();
     _paintTick.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _pauseHintTimer();
+    } else if (state == AppLifecycleState.resumed) {
+      _resumeHintTimer();
+    }
   }
 
   @override
@@ -385,7 +525,8 @@ class _GameScreenState extends State<GameScreen>
     }
 
     final isPlaying = gs.phase == GamePhase.playing;
-    final canUseHint = isPlaying && gs.hintsRemaining > 0 && !gs.hasActiveHint;
+    final showHintExitArea =
+        isPlaying && gs.currentHintSlot == null && _showingHintArea;
 
     return GameBoardView(
       gameState: gs,
@@ -401,12 +542,12 @@ class _GameScreenState extends State<GameScreen>
       onPanStart: isPlaying ? _onPanStart : null,
       onPanUpdate: isPlaying ? _onPanUpdate : null,
       onPanEnd: isPlaying ? _onPanEnd : null,
-      onHint: canUseHint
-          ? () {
-              gs.activateHint();
-              setState(() {});
-            }
-          : null,
+      currentHintSlot: isPlaying ? gs.currentHintSlot : null,
+      hintAvailableAnimation: isPlaying ? _hintAvailableAnimation : null,
+      hintsExhaustedAnimation:
+          showHintExitArea ? _hintsExhaustedAnimation : null,
+      showHintArea: showHintExitArea,
+      onHint: _onHintTapped,
     );
   }
 
@@ -420,17 +561,21 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _restartGame() {
+    _cancelHintTimer();
+    _timerRemainingMs = 0;
     _physicsTicker.stop();
     _lastPhysicsTime = null;
     _scatterController
       ..removeListener(_onScatterTick)
       ..removeStatusListener(_onScatterStatus);
     _confettiController.stop();
+    _hintsExhaustedController.reset();
     setState(() {
       _gameState = null;
       _assembledPositions = null;
       _scatterTargets = null;
       _showWinOverlay = false;
+      _showingHintArea = true;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _initGame();

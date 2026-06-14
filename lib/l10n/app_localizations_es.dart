@@ -122,4 +122,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get hint => 'Pista';
+
+  @override
+  String get hintsSection => 'Pistas';
+
+  @override
+  String get hintsImmediate => 'Siempre activo';
+
+  @override
+  String get hintsDelayLabel => 'Tiempo de desbloqueo (segundos)';
+
+  @override
+  String get hintsDelayError => 'Ingresa un número positivo';
 }

@@ -10,6 +10,7 @@ import 'package:lily_jigsaw_puzzle/screens/image_selection_screen.dart';
 import 'package:lily_jigsaw_puzzle/screens/splash_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 LocaleNotifier _makeLocaleNotifier() => LocaleNotifier(const Locale('en'));
@@ -18,6 +19,8 @@ DifficultySettings _makeDifficultySettings() => DifficultySettings(
       medium: DifficultySettings.defaultMedium,
       hard: DifficultySettings.defaultHard,
     );
+HintSettings _makeHintSettings() =>
+    HintSettings(immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
 
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -37,6 +40,7 @@ void main() {
       _wrap(SplashScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump(const Duration(milliseconds: 900));
@@ -54,6 +58,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -70,6 +75,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -87,6 +93,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -105,6 +112,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -121,6 +129,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -133,6 +142,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -148,6 +158,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -171,6 +182,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     // Let the FutureBuilder resolve.
@@ -187,6 +199,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pumpAndSettle();
@@ -199,6 +212,7 @@ void main() {
     await tester.pumpWidget(JigsawApp(
       localeNotifier: _makeLocaleNotifier(),
       difficultySettings: _makeDifficultySettings(),
+      hintSettings: _makeHintSettings(),
     ));
     await tester.pump();
     // SplashScreen is the initial route
@@ -213,6 +227,7 @@ void main() {
     await tester.pumpWidget(JigsawApp(
       localeNotifier: notifier,
       difficultySettings: _makeDifficultySettings(),
+      hintSettings: _makeHintSettings(),
     ));
     await tester.pump();
     notifier.setLocale(const Locale('de'));
@@ -232,6 +247,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     // Let async getStars complete so the mounted setState branch is hit
@@ -249,6 +265,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -269,6 +286,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -287,6 +305,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -308,6 +327,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pumpAndSettle();
@@ -337,6 +357,7 @@ void main() {
         selectedImage: catImage,
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pumpAndSettle();
@@ -362,6 +383,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -383,6 +405,7 @@ void main() {
       _wrap(ImageSelectionScreen(
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();
@@ -409,6 +432,7 @@ void main() {
         ),
         localeNotifier: _makeLocaleNotifier(),
         difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
       )),
     );
     await tester.pump();

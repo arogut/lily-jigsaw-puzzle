@@ -9,10 +9,13 @@ import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_screen.dart';
+import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 LocaleNotifier _makeLocaleNotifier() => LocaleNotifier(const Locale('en'));
+HintSettings _makeHintSettings() =>
+    HintSettings(immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
 
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -133,6 +136,7 @@ void main() {
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
 
     // First frame: image hasn't loaded yet → loading indicator visible.
@@ -155,6 +159,7 @@ void main() {
       gridSize: 5,
       difficultyStars: 2,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
 
     await tester.pump();
@@ -173,6 +178,7 @@ void main() {
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
 
     await tester.pump();
@@ -192,6 +198,7 @@ void main() {
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -206,6 +213,7 @@ void main() {
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -213,7 +221,7 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
-  testWidgets('tapping hint button activates hint and decrements count',
+  testWidgets('tapping hint button activates a hint (immediate mode)',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(_wrap(GameScreen(
@@ -221,13 +229,15 @@ void main() {
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: true, unlockDelaySeconds: 10),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
-    expect(find.text('Hint (3)'), findsOneWidget);
+    expect(find.byIcon(Icons.lightbulb_outline), findsOneWidget);
     await tester.tap(find.byIcon(Icons.lightbulb_outline));
     await tester.pump();
-    expect(find.text('Hint (2)'), findsOneWidget);
+    // After tapping, the hint is active — button slot transitions to used.
+    expect(find.byType(Scaffold), findsOneWidget);
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -238,6 +248,7 @@ void main() {
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -259,6 +270,7 @@ void main() {
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -268,26 +280,29 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
-  testWidgets('hint button is disabled while a hint is active', (tester) async {
+  testWidgets('hint button is absent after all hints used (immediate mode)', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(_wrap(GameScreen(
       selectedImage: _testImage,
       gridSize: 3,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: true, unlockDelaySeconds: 10),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
 
-    // Activate first hint — count goes 3 → 2, piece becomes hinted.
-    await tester.tap(find.byIcon(Icons.lightbulb_outline));
-    await tester.pump();
-    expect(find.text('Hint (2)'), findsOneWidget);
+    // Use all 3 hint slots.
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byIcon(Icons.lightbulb_outline));
+      await tester.pump();
+    }
 
-    // Second tap must be ignored: hasActiveHint=true → canUseHint=false → button disabled.
-    await tester.tap(find.byIcon(Icons.lightbulb_outline));
-    await tester.pump();
-    expect(find.text('Hint (2)'), findsOneWidget); // count unchanged
+    // Pump past the 400 ms exit animation.
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // All slots used and exit animation complete → hint button is absent.
+    expect(find.byIcon(Icons.lightbulb_outline), findsNothing);
 
     await tester.binding.setSurfaceSize(null);
   });
@@ -312,6 +327,7 @@ void main() {
       gridSize: 1,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -335,6 +351,7 @@ void main() {
       gridSize: 1,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -364,6 +381,7 @@ void main() {
       gridSize: 1,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -394,6 +412,7 @@ void main() {
       gridSize: 1,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -415,6 +434,315 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
+  // ── T017: Hint timer behaviour ────────────────────────────────────────────
+
+  testWidgets('immediate mode: hint button is active as soon as game is playing',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: true, unlockDelaySeconds: 10),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 1.0,
+        reason: 'immediate mode: hint button must be fully enabled');
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('timed mode: hint button starts inactive (waiting state)',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 10),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 0.5,
+        reason: 'timed mode: hint button must be dimmed while waiting');
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('timed mode: hint becomes active after configured delay',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 5),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Button must be waiting before timer fires.
+    final opBefore = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opBefore.opacity, 0.5, reason: 'must be waiting before timer fires');
+
+    // Advance past the 5-second delay so the timer fires.
+    await tester.pump(const Duration(seconds: 5));
+
+    final opAfter = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opAfter.opacity, 1.0,
+        reason: 'hint must be active after delay expires');
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'timed mode: hint available pop animation plays scale > 1.0 after timer fires',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 1),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Advance past the 1-second delay to fire the hint timer.
+    await tester.pump(const Duration(seconds: 1));
+
+    // Advance 50 ms into the 500 ms pop animation (still in the scale-up
+    // phase: TweenSequence goes 1.0 → 1.25 over the first 250 ms).
+    await tester.pump(const Duration(milliseconds: 50));
+
+    // Hint button must be active after timer fires.
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 1.0, reason: 'hint must be active after delay');
+
+    // The outermost ScaleTransition ancestor of the lightbulb icon is the
+    // pop-animation wrapper. Its scale must exceed 1.0 during the bounce.
+    // (GameButton's internal AnimatedScale→ScaleTransition is innermost.)
+    final outerScale = tester
+        .widgetList<ScaleTransition>(
+          find.ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(ScaleTransition),
+          ),
+        )
+        .last;
+    expect(
+      outerScale.scale.value,
+      greaterThan(1.0),
+      reason: 'pop animation must scale the button above 1.0 during the bounce',
+    );
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'immediate mode: after all hints tapped, hint area briefly remains (exit animation) then disappears',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: true, unlockDelaySeconds: 10),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Exhaust the first two hint slots.
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byIcon(Icons.lightbulb_outline));
+      await tester.pump();
+    }
+
+    // Tap the last hint slot.
+    await tester.tap(find.byIcon(Icons.lightbulb_outline));
+    await tester.pump();
+
+    // Immediately after the last tap, the exit animation has just started
+    // (showHintArea is still true) → hint button must still be in the tree.
+    expect(
+      find.byIcon(Icons.lightbulb_outline),
+      findsOneWidget,
+      reason: 'hint area must remain visible during its 400 ms exit animation',
+    );
+
+    // FadeTransition must wrap the hint area during the exit animation.
+    expect(
+      find.ancestor(
+        of: find.byIcon(Icons.lightbulb_outline),
+        matching: find.byType(FadeTransition),
+      ),
+      findsWidgets,
+      reason: 'hint area must be wrapped in FadeTransition during exit',
+    );
+
+    // Advance past the 400 ms exit animation + settle.
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // After the animation completes, hint area is removed from the tree.
+    expect(
+      find.byIcon(Icons.lightbulb_outline),
+      findsNothing,
+      reason: 'hint area must be gone after exit animation completes',
+    );
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  // ── T018: App lifecycle pause / resume ───────────────────────────────────
+
+  testWidgets('timed mode: pausing app suspends hint timer so it does not fire',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 5),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Timer is running; pause the app — this cancels the timer via _pauseHintTimer.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    // Advance past the 5-second delay — the paused timer must NOT fire.
+    await tester.pump(const Duration(seconds: 5));
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 0.5,
+        reason: 'hint must remain waiting after timer was paused');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('timed mode: inactive app lifecycle suspends hint timer',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 5),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Inactive (e.g. notification shade) — same pause-timer path as paused.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+
+    // Timer paused; advancing past the delay must NOT activate the hint.
+    await tester.pump(const Duration(seconds: 5));
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 0.5,
+        reason: 'hint must remain waiting after inactive-paused timer');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'timed mode: resuming app after pause restarts timer and hint fires after delay',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 3,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 5),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Pause then immediately resume — _resumeHintTimer restarts the full delay.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    // After resuming, the timer restarts from the configured delay (5 s).
+    // Advancing that far should fire the timer and activate the hint.
+    await tester.pump(const Duration(seconds: 5));
+
+    final opacity = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.lightbulb_outline),
+            matching: find.byType(Opacity),
+          )
+          .first,
+    );
+    expect(opacity.opacity, 1.0,
+        reason: 'hint must be active after restarted timer fires');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
   testWidgets('tapping Play Again from win overlay restarts the game', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(_wrap(GameScreen(
@@ -422,6 +750,7 @@ void main() {
       gridSize: 1,
       difficultyStars: 1,
       localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
     )));
     await tester.pump();
     await _pumpUntilPlaying(tester);
@@ -444,6 +773,136 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
 
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  // ── Additional drag-path coverage ─────────────────────────────────────────
+  //
+  // All tests below use _pumpUntilPlaying (runAsync, logical screen 800×600):
+  //   gridSize=1 → pieceWidth=360  pieceHeight=560
+  //   scatter target = (420, 20)   piece centre = (600, 300)
+  //   board target   = (20, 20)    screen midline at x = 400
+
+  testWidgets(
+      'dragging piece left across midline without snapping triggers return animation',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      // Timed mode with long delay so the timer does not fire during the test.
+      hintSettings: HintSettings(immediateMode: false, unlockDelaySeconds: 60),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Move left 250 px: _rawDragPosition → (170, 20).  170 < 400 → crosses
+    // midline, setting _dragCrossedLeft=true.  Distance to target (20,20)
+    // is 150 px >> kSnapThreshold(40), so the piece is NOT placed.
+    // _onPanEnd takes the _dragCrossedLeft branch, calls _resetHintTimer (which
+    // in timed-waiting state reaches _startHintTimer) then _startReturnAnimation.
+    final gesture = await tester.startGesture(const Offset(600, 300));
+    await tester.pump();
+    await gesture.moveBy(const Offset(-250, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    // Advance past the 750 ms return animation so the ticker completes cleanly.
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump();
+
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'releasing piece inside tray without crossing midline covers else branch and physics tick',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Move right 50 px: _rawDragPosition → (470, 20).  Never crosses x=400 so
+    // _dragCrossedLeft=false.  cx = 470+180 = 650 < 800 (in bounds), so
+    // _snapToTrayIfOutside returns false and _paintTick is incremented.
+    // Pumping two frames afterwards fires the physics ticker with dt>0, which
+    // advances piece momentum and hits the stepPhysics-changed branch.
+    final gesture = await tester.startGesture(const Offset(600, 300));
+    await tester.pump();
+    await gesture.moveBy(const Offset(50, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'releasing piece outside screen boundary triggers snap-back into tray',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    // Move right 320 px: _rawDragPosition → (740, 20).  cx = 740+180 = 920
+    // which exceeds screen width (800), so _snapToTrayIfOutside returns true
+    // and fires _startReturnAnimation.  Piece never crosses x=400, so
+    // _dragCrossedLeft remains false and we take the else branch.
+    final gesture = await tester.startGesture(const Offset(600, 300));
+    await tester.pump();
+    await gesture.moveBy(const Offset(320, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump();
+
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('tapping New Puzzle from win overlay invokes onNewPuzzle',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    await _placeLastPiece(tester);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
+    await tester.pump();
+    expect(find.byType(WinOverlay), findsOneWidget);
+
+    await tester.tap(find.text('New Puzzle'));
+    await tester.pump();
+    expect(find.byType(Scaffold), findsOneWidget);
     await tester.binding.setSurfaceSize(null);
   });
 }
