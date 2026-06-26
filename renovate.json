@@ -13,18 +13,15 @@
   "rangeStrategy": "pin",
   "packageRules": [
     {
-      "description": "Flutter SDK updates",
+      "description": "Group Flutter and Dart SDK updates together for compatibility",
       "matchPackageNames": [
-        "flutter"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "Dart SDK updates",
-      "matchPackageNames": [
+        "flutter",
         "dart"
       ],
-      "enabled": false
+      "groupName": "Flutter and Dart SDK",
+      "schedule": [
+        "on sunday"
+      ]
     },
     {
       "description": "Group pub.dev dependency updates",
