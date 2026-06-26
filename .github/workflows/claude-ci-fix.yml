@@ -50,14 +50,14 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Checkout PR branch
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 1
 
       - name: Run Claude to fix CI failures
-        uses: anthropics/claude-code-action@fbda2eb1bdc90d319b8d853f5deb53bca199a7c1 # v1.0.140
+        uses: anthropics/claude-code-action@0f97b95b6536c26e5f6bd90faec370d41695beca # v1.0.144
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
