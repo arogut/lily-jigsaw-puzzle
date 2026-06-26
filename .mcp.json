@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "android": {
+      "command": "bash",
+      "args": [".claude/android-mcp.sh"],
+      "type": "stdio"
+    }
+  }
+}

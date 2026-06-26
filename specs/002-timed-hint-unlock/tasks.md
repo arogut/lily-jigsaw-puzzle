@@ -185,10 +185,10 @@ active.
 - [X] T023 Run `flutter test --coverage`; verify line coverage ≥ 85% (hard gate per constitution §VI); fix any failures or coverage drops before proceeding
 - [X] T024 [P] Run `flutter analyze` — zero warnings; fix any lint issues before proceeding
 - [X] T025 [P] Run `flutter build apk --debug` — must compile cleanly; fix any errors
-- [ ] T026 Manually validate Scenarios 8, 9, 10 from `quickstart.md` (background/foreground, persistence, mid-session change)
+- [X] T026 Manually validate Scenarios 8, 9, 10 from `quickstart.md` (background/foreground, persistence, mid-session change)
 - [X] T027 [P] Update `specs/002-timed-hint-unlock/checklists/requirements.md` — mark any newly resolved checklist items
 - [X] T028 [P] Mark `specs/002-timed-hint-unlock/checklists/hint-logic.md` CHK010 and CHK023 as resolved — FR-018 now explicitly prohibits any fallback mechanism, closing both gaps
-- [ ] T029 Review hint button visual states (inactive, active, hidden) against `assets/design/` mockups; confirm each state's visual treatment is approved before raising the PR — constitution §I requires every child-facing widget to be reviewed against design mockups
+- [X] T029 Review hint button visual states (inactive, active, hidden) against `assets/design/` mockups; confirm each state's visual treatment is approved before raising the PR — constitution §I requires every child-facing widget to be reviewed against design mockups
 
 ---
 

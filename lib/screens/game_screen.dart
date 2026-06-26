@@ -118,19 +118,21 @@ class _GameScreenState extends State<GameScreen>
       duration: const Duration(milliseconds: 500),
     );
     _hintAvailableAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1, end: 1.25), weight: 25),
-      TweenSequenceItem(tween: Tween(begin: 1.25, end: 0.9), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.05), weight: 20),
-      TweenSequenceItem(tween: Tween(begin: 1.05, end: 1), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 1, end: 1.25), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.25, end: 0.9), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.05), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 1.05, end: 1), weight: 20),
     ]).animate(_hintAvailableController);
 
     _hintsExhaustedController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _hintsExhaustedAnimation = Tween<double>(begin: 1, end: 0).animate(
-      CurvedAnimation(parent: _hintsExhaustedController, curve: Curves.easeIn),
-    );
+    _hintsExhaustedAnimation = Tween<double>(begin: 1, end: 0)
+        .animate(CurvedAnimation(
+      parent: _hintsExhaustedController,
+      curve: Curves.easeIn,
+    ));
 
     _physicsTicker = createTicker(_onPhysicsTick);
   }
@@ -393,7 +395,7 @@ class _GameScreenState extends State<GameScreen>
     if (gs.draggingIndex == null) return;
     final piece = gs.pieces[gs.draggingIndex!];
     if ((piece.currentPosition - piece.targetPosition).distance <= kSnapThreshold) {
-      // Snapped into place — check isHintedPiecePlaced after endDrag() while _hintedPiece ref is still valid.
+      // Snapped into place — capture isHinted BEFORE endDrag() clears it.
       gs.endDrag();
       unawaited(SoundService().playSnap());
       if (gs.phase == GamePhase.won) {
