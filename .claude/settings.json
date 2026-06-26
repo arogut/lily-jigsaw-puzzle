@@ -1,10 +1,12 @@
 {
+  "enableAllProjectMcpServers": true,
   "permissions": {
     "allow": [
       "Bash(flutter test:*)",
       "Bash(flutter analyze:*)",
       "Bash(flutter build:*)",
-      "Bash(flutter run:*)"
+      "Bash(flutter run:*)",
+      "Bash(adb:*)"
     ],
     "ask": [],
     "deny": [

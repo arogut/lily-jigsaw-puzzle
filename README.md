@@ -102,6 +102,27 @@ adb devices   # should list the Windows emulator
 flutter devices
 ```
 
+## Claude Code / Android MCP Setup
+
+The project ships with an Android MCP server (`.mcp.json`) that lets Claude Code take
+screenshots, interact with the emulator, and run ADB commands via
+[`@mobilenext/mobile-mcp`](https://github.com/mobile-next/mobile-mcp).
+
+### Prerequisites
+
+- **Node.js** with `npx` on your PATH (install via [nvm](https://github.com/nvm-sh/nvm) or your system package manager)
+- **ANDROID_HOME** pointing to your Android SDK (e.g. `export ANDROID_HOME=~/Android/Sdk`)
+- An Android emulator or device visible to ADB
+
+The script at `.claude/android-mcp.sh` resolves `ANDROID_HOME` from your environment
+(defaulting to `~/Android/Sdk` if unset) and loads nvm automatically if `npx` is not on
+your PATH. No hardcoded paths — it works on any machine.
+
+> **WSL2 note:** If the emulator runs on the Windows host (the setup described in the
+> [Emulated Device Setup](#emulated-device-setup) section above), the script reads the
+> Windows host IP from the default gateway at runtime and points ADB at the Windows ADB
+> server on port 5037. No extra configuration is needed beyond what that section describes.
+
 ## Running the App
 
 ```bash
