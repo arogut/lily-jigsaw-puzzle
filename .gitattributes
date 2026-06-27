@@ -1,0 +1,15 @@
+# Enforce LF line endings for all text files in this repository.
+# Overrides core.autocrlf on Windows/WSL2 checkouts.
+* text=auto eol=lf
+
+# Explicitly binary — never touch line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.apk binary
+*.aab binary
+*.jar binary
+*.class binary
+*.keystore binary
