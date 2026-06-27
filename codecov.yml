@@ -1,0 +1,12 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+    patch:
+      default:
+        target: 80%
+
+ignore:
+  - "lib/l10n/app_localizations*.dart"
+  - "lib/l10n/app_localizations.dart"

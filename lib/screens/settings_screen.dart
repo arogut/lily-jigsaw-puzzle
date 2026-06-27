@@ -10,6 +10,7 @@ import 'package:lily_jigsaw_puzzle/screens/difficulty_sliders_section.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/streak_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
@@ -85,6 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _resetProgress() async {
     await CompletionService().resetAll();
+    await StreakService().resetAll();
     if (mounted) setState(() => _resetDone = true);
   }
 

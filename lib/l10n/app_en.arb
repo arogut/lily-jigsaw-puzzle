@@ -52,5 +52,17 @@
   "hintsSection": "Hints",
   "hintsImmediate": "Always Active",
   "hintsDelayLabel": "Unlock delay (seconds)",
-  "hintsDelayError": "Enter a positive number"
+  "hintsDelayError": "Enter a positive number",
+  "streakDays": "🔥 {count} Day Streak",
+  "@streakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "streakBest": "Best: {count} days",
+  "@streakBest": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }
