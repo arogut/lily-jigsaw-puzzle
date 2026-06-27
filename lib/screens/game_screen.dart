@@ -21,7 +21,6 @@ import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 import 'package:lily_jigsaw_puzzle/services/streak_service.dart';
 
-
 class GameScreen extends StatefulWidget {
 
   const GameScreen({
