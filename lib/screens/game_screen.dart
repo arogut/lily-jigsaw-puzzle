@@ -12,12 +12,15 @@ import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
+import 'package:lily_jigsaw_puzzle/models/streak_record.dart';
 import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
 import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
+import 'package:lily_jigsaw_puzzle/services/streak_service.dart';
+
 
 class GameScreen extends StatefulWidget {
 
@@ -69,6 +72,9 @@ class _GameScreenState extends State<GameScreen>
   late AnimationController _confettiController;
   List<ConfettiParticle> _confettiParticles = const [];
   bool _showWinOverlay = false;
+
+  // Streak data populated by StreakService when the puzzle is won.
+  StreakRecord? _streakRecord;
 
   // Hint glow animation
   late AnimationController _hintController;
@@ -538,6 +544,7 @@ class _GameScreenState extends State<GameScreen>
       confettiParticles: _confettiParticles,
       confettiController: _confettiController,
       showWinOverlay: _showWinOverlay,
+      streakRecord: _streakRecord,
       onBack: () => Navigator.of(context).popUntil((r) => r.isFirst),
       onPlayAgain: _restartGame,
       onNewPuzzle: () => Navigator.of(context).popUntil((r) => r.isFirst),
@@ -577,6 +584,7 @@ class _GameScreenState extends State<GameScreen>
       _assembledPositions = null;
       _scatterTargets = null;
       _showWinOverlay = false;
+      _streakRecord = null;
       _showingHintArea = true;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -589,6 +597,8 @@ class _GameScreenState extends State<GameScreen>
       widget.selectedImage.uuid,
       widget.difficultyStars,
     );
+    final streak = await StreakService().recordPuzzleCompletion();
+    if (mounted) setState(() => _streakRecord = streak);
   }
 
   /// If the piece centre has gone outside the visible screen bounds,

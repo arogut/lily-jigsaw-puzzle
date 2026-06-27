@@ -52,5 +52,17 @@
   "hintsSection": "Podpowiedzi",
   "hintsImmediate": "Zawsze aktywne",
   "hintsDelayLabel": "Czas odblokowania (sekundy)",
-  "hintsDelayError": "Wpisz liczbę większą od zera"
+  "hintsDelayError": "Wpisz liczbę większą od zera",
+  "streakDays": "🔥 {count} dni z rzędu",
+  "@streakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "streakBest": "Rekord: {count} dni",
+  "@streakBest": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

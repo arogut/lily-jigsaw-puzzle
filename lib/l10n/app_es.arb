@@ -52,5 +52,17 @@
   "hintsSection": "Pistas",
   "hintsImmediate": "Siempre activo",
   "hintsDelayLabel": "Tiempo de desbloqueo (segundos)",
-  "hintsDelayError": "Ingresa un número positivo"
+  "hintsDelayError": "Ingresa un número positivo",
+  "streakDays": "🔥 {count} días seguidos",
+  "@streakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "streakBest": "Récord: {count} días",
+  "@streakBest": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

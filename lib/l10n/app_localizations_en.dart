@@ -134,4 +134,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hintsDelayError => 'Enter a positive number';
+
+  @override
+  String streakDays(int count) {
+    return '🔥 $count Day Streak';
+  }
+
+  @override
+  String streakBest(int count) {
+    return 'Best: $count days';
+  }
 }

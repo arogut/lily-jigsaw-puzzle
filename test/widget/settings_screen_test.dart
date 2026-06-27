@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
+import 'package:lily_jigsaw_puzzle/models/streak_record.dart';
 import 'package:lily_jigsaw_puzzle/screens/settings_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/streak_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 LocaleNotifier _makeLocaleNotifier() => LocaleNotifier(const Locale('en'));
@@ -437,6 +439,45 @@ void main() {
     await tester.pump();
 
     expect(hs.immediateMode, isTrue);
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets(
+      'given_existing_streak_when_reset_progress_tapped_then_streak_data_is_cleared',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1200));
+
+    // Pre-populate streak data in SharedPreferences.
+    SharedPreferences.setMockInitialValues({
+      'streak_current': 5,
+      'streak_longest': 10,
+      'streak_last_date': '2026-06-01',
+    });
+
+    await tester.pumpWidget(
+      _wrap(SettingsScreen(
+        localeNotifier: _makeLocaleNotifier(),
+        difficultySettings: _makeDifficultySettings(),
+        hintSettings: _makeHintSettings(),
+      )),
+    );
+    await tester.pump();
+
+    // Unlock the settings panel.
+    await _unlockSettings(tester);
+
+    // Scroll to reveal the Reset Progress button, then tap it.
+    final resetButton = find.byIcon(Icons.delete_sweep_rounded).first;
+    await tester.ensureVisible(resetButton);
+    await tester.pump();
+    await tester.tap(resetButton);
+    await tester.pump();
+
+    // After reset, StreakService should report initial state.
+    final record = await StreakService().getStreak();
+    expect(record, StreakRecord.initial(),
+        reason: 'Reset Progress must clear all streak data');
+
     await tester.binding.setSurfaceSize(null);
   });
 }

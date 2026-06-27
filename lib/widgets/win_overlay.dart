@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/models/streak_record.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
 
@@ -12,6 +13,7 @@ class WinOverlay extends StatelessWidget {
   const WinOverlay({
     required this.onPlayAgain,
     required this.onNewPuzzle,
+    this.streakRecord,
     super.key,
   });
 
@@ -20,6 +22,10 @@ class WinOverlay extends StatelessWidget {
 
   /// Called when the player taps "New Puzzle".
   final VoidCallback onNewPuzzle;
+
+  /// Streak data to display after a puzzle is won.
+  /// When `null` or [StreakRecord.currentStreak] is zero, no streak section is shown.
+  final StreakRecord? streakRecord;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +90,25 @@ class WinOverlay extends StatelessWidget {
                     color: AppColors.deepPurple.withValues(alpha: 0.70),
                   ),
                 ),
+                if (streakRecord != null && streakRecord!.currentStreak > 0) ...[
+                  SizedBox(height: subtitleGap),
+                  Text(
+                    l10n.streakDays(streakRecord!.currentStreak),
+                    style: TextStyle(
+                      fontSize: compact ? 16.0 : 20.0,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.hotPink,
+                    ),
+                  ),
+                  Text(
+                    l10n.streakBest(streakRecord!.longestStreak),
+                    style: TextStyle(
+                      fontSize: compact ? 12.0 : 14.0,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.deepPurple.withValues(alpha: 0.60),
+                    ),
+                  ),
+                ],
                 SizedBox(height: btnGap),
                 GameButton(
                   label: l10n.playAgain,

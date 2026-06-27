@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/models/streak_record.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
 Widget _wrap(Widget child) {
@@ -67,6 +68,87 @@ void main() {
       await tester.pump();
 
       expect(find.text('🎉'), findsOneWidget);
+    });
+
+    testWidgets('given_null_streakRecord_when_rendered_then_no_streak_section', (tester) async {
+      await tester.pumpWidget(
+        _wrap(WinOverlay(onPlayAgain: () {}, onNewPuzzle: () {})),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Day Streak'), findsNothing,
+          reason: 'streak section must not appear when streakRecord is null');
+    });
+
+    testWidgets('given_streakRecord_with_zero_streak_when_rendered_then_no_streak_section',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(WinOverlay(
+          onPlayAgain: () {},
+          onNewPuzzle: () {},
+          streakRecord: StreakRecord.initial(),
+        )),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Day Streak'), findsNothing,
+          reason: 'streak section must not appear when currentStreak == 0');
+    });
+
+    testWidgets('given_streak_of_5_when_rendered_then_shows_current_streak', (tester) async {
+      await tester.pumpWidget(
+        _wrap(WinOverlay(
+          onPlayAgain: () {},
+          onNewPuzzle: () {},
+          streakRecord: const StreakRecord(
+            currentStreak: 5,
+            longestStreak: 12,
+            lastCompletionDate: '2026-06-27',
+          ),
+        )),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('5'), findsWidgets,
+          reason: 'current streak count must be visible');
+      expect(find.textContaining('Day Streak'), findsOneWidget,
+          reason: 'streak label must appear when currentStreak > 0');
+    });
+
+    testWidgets('given_streak_record_when_rendered_then_shows_longest_streak', (tester) async {
+      await tester.pumpWidget(
+        _wrap(WinOverlay(
+          onPlayAgain: () {},
+          onNewPuzzle: () {},
+          streakRecord: const StreakRecord(
+            currentStreak: 3,
+            longestStreak: 10,
+            lastCompletionDate: '2026-06-27',
+          ),
+        )),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('10'), findsWidgets,
+          reason: 'longest streak must be shown alongside current streak');
+    });
+
+    testWidgets('given_streak_of_1_when_rendered_then_streak_section_is_visible',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(WinOverlay(
+          onPlayAgain: () {},
+          onNewPuzzle: () {},
+          streakRecord: const StreakRecord(
+            currentStreak: 1,
+            longestStreak: 1,
+            lastCompletionDate: '2026-06-27',
+          ),
+        )),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Day Streak'), findsOneWidget);
     });
   });
 }

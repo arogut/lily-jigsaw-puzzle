@@ -881,6 +881,57 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
+  testWidgets('winning the game records streak in SharedPreferences', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    await _placeLastPiece(tester);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
+    await tester.pump();
+
+    // After winning, StreakService.recordPuzzleCompletion() must have been called,
+    // storing streak_current = 1 in SharedPreferences.
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getInt('streak_current'), 1,
+        reason: 'winning a puzzle must persist streak_current = 1');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('win overlay shows streak text after puzzle completion', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      localeNotifier: _makeLocaleNotifier(),
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    await _placeLastPiece(tester);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
+    await tester.pump();
+
+    expect(find.byType(WinOverlay), findsOneWidget);
+    // After winning, the overlay must show streak information.
+    expect(find.textContaining('Day Streak'), findsOneWidget,
+        reason: 'win overlay must display the current streak after completion');
+
+    await tester.binding.setSurfaceSize(null);
+  });
+
   testWidgets('tapping New Puzzle from win overlay invokes onNewPuzzle',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));

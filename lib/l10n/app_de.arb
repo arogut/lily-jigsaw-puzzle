@@ -52,5 +52,17 @@
   "hintsSection": "Hinweise",
   "hintsImmediate": "Immer aktiv",
   "hintsDelayLabel": "Entsperrzeit (Sekunden)",
-  "hintsDelayError": "Bitte eine positive Zahl eingeben"
+  "hintsDelayError": "Bitte eine positive Zahl eingeben",
+  "streakDays": "🔥 {count} Tage am Stück",
+  "@streakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "streakBest": "Bestleistung: {count} Tage",
+  "@streakBest": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

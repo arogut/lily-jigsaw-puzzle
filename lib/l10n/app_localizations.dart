@@ -347,6 +347,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a positive number'**
   String get hintsDelayError;
+
+  /// No description provided for @streakDays.
+  ///
+  /// In en, this message translates to:
+  /// **'🔥 {count} Day Streak'**
+  String streakDays(int count);
+
+  /// No description provided for @streakBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {count} days'**
+  String streakBest(int count);
 }
 
 class _AppLocalizationsDelegate

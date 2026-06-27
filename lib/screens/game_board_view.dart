@@ -7,6 +7,7 @@ import 'package:lily_jigsaw_puzzle/core/widgets/panel_backgrounds.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
+import 'package:lily_jigsaw_puzzle/models/streak_record.dart';
 import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_grid_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_shadow_painter.dart';
@@ -36,6 +37,7 @@ class GameBoardView extends StatelessWidget {
     required this.onPlayAgain,
     required this.onNewPuzzle,
     required this.onHint,
+    this.streakRecord,
     this.onPanStart,
     this.onPanUpdate,
     this.onPanEnd,
@@ -105,6 +107,10 @@ class GameBoardView extends StatelessWidget {
   /// When `true`, keeps the hint area in the widget tree even if
   /// [currentHintSlot] is `null` (e.g. while the exit animation is playing).
   final bool showHintArea;
+
+  /// Streak data to display on [WinOverlay] after a puzzle is won.
+  /// `null` until the streak service has recorded the completion.
+  final StreakRecord? streakRecord;
 
   @override
   Widget build(BuildContext context) {
@@ -176,6 +182,7 @@ class GameBoardView extends StatelessWidget {
           WinOverlay(
             onPlayAgain: onPlayAgain,
             onNewPuzzle: onNewPuzzle,
+            streakRecord: streakRecord,
           ),
       ],
     );
