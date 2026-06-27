@@ -65,10 +65,10 @@
 
 > **TDD**: Write T011 first, confirm it FAILS, then implement T012–T013.
 
-- [ ] T010 [P] [US3] Add localization keys `streakDays` (with `count` int placeholder) and `streakBest` (with `count` int placeholder) to all four ARB files: `lib/l10n/app_en.arb`, `lib/l10n/app_pl.arb`, `lib/l10n/app_de.arb`, `lib/l10n/app_es.arb` (EN: `"🔥 {count} Day Streak"` / `"Best: {count} days"`)
-- [ ] T011 [US3] Write failing widget tests in `test/unit/widgets/win_overlay_test.dart`: (a) null `streakRecord` renders correctly with no streak section; (b) `streakRecord` with `currentStreak > 0` shows streak text and longest streak; (c) `streakRecord` with `currentStreak == 0` hides streak section
-- [ ] T012 [US3] Add `final StreakRecord? streakRecord` named parameter (default `null`) to `WinOverlay` constructor in `lib/widgets/win_overlay.dart` (doc-comment the new field)
-- [ ] T013 [US3] Add streak display section to `WinOverlay.build()` in `lib/widgets/win_overlay.dart`: render between subtitle and buttons when `streakRecord != null && streakRecord!.currentStreak > 0`; use `l10n.streakDays(count: streakRecord!.currentStreak)` and `l10n.streakBest(count: streakRecord!.longestStreak)`; match existing childish palette (makes T011 green)
+- [x] T010 [P] [US3] Add localization keys `streakDays` (with `count` int placeholder) and `streakBest` (with `count` int placeholder) to all four ARB files: `lib/l10n/app_en.arb`, `lib/l10n/app_pl.arb`, `lib/l10n/app_de.arb`, `lib/l10n/app_es.arb` (EN: `"🔥 {count} Day Streak"` / `"Best: {count} days"`)
+- [x] T011 [US3] Write failing widget tests in `test/unit/widgets/win_overlay_test.dart`: (a) null `streakRecord` renders correctly with no streak section; (b) `streakRecord` with `currentStreak > 0` shows streak text and longest streak; (c) `streakRecord` with `currentStreak == 0` hides streak section
+- [x] T012 [US3] Add `final StreakRecord? streakRecord` named parameter (default `null`) to `WinOverlay` constructor in `lib/widgets/win_overlay.dart` (doc-comment the new field)
+- [x] T013 [US3] Add streak display section to `WinOverlay.build()` in `lib/widgets/win_overlay.dart`: render between subtitle and buttons when `streakRecord != null && streakRecord!.currentStreak > 0`; use `l10n.streakDays(count: streakRecord!.currentStreak)` and `l10n.streakBest(count: streakRecord!.longestStreak)`; match existing childish palette (makes T011 green)
 
 **Checkpoint**: `flutter test test/unit/widgets/win_overlay_test.dart` passes; `WinOverlay` renders correctly for null and non-null `streakRecord` cases.
 
@@ -78,9 +78,9 @@
 
 **Purpose**: Wire `StreakService.resetAll()` into the existing "Reset Progress" flow so a settings reset also clears the streak. Then run all quality gates.
 
-- [ ] T014 Write failing widget test in `test/widget/settings_screen_test.dart` asserting that after tapping "Reset Progress", subsequent `StreakService().getStreak()` returns `StreakRecord.initial()` (use `SharedPreferences.setMockInitialValues({'streak_current': 5, 'streak_longest': 10, 'streak_last_date': '2026-06-01'})`)
-- [ ] T015 Extend the "Reset Progress" action in `lib/screens/settings_screen.dart` to call `await StreakService().resetAll()` alongside the existing `CompletionService().resetAll()` call (makes T014 green)
-- [ ] T016 [P] Run all quality gates in order: `flutter test`, `flutter analyze`, `flutter build apk --debug`; resolve any failures before raising a PR
+- [x] T014 Write failing widget test in `test/widget/settings_screen_test.dart` asserting that after tapping "Reset Progress", subsequent `StreakService().getStreak()` returns `StreakRecord.initial()` (use `SharedPreferences.setMockInitialValues({'streak_current': 5, 'streak_longest': 10, 'streak_last_date': '2026-06-01'})`)
+- [x] T015 Extend the "Reset Progress" action in `lib/screens/settings_screen.dart` to call `await StreakService().resetAll()` alongside the existing `CompletionService().resetAll()` call (makes T014 green)
+- [x] T016 [P] Run all quality gates in order: `flutter test`, `flutter analyze`, `flutter build apk --debug`; resolve any failures before raising a PR
 
 ---
 
