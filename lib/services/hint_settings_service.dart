@@ -8,10 +8,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - [immediateMode]: when true, all hints are active from session start.
 /// - [unlockDelaySeconds]: idle seconds before each hint unlocks (default 10).
 class HintSettings extends ChangeNotifier {
+  HintSettings._({
+    required this._immediateMode,
+    required this._unlockDelaySeconds,
+  });
+
   /// Creates a [HintSettings] with the given values.
-  HintSettings({required bool immediateMode, required int unlockDelaySeconds})
-      : _immediateMode = immediateMode,
-        _unlockDelaySeconds = unlockDelaySeconds;
+  factory HintSettings({
+    required bool immediateMode,
+    required int unlockDelaySeconds,
+  }) =>
+      HintSettings._(
+        _immediateMode: immediateMode,
+        _unlockDelaySeconds: unlockDelaySeconds,
+      );
 
   /// Default idle delay in seconds before a hint unlocks.
   static const int defaultDelay = 10;
