@@ -19,8 +19,8 @@ class HintSettings extends ChangeNotifier {
     required int unlockDelaySeconds,
   }) =>
       HintSettings._(
-        _immediateMode: immediateMode,
-        _unlockDelaySeconds: unlockDelaySeconds,
+        immediateMode: immediateMode,
+        unlockDelaySeconds: unlockDelaySeconds,
       );
 
   /// Default idle delay in seconds before a hint unlocks.

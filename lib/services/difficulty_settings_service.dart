@@ -24,9 +24,9 @@ class DifficultySettings extends ChangeNotifier {
     required int hard,
   }) =>
       DifficultySettings._(
-        _easy: easy,
-        _medium: medium,
-        _hard: hard,
+        easy: easy,
+        medium: medium,
+        hard: hard,
       );
 
   /// Minimum allowed grid size (rows / columns).
