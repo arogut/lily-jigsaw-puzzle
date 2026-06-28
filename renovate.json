@@ -14,7 +14,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^\\.github/workflows/[^/]+\\.ya?ml$"],
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+      ],
       "matchStrings": ["flutter-version:\\s+'(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)'"],
       "depNameTemplate": "flutter",
       "datasourceTemplate": "flutter-version",
@@ -29,11 +31,13 @@
     },
     {
       "description": "Group all pub.dev packages and the CI flutter-version together so they always move as one compatible set. Packages like audioplayers or very_good_analysis may require a newer Flutter/Dart — updating them atomically with the CI SDK version prevents incompatibility failures.",
-      "matchManagers": ["pub", "regex"],
-      "excludePackageNames": ["intl"],
+      "matchManagers": ["pub","custom.regex"],
       "groupName": "Flutter and dependencies",
       "schedule": ["on sunday"],
-      "rangeStrategy": "bump"
+      "rangeStrategy": "bump",
+      "matchPackageNames": [
+        "!intl"
+      ]
     },
     {
       "description": "Group GitHub Actions updates (action version tags, not flutter-version inputs which are handled above)",
