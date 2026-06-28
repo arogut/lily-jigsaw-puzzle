@@ -10,35 +10,36 @@
   "minimumReleaseAge": "3 days",
   "internalChecksFilter": "strict",
   "ignoreUnstable": true,
-  "rangeStrategy": "pin",
+  "rangeStrategy": "bump",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^\\.github/workflows/[^/]+\\.ya?ml$"],
+      "matchStrings": ["flutter-version:\\s+'(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)'"],
+      "depNameTemplate": "flutter",
+      "datasourceTemplate": "flutter-version",
+      "versioningTemplate": "semver"
+    }
+  ],
   "packageRules": [
     {
-      "description": "Group Flutter and Dart SDK updates together for compatibility",
-      "matchPackageNames": [
-        "flutter",
-        "dart"
-      ],
-      "groupName": "Flutter and Dart SDK",
-      "schedule": [
-        "on sunday"
-      ]
+      "description": "Disable intl updates — version is pinned by flutter_localizations to match the bundled Flutter SDK version; managed via ^range in pubspec.yaml",
+      "matchPackageNames": ["intl"],
+      "enabled": false
     },
     {
-      "description": "Group pub.dev dependency updates",
-      "matchDatasources": [
-        "pub"
-      ],
-      "groupName": "pub.dev dependencies"
+      "description": "Group all pub.dev packages and the CI flutter-version together so they always move as one compatible set. Packages like audioplayers or very_good_analysis may require a newer Flutter/Dart — updating them atomically with the CI SDK version prevents incompatibility failures.",
+      "matchManagers": ["pub", "regex"],
+      "excludePackageNames": ["intl"],
+      "groupName": "Flutter and dependencies",
+      "schedule": ["on sunday"],
+      "rangeStrategy": "bump"
     },
     {
-      "description": "Group GitHub Actions updates",
-      "matchManagers": [
-        "github-actions"
-      ],
+      "description": "Group GitHub Actions updates (action version tags, not flutter-version inputs which are handled above)",
+      "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions",
-      "schedule": [
-        "on sunday"
-      ]
+      "schedule": ["on sunday"]
     }
   ]
 }
