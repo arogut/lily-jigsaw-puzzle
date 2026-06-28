@@ -9,12 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - All values between [minGridSize] and [maxGridSize] inclusive.
 /// - [easyGridSize] < [mediumGridSize] < [hardGridSize].
 class DifficultySettings extends ChangeNotifier {
-  DifficultySettings._({
-    required this._easy,
-    required this._medium,
-    required this._hard,
-  });
-
   /// Creates a [DifficultySettings] with the given grid sizes.
   ///
   /// Sizes must satisfy [minGridSize] ≤ easy < medium < hard ≤ [maxGridSize].
@@ -28,6 +22,12 @@ class DifficultySettings extends ChangeNotifier {
         medium: medium,
         hard: hard,
       );
+
+  DifficultySettings._({
+    required this._easy,
+    required this._medium,
+    required this._hard,
+  });
 
   /// Minimum allowed grid size (rows / columns).
   static const int minGridSize = 2;
