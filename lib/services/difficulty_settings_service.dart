@@ -12,13 +12,22 @@ class DifficultySettings extends ChangeNotifier {
   /// Creates a [DifficultySettings] with the given grid sizes.
   ///
   /// Sizes must satisfy [minGridSize] ≤ easy < medium < hard ≤ [maxGridSize].
-  DifficultySettings({
+  factory DifficultySettings({
     required int easy,
     required int medium,
     required int hard,
-  })  : _easy = easy,
-        _medium = medium,
-        _hard = hard;
+  }) =>
+      DifficultySettings._(
+        easy: easy,
+        medium: medium,
+        hard: hard,
+      );
+
+  DifficultySettings._({
+    required this._easy,
+    required this._medium,
+    required this._hard,
+  });
 
   /// Minimum allowed grid size (rows / columns).
   static const int minGridSize = 2;

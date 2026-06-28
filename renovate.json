@@ -21,6 +21,15 @@
       "depNameTemplate": "flutter",
       "datasourceTemplate": "flutter-version",
       "versioningTemplate": "semver"
+    },
+    {
+      "description": "Track Dart SDK minimum version in pubspec.yaml environment.sdk constraint",
+      "customType": "regex",
+      "managerFilePatterns": ["/pubspec\\.yaml$/"],
+      "matchStrings": ["sdk:\\s+\\^(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
+      "depNameTemplate": "dart-lang/sdk",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
     }
   ],
   "packageRules": [

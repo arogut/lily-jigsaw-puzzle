@@ -9,9 +9,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - [unlockDelaySeconds]: idle seconds before each hint unlocks (default 10).
 class HintSettings extends ChangeNotifier {
   /// Creates a [HintSettings] with the given values.
-  HintSettings({required bool immediateMode, required int unlockDelaySeconds})
-      : _immediateMode = immediateMode,
-        _unlockDelaySeconds = unlockDelaySeconds;
+  factory HintSettings({
+    required bool immediateMode,
+    required int unlockDelaySeconds,
+  }) =>
+      HintSettings._(
+        immediateMode: immediateMode,
+        unlockDelaySeconds: unlockDelaySeconds,
+      );
+
+  HintSettings._({
+    required this._immediateMode,
+    required this._unlockDelaySeconds,
+  });
 
   /// Default idle delay in seconds before a hint unlocks.
   static const int defaultDelay = 10;
