@@ -8,8 +8,7 @@ import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 ///
 /// Randomly assigns tab/blank connector shapes to all shared edges so adjacent
 /// pieces interlock correctly.
-class PuzzleBuilder {
-  PuzzleBuilder._();
+abstract final class PuzzleBuilder {
 
   /// Builds [gridSize]² pieces positioned within [boardSize] at [boardOffset].
   ///

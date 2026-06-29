@@ -88,7 +88,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
@@ -107,7 +106,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
@@ -124,7 +122,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
@@ -242,7 +239,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
@@ -260,7 +256,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
@@ -281,7 +276,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
@@ -346,7 +340,6 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     const catImage = PuzzleImageData(
       assetPath: 'assets/images/puzzle-1.jpg',
-      name: 'Cat',
       uuid: 'test-uuid-cat',
     );
     // Record 3-star completion to unlock Hard
@@ -378,7 +371,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),
@@ -427,7 +419,6 @@ void main() {
       _wrap(DifficultyScreen(
         selectedImage: const PuzzleImageData(
           assetPath: 'assets/images/puzzle-1.jpg',
-          name: 'Cat',
           uuid: 'test-uuid-cat',
         ),
         localeNotifier: _makeLocaleNotifier(),

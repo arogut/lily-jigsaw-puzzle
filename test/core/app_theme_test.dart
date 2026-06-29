@@ -12,8 +12,8 @@ void main() {
       expect(AppColors.mediumPurple, const Color(0xFF9B6DD4));
     });
 
-    test('hotPink is pastelPink Color(0xFFFA9AC1)', () {
-      expect(AppColors.hotPink, const Color(0xFFFA9AC1));
+    test('pastelPink is Color(0xFFFA9AC1)', () {
+      expect(AppColors.pastelPink, const Color(0xFFFA9AC1));
     });
 
     test('skyBlue is Color(0xFF80D4F7)', () {
@@ -28,16 +28,16 @@ void main() {
       expect(AppColors.babyPink, const Color(0xFFFFCCE5));
     });
 
-    test('green is mintGreen Color(0xFF99EEC4)', () {
-      expect(AppColors.green, const Color(0xFF99EEC4));
+    test('mintGreen is Color(0xFF99EEC4)', () {
+      expect(AppColors.mintGreen, const Color(0xFF99EEC4));
     });
 
     test('red is Color(0xFFFF7BAC)', () {
       expect(AppColors.red, const Color(0xFFFF7BAC));
     });
 
-    test('blue is skyBlue Color(0xFF80D4F7)', () {
-      expect(AppColors.blue, const Color(0xFF80D4F7));
+    test('sunnyYellow is Color(0xFFFEE668)', () {
+      expect(AppColors.sunnyYellow, const Color(0xFFFEE668));
     });
 
     test('gold is Color(0xFFFFD700)', () {

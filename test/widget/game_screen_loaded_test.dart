@@ -26,7 +26,6 @@ Widget _wrap(Widget child) => MaterialApp(
 
 const _testImage = PuzzleImageData(
   assetPath: 'assets/images/puzzle-1.jpg',
-  name: 'Cat',
   uuid: 'test-uuid-cat',
 );
 

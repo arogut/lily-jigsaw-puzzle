@@ -305,7 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.green.withValues(alpha: 0.90),
+                color: AppColors.mintGreen.withValues(alpha: 0.90),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

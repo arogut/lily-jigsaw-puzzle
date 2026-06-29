@@ -77,7 +77,7 @@ class JigsawApp extends StatelessWidget {
           supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.hotPink,
+              seedColor: AppColors.pastelPink,
             ),
             useMaterial3: true,
             textTheme: GoogleFonts.nunitoTextTheme(),
