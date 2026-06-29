@@ -43,7 +43,7 @@ class DifficultySlidersSection extends StatelessWidget {
             children: [
               _buildSliderRow(
                 label: l10n.easy,
-                color: AppColors.green,
+                color: AppColors.mintGreen,
                 value: easy,
                 min: DifficultySettings.minGridSize,
                 max: medium - 1,
@@ -52,7 +52,7 @@ class DifficultySlidersSection extends StatelessWidget {
               const SizedBox(height: 8),
               _buildSliderRow(
                 label: l10n.medium,
-                color: AppColors.orange,
+                color: AppColors.sunnyYellow,
                 value: medium,
                 min: easy + 1,
                 max: hard - 1,

@@ -41,7 +41,7 @@ class StreakService {
   /// - Gap of 2+ days → streak resets to 1; [StreakRecord.longestStreak] is preserved.
   Future<StreakRecord> recordPuzzleCompletion() async {
     final existing = await getStreak();
-    final today = _toDateString(_clock());
+    final today = _clock().toIso8601String().split('T').first;
     final next = _transition(existing, today);
     if (next != existing) {
       await _persist(next);
@@ -97,12 +97,9 @@ class StreakService {
     }
   }
 
-  String _toDateString(DateTime dt) =>
-      '${dt.year.toString().padLeft(4, '0')}'
-      '-${dt.month.toString().padLeft(2, '0')}'
-      '-${dt.day.toString().padLeft(2, '0')}';
-
-  String _yesterday(String isoDate) => _toDateString(
-        DateTime.parse(isoDate).subtract(const Duration(days: 1)),
-      );
+  String _yesterday(String isoDate) => DateTime.parse(isoDate)
+      .subtract(const Duration(days: 1))
+      .toIso8601String()
+      .split('T')
+      .first;
 }

@@ -213,10 +213,10 @@ class GameBoardView extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.hotPink,
+                AppColors.pastelPink,
                 Color(0xFFFFD93D),
-                AppColors.green,
-                AppColors.blue,
+                AppColors.mintGreen,
+                AppColors.skyBlue,
               ],
             ),
             boxShadow: [

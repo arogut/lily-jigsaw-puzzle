@@ -28,7 +28,7 @@ abstract final class AppColors {
   /// Sunny yellow shadow — 3-D base for yellow buttons.
   static const Color sunnyYellowShadow = Color(0xFFD4B830);
 
-  // ── Legacy aliases kept for call-sites not yet updated ───────────────────
+  // ── Additional colours ────────────────────────────────────────────────────
 
   /// Deep purple — text strokes, outlines.
   static const Color deepPurple = Color(0xFF5B2D8E);
@@ -36,20 +36,11 @@ abstract final class AppColors {
   /// Medium purple — settings / secondary buttons.
   static const Color mediumPurple = Color(0xFF9B6DD4);
 
-  /// Hot pink — legacy accent.
-  static const Color hotPink = pastelPink;
-
   /// Lavender — midpoint of background gradient.
   static const Color lavender = Color(0xFFCEB4F0);
 
   /// Baby pink — bottom of background gradient.
   static const Color babyPink = Color(0xFFFFCCE5);
-
-  /// Green — maps to mint for confirm/easy.
-  static const Color green = mintGreen;
-
-  /// Dark green — shadow for green.
-  static const Color greenShadow = mintGreenShadow;
 
   /// Red — quit / destructive actions.
   static const Color red = Color(0xFFFF7BAC);
@@ -57,23 +48,8 @@ abstract final class AppColors {
   /// Dark red — shadow for red buttons.
   static const Color redShadow = Color(0xFFCC4480);
 
-  /// Orange — medium difficulty.
-  static const Color orange = sunnyYellow;
-
-  /// Dark orange — shadow for orange.
-  static const Color orangeShadow = sunnyYellowShadow;
-
-  /// Blue — navigation buttons.
-  static const Color blue = skyBlue;
-
-  /// Dark blue — shadow for blue.
-  static const Color blueShadow = skyBlueShadow;
-
   /// Gold — star icons.
   static const Color gold = Color(0xFFFFD700);
-
-  /// Amber — hint button.
-  static const Color amber = sunnyYellow;
 }
 
 /// Shared decoration constants.

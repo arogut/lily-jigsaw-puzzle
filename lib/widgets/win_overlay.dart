@@ -65,13 +65,13 @@ class WinOverlay extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.hotPink.withValues(alpha: 0.50),
+                  color: AppColors.pastelPink.withValues(alpha: 0.50),
                   blurRadius: 30,
                   offset: const Offset(0, 10),
                 ),
               ],
               border: Border.all(
-                color: AppColors.hotPink.withValues(alpha: 0.50),
+                color: AppColors.pastelPink.withValues(alpha: 0.50),
                 width: 2.5,
               ),
             ),
@@ -97,7 +97,7 @@ class WinOverlay extends StatelessWidget {
                     style: TextStyle(
                       fontSize: compact ? 16.0 : 20.0,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.hotPink,
+                      color: AppColors.pastelPink,
                     ),
                   ),
                   Text(

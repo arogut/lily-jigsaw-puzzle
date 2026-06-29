@@ -7,12 +7,6 @@ void main() {
       expect(PuzzleImageData.all.length, 9);
     });
 
-    test('all items have non-empty names', () {
-      for (final img in PuzzleImageData.all) {
-        expect(img.name.isNotEmpty, isTrue);
-      }
-    });
-
     test('all items have asset paths under assets/images/', () {
       for (final img in PuzzleImageData.all) {
         expect(img.assetPath.startsWith('assets/images/'), isTrue);
@@ -24,24 +18,12 @@ void main() {
       expect(paths.toSet().length, paths.length);
     });
 
-    test('all names are unique', () {
-      final names = PuzzleImageData.all.map((e) => e.name).toList();
-      expect(names.toSet().length, names.length);
-    });
-
-    test('contains expected puzzle names', () {
-      final names = PuzzleImageData.all.map((e) => e.name).toSet();
-      expect(names, containsAll(['Cat', 'Dog', 'Lion']));
-    });
-
     test('constructor stores values correctly', () {
       const img = PuzzleImageData(
         assetPath: 'assets/test.jpg',
-        name: 'Test',
         uuid: 'test-uuid-1234',
       );
       expect(img.assetPath, 'assets/test.jpg');
-      expect(img.name, 'Test');
       expect(img.uuid, 'test-uuid-1234');
     });
 
