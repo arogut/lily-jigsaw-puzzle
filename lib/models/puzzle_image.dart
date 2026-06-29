@@ -6,6 +6,9 @@ class PuzzleImageData {
   final String assetPath;
   final String uuid;
 
+  /// UUIDs are UUID v5 values computed from each asset path using namespace
+  /// `3c3d63d7-0de7-4b57-8e7f-a9a1b9c2d7e5` (via the `uuid` package's
+  /// `Uuid().v5(ns, assetPath)`). Add new entries the same way.
   static const List<PuzzleImageData> all = [
     PuzzleImageData(assetPath: 'assets/images/puzzle-1.jpg', uuid: 'c9ca2678-81e7-5268-b01c-551c354b2f70'),
     PuzzleImageData(assetPath: 'assets/images/puzzle-2.jpg', uuid: 'c72cd81d-b06d-5b5f-a68a-392b1757002c'),
