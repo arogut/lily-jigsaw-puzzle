@@ -12,7 +12,7 @@ on:
 
 concurrency:
   group: cursor-agent-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   cursor:
@@ -39,7 +39,7 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b73a # v2.1.0
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -49,6 +49,22 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          skip=false
+
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            if HEAD_REPO=$(gh pr view "${{ github.event.issue.number }}" --json headRepository -q '.headRepository.nameWithOwner' 2>/dev/null); then
+              if [ "$HEAD_REPO" != "${{ github.repository }}" ]; then
+                echo "Fork PR comment trigger detected ($HEAD_REPO) — skipping agent run."
+                skip=true
+              fi
+            fi
+          fi
+
+          echo "skip=${skip}" >> "$GITHUB_OUTPUT"
+          if [ "$skip" = "true" ]; then
+            exit 0
+          fi
+
           case "${{ github.event_name }}" in
             pull_request_review|pull_request_review_comment)
               echo "ref=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
@@ -66,6 +82,7 @@ jobs:
           esac
 
       - name: Checkout repository
+        if: steps.target-ref.outputs.skip != 'true'
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
@@ -73,6 +90,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up Flutter
+        if: steps.target-ref.outputs.skip != 'true'
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: '3.44.4'
@@ -80,19 +98,22 @@ jobs:
           cache: true
 
       - name: Install Cursor CLI
-        run: |
-          curl https://cursor.com/install -fsS | bash
-          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+        if: steps.target-ref.outputs.skip != 'true'
+        run: bash .github/cursor/install-cursor-cli.sh
 
       - name: Configure git
+        if: steps.target-ref.outputs.skip != 'true'
         run: |
           git config user.name "Cursor Agent"
           git config user.email "cursoragent@users.noreply.github.com"
 
       - name: Write event context
+        if: steps.target-ref.outputs.skip != 'true'
         id: agent-context
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          REVIEW_BODY: ${{ github.event.review.body }}
         run: |
           mkdir -p .github/cursor
 
@@ -111,21 +132,21 @@ jobs:
               {
                 echo "Comment by ${{ github.event.comment.user.login }}:"
                 echo
-                echo "${{ github.event.comment.body }}"
+                printf '%s\n' "$COMMENT_BODY"
               } > .github/cursor/.event-context.txt
               ;;
             pull_request_review)
               {
                 echo "PR review by ${{ github.event.review.user.login }}:"
                 echo
-                echo "${{ github.event.review.body }}"
+                printf '%s\n' "$REVIEW_BODY"
               } > .github/cursor/.event-context.txt
               ;;
             pull_request_review_comment)
               {
                 echo "Inline PR comment by ${{ github.event.comment.user.login }} on ${{ github.event.comment.path }}:${{ github.event.comment.line }}:"
                 echo
-                echo "${{ github.event.comment.body }}"
+                printf '%s\n' "$COMMENT_BODY"
               } > .github/cursor/.event-context.txt
               ;;
             *)
@@ -134,6 +155,7 @@ jobs:
           esac
 
       - name: Run Cursor agent
+        if: steps.target-ref.outputs.skip != 'true'
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
