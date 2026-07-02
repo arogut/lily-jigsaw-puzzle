@@ -17,7 +17,7 @@ gh api repos/${REPO}/pulls/${PR_NUMBER}/comments \
   --jq '[.[] | select(.user.type == "Bot" or (.performed_via_github_app != null)) | {id, path, line, original_line, body}]'
 ```
 
-Also fetch every existing PR-level comment and save as PRIOR_SUMMARY (fields: id, body):
+Also fetch every existing PR-level issue comment from this bot and save as PRIOR_SUMMARY (fields: id, body):
 
 ```bash
 gh api repos/${REPO}/issues/${PR_NUMBER}/comments \
@@ -47,21 +47,72 @@ For each PRIOR_INLINE entry:
 
 Before posting a new inline comment, check PRIOR_INLINE for the same path within ±3 lines. Skip duplicates.
 
-Post inline comments with the GitHub REST API (gh pr review does not support inline path/line flags):
+Post inline comments with the GitHub REST API. Prefer JSON input when the body contains suggestion blocks or multiline text:
 
 ```bash
 gh api repos/${REPO}/pulls/${PR_NUMBER}/comments \
   --method POST \
-  -f body="Issue description and suggested fix" \
-  -f commit_id="${PR_HEAD_SHA}" \
-  -f path="lib/example.dart" \
-  -F line=42 \
-  -f side="RIGHT"
+  --input - <<'EOF'
+{
+  "body": "Short explanation of the issue.",
+  "commit_id": "COMMIT_SHA",
+  "path": "lib/example.dart",
+  "line": 42,
+  "side": "RIGHT"
+}
+EOF
 ```
 
-For multi-line ranges, include start_line and start_side when needed.
+Replace `COMMIT_SHA` with ${PR_HEAD_SHA}. For multi-line ranges, add `start_line` and `start_side`.
 
 Limit new inline comments to at most 10 high-confidence findings per run.
+
+### Proposed changes (GitHub suggestion blocks)
+
+When you have a concrete code fix for specific changed line(s), use GitHub's **Apply suggestion** format so the author can commit the fix in one click. Do NOT paste replacement code as plain text or a regular fenced code block.
+
+Format:
+
+```markdown
+Brief explanation of why this change helps.
+
+```suggestion
+exact replacement line(s)
+```
+```
+
+Rules:
+
+- Use suggestion blocks only for concrete, apply-ready code edits on diff lines (typos, renames, small refactors, config tweaks, 1–10 lines).
+- The number of lines inside ` ```suggestion ` must exactly match the commented range (`line`, or `start_line` through `line`).
+- Do NOT use suggestion blocks for conceptual feedback ("add tests", architecture notes, missing coverage) — use plain text instead.
+- Read the actual line content from the diff and put the corrected version in the suggestion block.
+
+Example JSON body for a single-line fix:
+
+```json
+{
+  "body": "Pin the Cursor CLI install script to a known-good commit or version.\n\n```suggestion\n          curl https://cursor.com/install -fsS | bash\n```",
+  "commit_id": "COMMIT_SHA",
+  "path": ".github/workflows/cursor-code-review.yml",
+  "line": 38,
+  "side": "RIGHT"
+}
+```
+
+Example for a three-line range (`start_line` 10, `line` 12):
+
+```json
+{
+  "body": "Extract duplicated logic into the shared runner.\n\n```suggestion\nline one\nline two\nline three\n```",
+  "commit_id": "COMMIT_SHA",
+  "path": "lib/example.dart",
+  "start_line": 10,
+  "start_side": "RIGHT",
+  "line": 12,
+  "side": "RIGHT"
+}
+```
 
 ### Review rules
 
@@ -87,25 +138,37 @@ Limit new inline comments to at most 10 high-confidence findings per run.
 - Proper error handling
 - No sensitive data in logs
 
-## Step 5 — Replace the summary comment
+## Step 5 — Write the review summary
 
-Delete every comment in PRIOR_SUMMARY, then write review.md and post it:
+1. Delete every legacy standalone bot summary in PRIOR_SUMMARY (from older runs that used `gh pr comment`):
+   ```bash
+   gh api repos/${REPO}/issues/comments/{id} -X DELETE
+   ```
 
-```bash
-gh pr comment ${PR_NUMBER} --body-file review.md
-```
+2. Write the full review summary to `review.md`. This file becomes the **only** review summary — do not post it anywhere else.
 
 The summary must:
 - Start with **Approved**, **Approved with suggestions**, or **Changes requested**
-- List only items needing attention
-- Mention fixed prior issues
-- Cross-reference remaining inline comments
-- Stay under 30 lines
+- List only items needing attention (numbered or bulleted)
+- Mention fixed prior inline threads
+- Note how many inline comments were posted and whether they include apply-able suggestions
+- Include positives when the PR is mostly good
+- Stay under 40 lines
 
-## Step 6 — Submit a formal PR review
+## Step 6 — Submit one formal PR review (summary lives here)
 
-- No issues found: `gh pr review ${PR_NUMBER} --approve --body "LGTM — no issues found."`
-- Suggestions only: `gh pr review ${PR_NUMBER} --approve --body "Approved with suggestions — see inline comments."`
-- Must-fix issues: `gh pr review ${PR_NUMBER} --request-changes --body "Changes requested — see inline comments and summary."`
+Submit the review using `review.md` as the review body. **Never** call `gh pr comment` for the summary — the summary must appear only on the formal review event (Approved / Changes requested), not as a separate issue comment.
 
-Use request-changes only for clear violations: missing tests for new code, hardcoded secrets, broken SOLID/DRY/KISS rules.
+```bash
+gh pr review ${PR_NUMBER} --approve --body-file review.md
+```
+
+Choose the event from the summary verdict:
+
+- No issues found: `--approve`
+- Suggestions only (no must-fix items): `--approve`
+- Must-fix issues: `--request-changes`
+
+Use `--request-changes` only for clear violations: missing tests for new code, hardcoded secrets, broken SOLID/DRY/KISS rules.
+
+Always pass `--body-file review.md` so the full summary appears under the review state on the PR timeline.
