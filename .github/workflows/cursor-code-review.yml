@@ -10,20 +10,10 @@ on:
         required: true
         type: number
       model:
-        description: Cursor agent model (PR events always use auto)
+        description: Model slug (use "auto", or any id from "agent models" — listed in job logs after install)
         required: true
         default: auto
-        type: choice
-        # Keep in sync with .github/cursor/models.txt
-        options:
-          - auto
-          - composer-2.5-fast
-          - gpt-5.3-codex
-          - gpt-5.5-medium
-          - claude-4.6-sonnet-medium-thinking
-          - claude-fable-5-thinking-high
-          - claude-opus-4-8-thinking-high
-          - claude-sonnet-5-thinking-high
+        type: string
 
 concurrency:
   group: cursor-review-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
@@ -56,10 +46,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             PR_NUMBER="${{ github.event.inputs.pr_number }}"
-            CURSOR_MODEL="${{ github.event.inputs.model }}"
+            REQUESTED_MODEL="${{ github.event.inputs.model }}"
           else
             PR_NUMBER="${{ github.event.pull_request.number }}"
-            CURSOR_MODEL="auto"
+            REQUESTED_MODEL="auto"
           fi
 
           PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid,isDraft)
@@ -72,7 +62,7 @@ jobs:
           echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
           echo "head_sha=$(echo "$PR_JSON" | jq -r '.headRefOid')" >> "$GITHUB_OUTPUT"
           echo "base_sha=$(echo "$PR_JSON" | jq -r '.baseRefOid')" >> "$GITHUB_OUTPUT"
-          echo "model=${CURSOR_MODEL}" >> "$GITHUB_OUTPUT"
+          echo "requested_model=${REQUESTED_MODEL}" >> "$GITHUB_OUTPUT"
           echo "skip=false" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository
@@ -87,11 +77,29 @@ jobs:
         if: steps.review-context.outputs.skip != 'true'
         run: bash .github/cursor/install-cursor-cli.sh
 
+      - name: Resolve Cursor model
+        if: steps.review-context.outputs.skip != 'true'
+        id: cursor-model
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          CURSOR_MODEL: ${{ steps.review-context.outputs.requested_model }}
+        run: |
+          echo "Available Cursor models for this account:"
+          if command -v agent >/dev/null 2>&1; then
+            agent models
+          else
+            cursor-agent --list-models
+          fi
+
+          RESOLVED_MODEL="$(bash .github/cursor/resolve-cursor-model.sh)"
+          echo "Using model: ${RESOLVED_MODEL}"
+          echo "model=${RESOLVED_MODEL}" >> "$GITHUB_OUTPUT"
+
       - name: Run Cursor review agent
         if: steps.review-context.outputs.skip != 'true'
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          CURSOR_MODEL: ${{ steps.review-context.outputs.model }}
+          CURSOR_MODEL: ${{ steps.cursor-model.outputs.model }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ steps.review-context.outputs.pr_number }}
