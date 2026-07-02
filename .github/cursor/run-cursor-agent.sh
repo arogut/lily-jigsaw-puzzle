@@ -22,7 +22,7 @@ else
 fi
 
 export REPO EVENT_NAME ACTOR ISSUE_NUMBER PR_NUMBER PR_HEAD_SHA PR_BASE_SHA
-PROMPT="$(envsubst < "$PROMPT_TEMPLATE")"
+PROMPT="$(envsubst '$REPO $PR_NUMBER $PR_HEAD_SHA $PR_BASE_SHA $EVENT_NAME $ACTOR $ISSUE_NUMBER' < "$PROMPT_TEMPLATE")"
 
 if [ -f .github/cursor/.event-context.txt ]; then
   PROMPT="${PROMPT}
