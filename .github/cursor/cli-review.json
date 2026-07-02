@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "permissions": {
+    "allow": [
+      "Read(**/*)",
+      "Write(review.md)",
+      "Shell(gh)",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Shell(git)",
+      "Shell(flutter)",
+      "Shell(dart)",
+      "Write(lib/**)",
+      "Write(test/**)",
+      "Write(android/**)",
+      "Write(ios/**)",
+      "Write(pubspec.yaml)",
+      "Write(pubspec.lock)",
+      "Write(.github/**)",
+      "Write(specs/**)"
+    ]
+  }
+}
