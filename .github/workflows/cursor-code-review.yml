@@ -1,0 +1,105 @@
+name: Cursor Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to review
+        required: true
+        type: number
+      model:
+        description: Cursor agent model (PR events always use auto)
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - composer-2.5-fast
+          - gpt-5.3-codex
+          - gpt-5.5-medium
+          - claude-4.6-sonnet-medium-thinking
+          - claude-fable-5-thinking-high
+          - claude-opus-4-8-thinking-high
+          - claude-sonnet-5-thinking-high
+
+concurrency:
+  group: cursor-review-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  cursor-review:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Resolve review context
+        id: review-context
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+            CURSOR_MODEL="${{ github.event.inputs.model }}"
+            PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}")
+            IS_DRAFT=$(echo "$PR_JSON" | jq -r '.draft')
+            HEAD_SHA=$(echo "$PR_JSON" | jq -r '.head.sha')
+            BASE_SHA=$(echo "$PR_JSON" | jq -r '.base.sha')
+          else
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            CURSOR_MODEL="auto"
+            IS_DRAFT="${{ github.event.pull_request.draft }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          fi
+
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "PR #${PR_NUMBER} is a draft — skipping review."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "base_sha=${BASE_SHA}" >> "$GITHUB_OUTPUT"
+          echo "model=${CURSOR_MODEL}" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        if: steps.review-context.outputs.skip != 'true'
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          ref: ${{ steps.review-context.outputs.head_sha }}
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        if: steps.review-context.outputs.skip != 'true'
+        run: bash .github/cursor/install-cursor-cli.sh
+
+      - name: Run Cursor review agent
+        if: steps.review-context.outputs.skip != 'true'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          CURSOR_MODEL: ${{ steps.review-context.outputs.model }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.review-context.outputs.pr_number }}
+          PR_HEAD_SHA: ${{ steps.review-context.outputs.head_sha }}
+          PR_BASE_SHA: ${{ steps.review-context.outputs.base_sha }}
+        run: bash .github/cursor/run-cursor-agent.sh .github/cursor/cli-review.json .github/cursor/prompts/review.md

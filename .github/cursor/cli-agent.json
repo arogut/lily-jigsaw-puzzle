@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**/*)",
+      "Write(**/*)",
+      "Shell(git)",
+      "Shell(gh)",
+      "Shell(flutter)",
+      "Shell(dart)",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Write(**/.env*)",
+      "Write(**/*.key)",
+      "Shell(git push --force)",
+      "Shell(git push -f)",
+      "Shell(gh pr merge)"
+    ]
+  }
+}
