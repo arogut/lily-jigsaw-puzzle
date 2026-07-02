@@ -8,13 +8,41 @@ Use the authenticated gh CLI via GH_TOKEN for all GitHub operations.
 
 Do NOT modify any existing repository files. You may ONLY write to review.md.
 
-## Step 1 — Load prior inline review comments
+## Step 1 — Load prior bot review threads
 
-Fetch every existing inline review comment on this PR and save the full list as PRIOR_INLINE (fields: id, path, line, original_line, body):
+Fetch every existing bot review thread on this PR and save as PRIOR_THREADS. Include thread id (GraphQL `PRRT_…`), path, line, isResolved, and the root comment databaseId/body:
 
 ```bash
-gh api repos/${REPO}/pulls/${PR_NUMBER}/comments \
-  --jq '[.[] | select(.user.type == "Bot" or (.performed_via_github_app != null)) | {id, path, line, original_line, body}]'
+OWNER="${REPO%%/*}"
+NAME="${REPO#*/}"
+gh api graphql -f query='
+query($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      reviewThreads(first: 100) {
+        nodes {
+          id
+          isResolved
+          path
+          line
+          comments(first: 20) {
+            nodes {
+              databaseId
+              body
+              author { login __typename }
+            }
+          }
+        }
+      }
+    }
+  }
+}' -f owner="$OWNER" -f name="$NAME" -F number="${PR_NUMBER}" \
+  --jq '[.data.repository.pullRequest.reviewThreads.nodes[]
+    | select(.comments.nodes[0].author.__typename == "Bot"
+      or (.comments.nodes[0].author.login | test("bot"; "i")))
+    | {thread_id: .id, isResolved, path, line,
+       comment_id: .comments.nodes[0].databaseId,
+       body: .comments.nodes[0].body}]'
 ```
 
 Also fetch every existing PR-level issue comment from this bot and save as PRIOR_SUMMARY (fields: id, body):
@@ -32,20 +60,35 @@ gh pr diff ${PR_NUMBER}
 
 Build a CHANGED_LINES map: for every + line in the diff record its file path and line number. Only + lines are reviewable.
 
-## Step 3 — Reconcile prior inline comments
+## Step 3 — Reconcile prior inline comment threads
 
-For each PRIOR_INLINE entry:
+For each **unresolved** entry in PRIOR_THREADS:
 
-- If the issue appears fixed in the latest diff, reply then delete the original comment:
+- If the issue appears fixed in the latest diff, reply then **resolve the thread** (do NOT delete comments):
   ```bash
-  gh api repos/${REPO}/pulls/comments/{id}/replies -X POST -f body="Fixed in the latest commit — closing this thread."
-  gh api repos/${REPO}/pulls/comments/{id} -X DELETE
+  gh api graphql -f query='
+  mutation($threadId: ID!, $body: String!) {
+    addPullRequestReviewThreadReply(input: {
+      pullRequestReviewThreadId: $threadId
+      body: $body
+    }) { comment { id } }
+  }' -f threadId="PRRT_…" -f body="Fixed in the latest commit — resolving this thread."
+
+  gh api graphql -f query='
+  mutation($threadId: ID!) {
+    resolveReviewThread(input: {threadId: $threadId}) {
+      thread { id isResolved }
+    }
+  }' -f threadId="PRRT_…"
   ```
-- If still an issue, leave the existing comment untouched.
+- If the thread is already resolved, leave it untouched.
+- If the issue is still present in the latest diff, leave the thread open.
+
+Never delete inline review comments to mark them handled. Deletion is only for mistaken/duplicate bot posts in the same run before anyone replies.
 
 ## Step 4 — Post new inline comments for new issues only
 
-Before posting a new inline comment, check PRIOR_INLINE for the same path within ±3 lines. Skip duplicates.
+Before posting a new inline comment, check PRIOR_THREADS for the same path within ±3 lines on **unresolved** threads. Skip duplicates — do not re-raise the same finding.
 
 Post inline comments with the GitHub REST API. Prefer JSON input when the body contains suggestion blocks or multiline text:
 
@@ -150,7 +193,7 @@ Example for a three-line range (`start_line` 10, `line` 12):
 The summary must:
 - Start with **Approved**, **Approved with suggestions**, or **Changes requested**
 - List only items needing attention (numbered or bulleted)
-- Mention fixed prior inline threads
+- Mention prior inline threads that were resolved this run
 - Note how many inline comments were posted and whether they include apply-able suggestions
 - Include positives when the PR is mostly good
 - Stay under 40 lines

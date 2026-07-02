@@ -32,8 +32,10 @@ if [ -f .github/cursor/.event-context.txt ]; then
 $(cat .github/cursor/.event-context.txt)"
 fi
 
+CURSOR_MODEL="${CURSOR_MODEL:-auto}"
+
 if [ "$AGENT_BIN" = "agent" ]; then
-  agent -p "$PROMPT" --model auto --force
+  agent -p "$PROMPT" --model "$CURSOR_MODEL" --force
 else
-  cursor-agent --force --model auto --output-format=text --print "$PROMPT"
+  cursor-agent --force --model "$CURSOR_MODEL" --output-format=text --print "$PROMPT"
 fi
