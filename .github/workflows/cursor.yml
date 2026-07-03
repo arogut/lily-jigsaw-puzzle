@@ -17,14 +17,14 @@ concurrency:
 jobs:
   cursor:
     if: >-
-      (github.event_name == 'issues' && (github.event.label.name == 'cursor' || github.event.label.name == 'claude') &&
+      (github.event_name == 'issues' && github.event.label.name == 'cursor' &&
        contains(fromJson('["arogut"]'), github.event.sender.login)) ||
-      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '@cursor') || contains(github.event.comment.body, '@claude')) &&
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@cursor') &&
        contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)) ||
-      (github.event_name == 'pull_request_review' && (contains(github.event.review.body, '@cursor') || contains(github.event.review.body, '@claude')) &&
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@cursor') &&
        contains(fromJson('["OWNER", "MEMBER"]'), github.event.review.author_association) &&
        (github.event.pull_request.head.repo.full_name == github.repository)) ||
-      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, '@cursor') || contains(github.event.comment.body, '@claude')) &&
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@cursor') &&
        contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association) &&
        (github.event.pull_request.head.repo.full_name == github.repository))
 
@@ -39,7 +39,7 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b73a # v2.1.0
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
