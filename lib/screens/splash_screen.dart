@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:lily_jigsaw_puzzle/core/constants/app_constants.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
@@ -63,11 +64,14 @@ class _SplashScreenState extends State<SplashScreen>
       PuzzleImageData.all.map((e) => e.assetPath).toList(),
     ));
 
-    // Start fade-out at 4.4 s, navigate at 5 s
-    unawaited(Future.delayed(const Duration(milliseconds: 4400), () {
+    unawaited(Future.delayed(
+      const Duration(milliseconds: AppConstants.splashFadeOutDelayMs),
+      () {
       if (mounted) unawaited(_outController.forward());
     }));
-    unawaited(Future.delayed(const Duration(milliseconds: 5000), () {
+    unawaited(Future.delayed(
+      const Duration(milliseconds: AppConstants.splashNavigateDelayMs),
+      () {
       if (!mounted) return;
       unawaited(Navigator.of(context).pushReplacement(
         PageRouteBuilder<void>(

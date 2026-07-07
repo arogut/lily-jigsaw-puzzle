@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
+import 'package:lily_jigsaw_puzzle/core/constants/app_constants.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/screens/splash_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lily_jigsaw_puzzle/services/preferences_store.dart';
 
 class LocaleNotifier extends ChangeNotifier {
 
@@ -24,13 +25,13 @@ class LocaleNotifier extends ChangeNotifier {
   }
 
   Future<void> _save(String code) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await PreferencesStore.load();
     await prefs.setString('locale', code);
   }
 
   static Future<LocaleNotifier> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final code = prefs.getString('locale') ?? 'pl';
+    final prefs = await PreferencesStore.load();
+    final code = prefs.getString('locale') ?? AppConstants.defaultLocaleCode;
     return LocaleNotifier(Locale(code));
   }
 }

@@ -8,6 +8,11 @@ class SoundService {
 
   static final SoundService _instance = SoundService._internal();
 
+  final Map<String, AudioPlayer> _players = {};
+
+  AudioPlayer _playerFor(String asset) =>
+      _players.putIfAbsent(asset, AudioPlayer.new);
+
   /// Plays the snap sound effect when a piece locks into its slot.
   Future<void> playSnap() => _play('sounds/snap.wav');
 
@@ -19,6 +24,7 @@ class SoundService {
 
   /// Plays the click sound effect for UI button interactions.
   Future<void> playClick() => _play('sounds/click.wav');
+
   /// Plays the sound effect signalling that a hint slot has become available.
   Future<void> playHintAvailable() => _play('sounds/hint_available.wav');
 
@@ -26,7 +32,7 @@ class SoundService {
   Future<void> playHintsExhausted() => _play('sounds/hints_exhausted.wav');
 
   Future<void> _play(String asset) async {
-    final player = AudioPlayer();
+    final player = _playerFor(asset);
     await player.setReleaseMode(ReleaseMode.release);
     await player.play(AssetSource(asset));
   }

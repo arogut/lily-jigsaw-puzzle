@@ -261,7 +261,6 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
         selectedImage: widget.selectedImage,
         gridSize: gridSize,
         difficultyStars: difficultyStars,
-        localeNotifier: widget.localeNotifier,
         hintSettings: widget.hintSettings,
       ),
     )));

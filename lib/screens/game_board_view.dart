@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/panel_backgrounds.dart';
+import 'package:lily_jigsaw_puzzle/core/utils/puzzle_geometry.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
@@ -18,7 +19,7 @@ import 'package:lily_jigsaw_puzzle/widgets/tray_label.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 
 /// Padding between the board/tray and the screen edge, in logical pixels.
-const double kEdgePad = 20;
+const double kEdgePad = PuzzleGeometry.edgePad;
 
 /// Renders the full game UI for an active puzzle session.
 ///
@@ -163,6 +164,7 @@ class GameBoardView extends StatelessWidget {
             icon: Icons.arrow_back_rounded,
             variant: GameButtonVariant.blue,
             fontSize: 15,
+            semanticLabel: l10n.back,
             onPressed: onBack,
           ),
         ),
@@ -195,6 +197,7 @@ class GameBoardView extends StatelessWidget {
       variant: GameButtonVariant.yellow,
       fontSize: 15,
       enabled: currentHintSlot == HintSlotState.available,
+      semanticLabel: l10n.hint,
       onPressed: onHint,
     );
     final anim = hintAvailableAnimation;

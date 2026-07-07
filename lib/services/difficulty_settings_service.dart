@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lily_jigsaw_puzzle/services/preferences_store.dart';
 
 /// Stores and persists the grid size (rows = columns) for each difficulty level.
 ///
@@ -16,18 +16,21 @@ class DifficultySettings extends ChangeNotifier {
     required int easy,
     required int medium,
     required int hard,
+    PreferencesStore? store,
   }) =>
       DifficultySettings._(
         easy: easy,
         medium: medium,
         hard: hard,
+        store: store,
       );
 
   DifficultySettings._({
     required this._easy,
     required this._medium,
     required this._hard,
-  });
+    PreferencesStore? store,
+  }) : _store = store;
 
   /// Minimum allowed grid size (rows / columns).
   static const int minGridSize = 2;
@@ -48,9 +51,13 @@ class DifficultySettings extends ChangeNotifier {
   static const _keyMedium = 'difficulty_medium';
   static const _keyHard = 'difficulty_hard';
 
+  final PreferencesStore? _store;
   int _easy;
   int _medium;
   int _hard;
+
+  Future<PreferencesStore> get _prefs async =>
+      _store ?? await PreferencesStore.load();
 
   /// Grid size for the easy difficulty level.
   int get easyGridSize => _easy;
@@ -61,10 +68,10 @@ class DifficultySettings extends ChangeNotifier {
   /// Grid size for the hard difficulty level.
   int get hardGridSize => _hard;
 
-  /// Loads persisted settings from [SharedPreferences], using defaults for any
+  /// Loads persisted settings from [PreferencesStore], using defaults for any
   /// missing or invalid values.
-  static Future<DifficultySettings> load() async {
-    final prefs = await SharedPreferences.getInstance();
+  static Future<DifficultySettings> load({PreferencesStore? store}) async {
+    final prefs = store ?? await PreferencesStore.load();
     var easy = prefs.getInt(_keyEasy) ?? defaultEasy;
     var medium = prefs.getInt(_keyMedium) ?? defaultMedium;
     var hard = prefs.getInt(_keyHard) ?? defaultHard;
@@ -76,7 +83,7 @@ class DifficultySettings extends ChangeNotifier {
       hard = defaultHard;
     }
 
-    return DifficultySettings(easy: easy, medium: medium, hard: hard);
+    return DifficultySettings(easy: easy, medium: medium, hard: hard, store: prefs);
   }
 
   /// Sets the easy grid size.
@@ -110,7 +117,7 @@ class DifficultySettings extends ChangeNotifier {
   }
 
   Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs;
     await prefs.setInt(_keyEasy, _easy);
     await prefs.setInt(_keyMedium, _medium);
     await prefs.setInt(_keyHard, _hard);

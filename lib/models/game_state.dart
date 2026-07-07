@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
+import 'package:lily_jigsaw_puzzle/core/constants/game_physics.dart';
+import 'package:lily_jigsaw_puzzle/core/utils/puzzle_geometry.dart';
 import 'package:lily_jigsaw_puzzle/models/game_phase.dart';
 import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_builder.dart';
@@ -11,24 +13,8 @@ import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
 export 'package:lily_jigsaw_puzzle/models/game_phase.dart';
 
-// ── Physics constants ──────────────────────────────────────────────────────
-const double _kLiftScale = 1.08;
-
 /// Distance in logical pixels within which a dropped piece snaps to its slot.
-const double kSnapThreshold = 40;
-
-const double _kMagnetRadius = 80;
-
-// Velocity friction: vel *= (1 - _kFriction * dt). Half-life ≈ 0.1 seconds.
-const double _kFriction = 6;
-
-// Bounce damping at tray walls.
-const double _kBounceDamp = 0.35;
-
-const double _kMaxVelocity = 1500;
-const double _kMinVelocity = 5;
-
-// ──────────────────────────────────────────────────────────────────────────
+const double kSnapThreshold = GamePhysics.snapThreshold;
 
 /// Holds the complete mutable state of an in-progress puzzle game.
 ///
@@ -66,7 +52,7 @@ class GameState extends ChangeNotifier {
   /// Ordered list of puzzle pieces — rendered and hit-tested back-to-front.
   List<PuzzlePiece> get pieces => _pieces;
 
-  GamePhase _phase = GamePhase.loading;
+  GamePhase _phase = GamePhase.assembled;
 
   /// Current game phase driving active interactions and visible layers.
   GamePhase get phase => _phase;
@@ -124,20 +110,13 @@ class GameState extends ChangeNotifier {
   }
 
   /// Returns random scatter target positions spread across the right-half tray.
-  List<Offset> computeScatterTargets(Size screenSize) {
-    final rng = Random();
-    const margin = 20.0;
-    final trayLeft = screenSize.width / 2 + margin;
-    final trayRight = screenSize.width - margin - pieceWidth;
-    const trayTop = margin;
-    final trayBottom = screenSize.height - margin - pieceHeight;
-    return List.generate(_pieces.length, (i) {
-      return Offset(
-        trayLeft + rng.nextDouble() * (trayRight - trayLeft).clamp(0, double.infinity),
-        trayTop + rng.nextDouble() * (trayBottom - trayTop).clamp(0, double.infinity),
+  List<Offset> computeScatterTargets(Size screenSize) =>
+      PuzzleGeometry.randomScatterTargets(
+        pieceCount: _pieces.length,
+        screenSize: screenSize,
+        pieceWidth: pieceWidth,
+        pieceHeight: pieceHeight,
       );
-    });
-  }
 
   /// Transitions to [GamePhase.scattering].
   ///
@@ -165,7 +144,7 @@ class GameState extends ChangeNotifier {
     _pieces.remove(piece);
     piece
       ..isDragging = true
-      ..scale = _kLiftScale
+      ..scale = GamePhysics.liftScale
       ..velocity = Offset.zero;
     _pieces.add(piece);
     _draggingIndex = _pieces.length - 1;
@@ -196,15 +175,15 @@ class GameState extends ChangeNotifier {
   }
 
   /// Returns the magnetic offset to add to the raw finger position when the
-  /// piece is within [_kMagnetRadius] of its target. The offset is zero at the
+  /// piece is within [GamePhysics.magnetRadius] of its target. The offset is zero at the
   /// radius boundary and grows smoothly inward, so there is no discontinuity
   /// when the piece enters or exits the magnet zone.
   Offset _magneticOffset(Offset rawPos, Offset targetPos) {
     final dist = (rawPos - targetPos).distance;
-    if (dist <= 0 || dist > _kMagnetRadius) return Offset.zero;
+    if (dist <= 0 || dist > GamePhysics.magnetRadius) return Offset.zero;
 
     // Pull strength ramps from 0 (at magnetRadius) to 8% correction (closer in).
-    final t = 1.0 - dist / _kMagnetRadius;
+    final t = 1.0 - dist / GamePhysics.magnetRadius;
     final pullDir = (targetPos - rawPos) / dist;
     return pullDir * (dist * t * 0.08);
   }
@@ -262,10 +241,10 @@ class GameState extends ChangeNotifier {
       var pos = piece.currentPosition;
 
       // Apply friction (exponential decay).
-      vel = vel * (1.0 - _kFriction * dt).clamp(0.0, 1.0);
+      vel = vel * (1.0 - GamePhysics.friction * dt).clamp(0.0, 1.0);
 
       // Zero out negligible velocity to avoid perpetual micro-movement.
-      if (vel.distance < _kMinVelocity) {
+      if (vel.distance < GamePhysics.minVelocity) {
         vel = Offset.zero;
       }
 
@@ -275,19 +254,19 @@ class GameState extends ChangeNotifier {
         // Bounce off tray walls.
         if (pos.dx < trayBounds.left) {
           pos = Offset(trayBounds.left, pos.dy);
-          vel = Offset(-vel.dx * _kBounceDamp, vel.dy);
+          vel = Offset(-vel.dx * GamePhysics.bounceDamp, vel.dy);
         }
         if (pos.dx + pieceWidth > trayBounds.right) {
           pos = Offset(trayBounds.right - pieceWidth, pos.dy);
-          vel = Offset(-vel.dx * _kBounceDamp, vel.dy);
+          vel = Offset(-vel.dx * GamePhysics.bounceDamp, vel.dy);
         }
         if (pos.dy < trayBounds.top) {
           pos = Offset(pos.dx, trayBounds.top);
-          vel = Offset(vel.dx, -vel.dy * _kBounceDamp);
+          vel = Offset(vel.dx, -vel.dy * GamePhysics.bounceDamp);
         }
         if (pos.dy + pieceHeight > trayBounds.bottom) {
           pos = Offset(pos.dx, trayBounds.bottom - pieceHeight);
-          vel = Offset(vel.dx, -vel.dy * _kBounceDamp);
+          vel = Offset(vel.dx, -vel.dy * GamePhysics.bounceDamp);
         }
 
         piece
@@ -307,8 +286,8 @@ class GameState extends ChangeNotifier {
 
   Offset _clampVelocity(Offset vel) {
     final d = vel.distance;
-    if (d <= _kMaxVelocity) return vel;
-    return vel / d * _kMaxVelocity;
+    if (d <= GamePhysics.maxVelocity) return vel;
+    return vel / d * GamePhysics.maxVelocity;
   }
 
   /// True when a hint is currently active (one piece is highlighted).
