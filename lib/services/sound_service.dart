@@ -34,6 +34,8 @@ class SoundService {
   Future<void> _play(String asset) async {
     final player = _playerFor(asset);
     await player.setReleaseMode(ReleaseMode.release);
+    await player.setReleaseMode(ReleaseMode.stop);
+    await player.stop();
     await player.play(AssetSource(asset));
   }
 }
