@@ -1,30 +1,37 @@
 import 'dart:math';
 
 import 'package:lily_jigsaw_puzzle/models/streak_record.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lily_jigsaw_puzzle/services/preferences_store.dart';
 
 /// Persists and transitions a user's consecutive-day puzzle completion streak.
 ///
-/// Streak data is stored via [SharedPreferences] using three keys under the
+/// Streak data is stored via [PreferencesStore] using three keys under the
 /// `streak_` namespace.
 class StreakService {
   /// Creates a [StreakService].
   ///
   /// [clock] defaults to [DateTime.now]. Inject a custom clock in tests to
   /// control the current date without any mocking framework.
-  StreakService({DateTime Function()? clock}) : _clock = clock ?? DateTime.now;
+  StreakService({
+    DateTime Function()? clock,
+    this._store,
+  }) : _clock = clock ?? DateTime.now;
 
   static const _kCurrentKey = 'streak_current';
   static const _kLongestKey = 'streak_longest';
   static const _kLastDateKey = 'streak_last_date';
 
   final DateTime Function() _clock;
+  final PreferencesStore? _store;
+
+  Future<PreferencesStore> get _prefs async =>
+      _store ?? await PreferencesStore.load();
 
   /// Returns the current [StreakRecord] from persistent storage.
   ///
   /// Returns [StreakRecord.initial()] when no streak has been recorded yet.
   Future<StreakRecord> getStreak() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs;
     return StreakRecord(
       currentStreak: prefs.getInt(_kCurrentKey) ?? 0,
       longestStreak: prefs.getInt(_kLongestKey) ?? 0,
@@ -51,7 +58,7 @@ class StreakService {
 
   /// Removes all streak data from persistent storage.
   Future<void> resetAll() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs;
     await prefs.remove(_kCurrentKey);
     await prefs.remove(_kLongestKey);
     await prefs.remove(_kLastDateKey);
@@ -89,7 +96,7 @@ class StreakService {
   }
 
   Future<void> _persist(StreakRecord record) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs;
     await prefs.setInt(_kCurrentKey, record.currentStreak);
     await prefs.setInt(_kLongestKey, record.longestStreak);
     if (record.lastCompletionDate != null) {

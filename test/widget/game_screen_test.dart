@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
-import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-LocaleNotifier _makeLocaleNotifier() => LocaleNotifier(const Locale('en'));
 HintSettings _makeHintSettings() =>
     HintSettings(immediateMode: false, unlockDelaySeconds: HintSettings.defaultDelay);
 
@@ -41,7 +39,6 @@ void main() {
         selectedImage: _testImage,
         gridSize: 3,
         difficultyStars: 1,
-        localeNotifier: _makeLocaleNotifier(),
         hintSettings: _makeHintSettings(),
       )),
     );
@@ -59,7 +56,6 @@ void main() {
         selectedImage: _testImage,
         gridSize: 3,
         difficultyStars: 1,
-        localeNotifier: _makeLocaleNotifier(),
         hintSettings: _makeHintSettings(),
       )),
     );
@@ -80,7 +76,6 @@ void main() {
         selectedImage: _testImage,
         gridSize: 3,
         difficultyStars: 1,
-        localeNotifier: _makeLocaleNotifier(),
         hintSettings: _makeHintSettings(),
       )),
     );
@@ -100,7 +95,6 @@ void main() {
         selectedImage: _testImage,
         gridSize: 5,
         difficultyStars: 2,
-        localeNotifier: _makeLocaleNotifier(),
         hintSettings: _makeHintSettings(),
       )),
     );

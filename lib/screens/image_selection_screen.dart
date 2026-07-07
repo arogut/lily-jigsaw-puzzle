@@ -57,6 +57,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                       icon: Icons.exit_to_app_rounded,
                       variant: GameButtonVariant.pink,
                       fontSize: 15,
+                      semanticLabel: l10n.quit,
                       onPressed: SystemNavigator.pop,
                     ),
                     Expanded(child: Center(child: GradientTitle(text: l10n.choosePuzzle, fontSize: 30))),
@@ -65,6 +66,7 @@ class _ImageSelectionScreenState extends State<ImageSelectionScreen> {
                       icon: Icons.settings_rounded,
                       variant: GameButtonVariant.blue,
                       fontSize: 15,
+                      semanticLabel: l10n.settings,
                       onPressed: () {
                         unawaited(
                           Navigator.of(context).push(MaterialPageRoute<void>(
@@ -173,7 +175,13 @@ class _ImageCardState extends State<_ImageCard>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final l10n = AppLocalizations.of(context)!;
+    final puzzleIndex = PuzzleImageData.all.indexOf(widget.image) + 1;
+
+    return Semantics(
+      button: true,
+      label: l10n.puzzleCardLabel(puzzleIndex),
+      child: GestureDetector(
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) => _onTap(),
       onTapCancel: () => _ctrl.reverse(),
@@ -203,6 +211,7 @@ class _ImageCardState extends State<_ImageCard>
             ),
           ),
         ),
+    ),
     );
   }
 }

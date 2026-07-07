@@ -64,5 +64,11 @@
     "placeholders": {
       "count": {"type": "int"}
     }
+  },
+  "puzzleCardLabel": "Rompecabezas {index}",
+  "@puzzleCardLabel": {
+    "placeholders": {
+      "index": {"type": "int"}
+    }
   }
 }

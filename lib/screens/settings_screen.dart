@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,21 +6,21 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/screens/difficulty_sliders_section.dart';
-import 'package:lily_jigsaw_puzzle/services/completion_service.dart';
 import 'package:lily_jigsaw_puzzle/services/difficulty_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
-import 'package:lily_jigsaw_puzzle/services/streak_service.dart';
+import 'package:lily_jigsaw_puzzle/services/progress_reset_service.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/gradient_title.dart';
+import 'package:lily_jigsaw_puzzle/widgets/parent_gate.dart';
 
 class SettingsScreen extends StatefulWidget {
-
   const SettingsScreen({
     required this.localeNotifier,
     required this.difficultySettings,
     required this.hintSettings,
     super.key,
   });
+
   final LocaleNotifier localeNotifier;
   final DifficultySettings difficultySettings;
 
@@ -33,14 +32,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Math challenge gate
-  late int _a;
-  late int _b;
-  final _answerController = TextEditingController();
   bool _unlocked = false;
-  String? _errorMessage;
-
-  // Settings state
   bool _resetDone = false;
   late TextEditingController _delayController;
   String? _delayError;
@@ -48,9 +40,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    final rng = Random();
-    _a = 1 + rng.nextInt(9);
-    _b = 1 + rng.nextInt(9);
     _delayController = TextEditingController(
       text: widget.hintSettings.unlockDelaySeconds.toString(),
     );
@@ -58,35 +47,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
-    _answerController.dispose();
     _delayController.dispose();
     super.dispose();
   }
 
-  void _checkAnswer(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final input = int.tryParse(_answerController.text.trim());
-    if (input == _a + _b) {
-      setState(() {
-        _unlocked = true;
-        _errorMessage = null;
-      });
-    } else {
-      setState(() => _errorMessage = l10n.wrongAnswer);
-      Timer(const Duration(milliseconds: 1500), () {
-        if (mounted) Navigator.of(context).pop();
-      });
-    }
-  }
-
   void _setLocale(Locale locale) {
     widget.localeNotifier.setLocale(locale);
-    setState(() {}); // rebuild to show new language
+    setState(() {});
   }
 
   Future<void> _resetProgress() async {
-    await CompletionService().resetAll();
-    await StreakService().resetAll();
+    await ProgressResetService().resetAll();
     if (mounted) setState(() => _resetDone = true);
   }
 
@@ -110,6 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.arrow_back_rounded,
                       variant: GameButtonVariant.blue,
                       fontSize: 16,
+                      semanticLabel: l10n.back,
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
@@ -123,92 +95,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Expanded(
                 child: _unlocked
                     ? _buildSettingsPanel(context, l10n)
-                    : _buildMathGate(context, l10n),
+                    : ParentGate(onUnlocked: () => setState(() => _unlocked = true)),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMathGate(BuildContext context, AppLocalizations l10n) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 32),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.mathQuestion(_a, _b),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppColors.deepPurple,
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _answerController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: AppColors.deepPurple,
-              ),
-              decoration: InputDecoration(
-                hintText: l10n.mathHint,
-                hintStyle: TextStyle(
-                  color: AppColors.mediumPurple.withValues(alpha: 0.50),
-                  fontSize: 16,
-                ),
-                filled: true,
-                fillColor: const Color(0xFFF5EEFF),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.mediumPurple, width: 2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.deepPurple, width: 2.5),
-                ),
-              ),
-              onSubmitted: (_) => _checkAnswer(context),
-            ),
-            const SizedBox(height: 20),
-            if (_errorMessage != null) ...[
-              Text(
-                _errorMessage!,
-                style: const TextStyle(
-                  color: AppColors.redShadow,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            GameButton(
-              label: l10n.confirm,
-              icon: Icons.check_rounded,
-              variant: GameButtonVariant.mint,
-              onPressed: () => _checkAnswer(context),
-            ),
-          ],
         ),
       ),
     );
@@ -229,7 +119,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Language section
           _buildSectionLabel(l10n.language),
           const SizedBox(height: 12),
           Wrap(
@@ -238,66 +127,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
             alignment: WrapAlignment.center,
             children: languages.map((lang) {
               final isSelected = currentLocale.languageCode == lang.$1;
-              return GestureDetector(
-                onTap: () => _setLocale(Locale(lang.$1)),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.mediumPurple
-                        : Colors.white.withValues(alpha: 0.75),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
+              return Semantics(
+                button: true,
+                selected: isSelected,
+                label: lang.$2,
+                child: GestureDetector(
+                  onTap: () => _setLocale(Locale(lang.$1)),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.deepPurple
-                          : Colors.white.withValues(alpha: 0.50),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+                          ? AppColors.mediumPurple
+                          : Colors.white.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.deepPurple
+                            : Colors.white.withValues(alpha: 0.50),
+                        width: 2,
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    lang.$2,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : AppColors.deepPurple,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      lang.$2,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? Colors.white : AppColors.deepPurple,
+                      ),
                     ),
                   ),
                 ),
               );
             }).toList(),
           ),
-
           const SizedBox(height: 24),
-
-          // Hints section
           _buildSectionLabel(l10n.hintsSection),
           const SizedBox(height: 12),
           _buildHintsSection(l10n),
-
           const SizedBox(height: 24),
-
-          // Difficulty section
           _buildSectionLabel(l10n.difficultyTitle),
           const SizedBox(height: 12),
           DifficultySlidersSection(settings: widget.difficultySettings),
-
           const SizedBox(height: 24),
-
-          // Reset progress section
           _buildSectionLabel(l10n.resetProgress),
           const SizedBox(height: 12),
           GameButton(
             label: l10n.resetProgress,
             icon: Icons.delete_sweep_rounded,
             variant: GameButtonVariant.pink,
+            semanticLabel: l10n.resetProgress,
             onPressed: () => unawaited(_resetProgress()),
           ),
           if (_resetDone) ...[
@@ -341,13 +228,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Row(
           children: [
-            Checkbox(
-              value: isImmediate,
-              onChanged: (v) {
-                widget.hintSettings.setImmediateMode(value: v ?? false);
-                setState(() => _delayError = null);
-              },
-              activeColor: AppColors.mediumPurple,
+            Semantics(
+              label: l10n.hintsImmediate,
+              checked: isImmediate,
+              child: Checkbox(
+                value: isImmediate,
+                onChanged: (v) {
+                  widget.hintSettings.setImmediateMode(value: v ?? false);
+                  setState(() => _delayError = null);
+                },
+                activeColor: AppColors.mediumPurple,
+              ),
             ),
             Text(
               l10n.hintsImmediate,
@@ -360,27 +251,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _delayController,
-          enabled: !isImmediate,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(
-            labelText: l10n.hintsDelayLabel,
-            errorText: _delayError,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide:
-                  const BorderSide(color: AppColors.mediumPurple, width: 2),
+        Semantics(
+          label: l10n.hintsDelayLabel,
+          textField: true,
+          child: TextField(
+            controller: _delayController,
+            enabled: !isImmediate,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: l10n.hintsDelayLabel,
+              errorText: _delayError,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide:
+                    const BorderSide(color: AppColors.mediumPurple, width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide:
+                    const BorderSide(color: AppColors.deepPurple, width: 2.5),
+              ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide:
-                  const BorderSide(color: AppColors.deepPurple, width: 2.5),
-            ),
+            onSubmitted: (_) => _submitDelay(l10n),
           ),
-          onSubmitted: (_) => _submitDelay(l10n),
         ),
       ],
     );

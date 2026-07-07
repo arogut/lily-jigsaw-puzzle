@@ -64,5 +64,11 @@
     "placeholders": {
       "count": {"type": "int"}
     }
+  },
+  "puzzleCardLabel": "Rätsel {index}",
+  "@puzzleCardLabel": {
+    "placeholders": {
+      "index": {"type": "int"}
+    }
   }
 }

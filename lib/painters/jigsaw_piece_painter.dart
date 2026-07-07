@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'package:lily_jigsaw_puzzle/core/utils/puzzle_geometry.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
 
 class JigsawPiecePainter extends CustomPainter {
@@ -14,7 +15,7 @@ class JigsawPiecePainter extends CustomPainter {
     required this.pieceHeight,
   });
   // Tab margin as a fraction of piece dimension (also used outside for canvas sizing)
-  static const double tabFraction = 0.35;
+  static const double tabFraction = PuzzleGeometry.tabFraction;
 
   final PuzzlePiece piece;
   final ui.Image image;
