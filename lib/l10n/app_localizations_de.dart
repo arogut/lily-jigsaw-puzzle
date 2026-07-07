@@ -147,6 +147,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String puzzleCardLabel(int index) {
-    return 'Puzzle $index';
+    return 'Rätsel $index';
   }
 }

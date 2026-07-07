@@ -65,7 +65,7 @@
       "count": {"type": "int"}
     }
   },
-  "puzzleCardLabel": "Puzzle {index}",
+  "puzzleCardLabel": "Rätsel {index}",
   "@puzzleCardLabel": {
     "placeholders": {
       "index": {"type": "int"}

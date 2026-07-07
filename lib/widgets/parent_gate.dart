@@ -23,9 +23,10 @@ class ParentGate extends StatefulWidget {
 }
 
 class _ParentGateState extends State<ParentGate> {
-  late final ParentGateValidator _validator;
+  late ParentGateValidator _validator;
   final _answerController = TextEditingController();
   String? _errorMessage;
+  Timer? _errorResetTimer;
 
   @override
   void initState() {
@@ -35,21 +36,29 @@ class _ParentGateState extends State<ParentGate> {
 
   @override
   void dispose() {
+    _errorResetTimer?.cancel();
     _answerController.dispose();
     super.dispose();
   }
 
-  void _checkAnswer(BuildContext context) {
+  void _checkAnswer() {
     final l10n = AppLocalizations.of(context)!;
     final input = int.tryParse(_answerController.text.trim());
     if (_validator.isCorrect(input)) {
       widget.onUnlocked();
-    } else {
-      setState(() => _errorMessage = l10n.wrongAnswer);
-      Timer(const Duration(milliseconds: 1500), () {
-        if (mounted) Navigator.of(context).pop();
-      });
+      return;
     }
+
+    setState(() => _errorMessage = l10n.wrongAnswer);
+    _errorResetTimer?.cancel();
+    _errorResetTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = null;
+        _validator = ParentGateValidator();
+        _answerController.clear();
+      });
+    });
   }
 
   @override
@@ -116,7 +125,7 @@ class _ParentGateState extends State<ParentGate> {
                         const BorderSide(color: AppColors.deepPurple, width: 2.5),
                   ),
                 ),
-                onSubmitted: (_) => _checkAnswer(context),
+                onSubmitted: (_) => _checkAnswer(),
               ),
             ),
             const SizedBox(height: 20),
@@ -135,7 +144,7 @@ class _ParentGateState extends State<ParentGate> {
               label: l10n.confirm,
               icon: Icons.check_rounded,
               variant: GameButtonVariant.mint,
-              onPressed: () => _checkAnswer(context),
+              onPressed: _checkAnswer,
             ),
           ],
         ),

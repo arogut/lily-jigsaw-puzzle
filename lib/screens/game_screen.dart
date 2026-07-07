@@ -360,9 +360,7 @@ class _GameScreenState extends State<GameScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _controller
-      ..disposeController()
-      ..dispose();
+    _controller.dispose();
     _physicsTicker.dispose();
     _scatterController
       ..removeListener(_onScatterTick)

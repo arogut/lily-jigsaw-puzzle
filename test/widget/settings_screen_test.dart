@@ -112,8 +112,10 @@ void main() {
     await tester.tap(find.text('Confirm'));
     await tester.pump();
     expect(find.text('Wrong answer!'), findsOneWidget);
-    // Drain auto-dismiss timer
+    // Gate stays visible and challenge resets after the delay.
     await tester.pump(const Duration(seconds: 2));
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('Language'), findsNothing);
   });
 
   testWidgets('Settings screen unlocks panel on correct answer', (tester) async {

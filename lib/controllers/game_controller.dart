@@ -34,6 +34,7 @@ class GameController extends ChangeNotifier {
 
   Timer? _hintTimer;
   int _timerRemainingMs = 0;
+  bool _disposed = false;
 
   /// Streak data populated when the puzzle is won.
   StreakRecord? streakRecord;
@@ -44,9 +45,19 @@ class GameController extends ChangeNotifier {
   /// Cancels any active hint unlock timer.
   void cancelHintTimer() => _cancelHintTimer();
 
-  /// Cancels timers. Call from the owning screen's [State.dispose].
+  /// Cancels timers and marks the controller inactive.
+  ///
+  /// Call from the owning screen's [State.dispose] before [dispose].
   void disposeController() {
+    if (_disposed) return;
+    _disposed = true;
     _hintTimer?.cancel();
+  }
+
+  @override
+  void dispose() {
+    disposeController();
+    super.dispose();
   }
 
   /// Resets session-scoped controller state for a new game.
@@ -55,7 +66,7 @@ class GameController extends ChangeNotifier {
     _timerRemainingMs = 0;
     streakRecord = null;
     showingHintArea = true;
-    notifyListeners();
+    _notifyIfActive();
   }
 
   /// Starts the first hint unlock timer after the scatter animation completes.
@@ -89,21 +100,25 @@ class GameController extends ChangeNotifier {
       unawaited(_soundService.playHintsExhausted());
       return true;
     }
-    notifyListeners();
+    _notifyIfActive();
     return false;
   }
 
   /// Plays the hint-available sound and notifies listeners.
   void onHintSlotAvailable() {
     unawaited(_soundService.playHintAvailable());
-    notifyListeners();
+    _notifyIfActive();
   }
 
   /// Records completion stars and updates the streak.
   Future<void> recordWin(String imageUuid, int difficultyStars) async {
     await _completionService.recordCompletion(imageUuid, difficultyStars);
+    if (_disposed) return;
+
     streakRecord = await _streakService.recordPuzzleCompletion();
-    notifyListeners();
+    if (_disposed) return;
+
+    _notifyIfActive();
   }
 
   /// Pauses or resumes the hint timer based on app lifecycle changes.
@@ -118,16 +133,21 @@ class GameController extends ChangeNotifier {
 
   void markHintAreaHidden() {
     showingHintArea = false;
-    notifyListeners();
+    _notifyIfActive();
+  }
+
+  void _notifyIfActive() {
+    if (!_disposed) notifyListeners();
   }
 
   void _startHintTimer(int delayMs) {
     _hintTimer?.cancel();
     _timerRemainingMs = delayMs;
     _hintTimer = Timer(Duration(milliseconds: delayMs), () {
+      if (_disposed) return;
       _timerRemainingMs = 0;
       onHintTimerElapsed?.call();
-      notifyListeners();
+      _notifyIfActive();
     });
   }
 
