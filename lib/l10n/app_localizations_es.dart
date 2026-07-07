@@ -144,4 +144,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String streakBest(int count) {
     return 'Récord: $count días';
   }
+
+  @override
+  String puzzleCardLabel(int index) {
+    return 'Puzzle $index';
+  }
 }

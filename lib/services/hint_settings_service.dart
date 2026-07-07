@@ -23,8 +23,8 @@ class HintSettings extends ChangeNotifier {
   HintSettings._({
     required this._immediateMode,
     required this._unlockDelaySeconds,
-    PreferencesStore? store,
-  }) : _store = store;
+    this._store,
+  });
 
   /// Default idle delay in seconds before a hint unlocks.
   static const int defaultDelay = 10;
@@ -76,7 +76,7 @@ class HintSettings extends ChangeNotifier {
 
   Future<void> _save() async {
     final prefs = await _prefs;
-    await prefs.setBool(_keyImmediate, _immediateMode);
+    await prefs.setBool(_keyImmediate, value: _immediateMode);
     await prefs.setInt(_keyDelay, _unlockDelaySeconds);
   }
 }

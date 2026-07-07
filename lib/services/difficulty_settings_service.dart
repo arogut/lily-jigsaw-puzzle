@@ -29,8 +29,8 @@ class DifficultySettings extends ChangeNotifier {
     required this._easy,
     required this._medium,
     required this._hard,
-    PreferencesStore? store,
-  }) : _store = store;
+    this._store,
+  });
 
   /// Minimum allowed grid size (rows / columns).
   static const int minGridSize = 2;

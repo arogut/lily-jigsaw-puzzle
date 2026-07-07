@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:lily_jigsaw_puzzle/core/constants/app_constants.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
+import 'package:lily_jigsaw_puzzle/core/constants/app_constants.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/puzzle_thumbnail.dart';
 import 'package:lily_jigsaw_puzzle/main.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';

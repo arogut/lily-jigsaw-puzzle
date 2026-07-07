@@ -85,7 +85,9 @@ class _GameScreenState extends State<GameScreen>
         _hintAvailableController.reset();
         unawaited(_hintAvailableController.forward());
       },
-    )..addListener(() => setState(() {}));
+    )..addListener(() {
+        if (mounted) setState(() {});
+      });
 
     WidgetsBinding.instance.addObserver(this);
     _scatterController = AnimationController(

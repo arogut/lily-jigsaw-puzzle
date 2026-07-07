@@ -359,6 +359,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Best: {count} days'**
   String streakBest(int count);
+
+  /// No description provided for @puzzleCardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Puzzle {index}'**
+  String puzzleCardLabel(int index);
 }
 
 class _AppLocalizationsDelegate

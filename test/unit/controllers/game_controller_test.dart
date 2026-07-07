@@ -12,30 +12,29 @@ void main() {
     test('resetSession clears streak and restores hint area', () {
       final controller = GameController(
         hintSettings: HintSettings(immediateMode: true, unlockDelaySeconds: 10),
-      )..showingHintArea = false;
+      )
+        ..showingHintArea = false
+        ..resetSession();
 
-      controller.resetSession();
       expect(controller.showingHintArea, isTrue);
       expect(controller.streakRecord, isNull);
     });
 
     test('onScatterComplete does not fire callback in immediate mode', () {
       var fired = false;
-      final controller = GameController(
+      GameController(
         hintSettings: HintSettings(immediateMode: true, unlockDelaySeconds: 1),
         onHintTimerElapsed: () => fired = true,
-      );
+      ).onScatterComplete();
 
-      controller.onScatterComplete();
       expect(fired, isFalse);
     });
 
     test('markHintAreaHidden updates showingHintArea', () {
       final controller = GameController(
         hintSettings: HintSettings(immediateMode: true, unlockDelaySeconds: 10),
-      );
+      )..markHintAreaHidden();
 
-      controller.markHintAreaHidden();
       expect(controller.showingHintArea, isFalse);
     });
   });

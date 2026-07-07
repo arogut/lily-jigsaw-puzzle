@@ -14,9 +14,8 @@ class StreakService {
   /// control the current date without any mocking framework.
   StreakService({
     DateTime Function()? clock,
-    PreferencesStore? store,
-  })  : _clock = clock ?? DateTime.now,
-        _store = store;
+    this._store,
+  }) : _clock = clock ?? DateTime.now;
 
   static const _kCurrentKey = 'streak_current';
   static const _kLongestKey = 'streak_longest';

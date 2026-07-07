@@ -64,5 +64,11 @@
     "placeholders": {
       "count": {"type": "int"}
     }
+  },
+  "puzzleCardLabel": "Puzzle nr {index}",
+  "@puzzleCardLabel": {
+    "placeholders": {
+      "index": {"type": "int"}
+    }
   }
 }

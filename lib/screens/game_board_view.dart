@@ -3,8 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
-import 'package:lily_jigsaw_puzzle/core/widgets/panel_backgrounds.dart';
 import 'package:lily_jigsaw_puzzle/core/utils/puzzle_geometry.dart';
+import 'package:lily_jigsaw_puzzle/core/widgets/panel_backgrounds.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';

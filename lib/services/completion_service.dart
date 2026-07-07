@@ -3,7 +3,7 @@ import 'package:lily_jigsaw_puzzle/services/preferences_store.dart';
 /// Tracks puzzle completion progress using SharedPreferences.
 class CompletionService {
   /// Creates a [CompletionService].
-  CompletionService({PreferencesStore? store}) : _store = store;
+  CompletionService({this._store});
 
   static const _prefix = 'stars_';
 

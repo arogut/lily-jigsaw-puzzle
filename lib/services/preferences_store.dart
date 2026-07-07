@@ -1,13 +1,13 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Typed wrapper around [SharedPreferences] to avoid repeating get/save boilerplate.
+/// Typed wrapper around shared preferences to avoid repeating get/save boilerplate.
 class PreferencesStore {
-  /// Creates a [PreferencesStore] backed by [prefs].
+  /// Creates a store backed by the given preferences instance.
   const PreferencesStore(this._prefs);
 
   final SharedPreferences _prefs;
 
-  /// Loads a [PreferencesStore] from the platform default instance.
+  /// Loads a store from the platform default instance.
   static Future<PreferencesStore> load() async =>
       PreferencesStore(await SharedPreferences.getInstance());
 
@@ -27,7 +27,8 @@ class PreferencesStore {
   Future<void> setInt(String key, int value) => _prefs.setInt(key, value);
 
   /// Persists [value] under [key].
-  Future<void> setBool(String key, bool value) => _prefs.setBool(key, value);
+  Future<void> setBool(String key, {required bool value}) =>
+      _prefs.setBool(key, value);
 
   /// Persists [value] under [key].
   Future<void> setString(String key, String value) => _prefs.setString(key, value);

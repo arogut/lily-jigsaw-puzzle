@@ -175,11 +175,12 @@ class _ImageCardState extends State<_ImageCard>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final puzzleIndex = PuzzleImageData.all.indexOf(widget.image) + 1;
 
     return Semantics(
       button: true,
-      label: 'Puzzle $puzzleIndex',
+      label: l10n.puzzleCardLabel(puzzleIndex),
       child: GestureDetector(
       onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) => _onTap(),
