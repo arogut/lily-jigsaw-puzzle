@@ -105,13 +105,38 @@ flutter devices
 ## AI agent setup
 
 This repository uses an agent-agnostic layout so Claude Code, Cursor, and other tools share one
-configuration without duplication. Canonical files (edit these):
+configuration without duplication.
 
-- `AGENTS.md` — agent instructions (`CLAUDE.md` is a symlink for Claude Code)
-- `.agents/skills/` — reusable agent skills (`.claude/skills` is a symlink)
-- `.mcp.json` — MCP server config (`.cursor/mcp.json` is a symlink)
+### Layout
 
-See `agent-agnostic-plan.md` for the full layout and extension conventions.
+Edit **canonical** files only. Adapter paths are symlinks — do not edit them directly.
+
+| Canonical (edit these) | Adapter (symlink) |
+|---|---|
+| `AGENTS.md` | `CLAUDE.md` → `AGENTS.md` |
+| `.agents/skills/` | `.claude/skills` → `.agents/skills` |
+| `.mcp.json` | `.cursor/mcp.json` → `.mcp.json` |
+| `tool/agents/` | Tool-neutral helper scripts (e.g. MCP wrappers) |
+
+Tool-specific config that has no shared format stays in the vendor directory — for example
+`.claude/settings.json` (Claude permission allowlists) and `.github/cursor/` (CI runners).
+
+### Extending the setup
+
+- **New skill** → `.agents/skills/<name>/SKILL.md`. Available to Cursor natively and to Claude
+  Code via the `.claude/skills` symlink.
+- **New slash command** → prefer a skill instead. Add `disable-model-invocation: true` in the
+  skill frontmatter if it should only run when explicitly invoked.
+- **New MCP server** → add to `.mcp.json` only. Never commit API keys; use `${env:VAR}` references
+  or local override files.
+- **New always-on instruction** → add to `AGENTS.md` if it applies to every task; otherwise
+  create a skill with a description that triggers on demand.
+- **New agent tool** → if it reads `AGENTS.md` / `.agents/skills/` natively, nothing to do;
+  otherwise add a one-line symlink or import from the tool's expected path to the canonical file.
+
+> **Windows note:** symlinks require Developer Mode or `git config core.symlinks true`. On WSL2/Linux
+> this works out of the box. If a Windows-native checkout cannot use symlinks, replace the
+> `CLAUDE.md` symlink with a real file containing `@AGENTS.md` on its own line.
 
 ## Claude Code / Android MCP Setup
 
