@@ -64,5 +64,5 @@ Fix any failures you introduce.
 ## Safety
 
 - Make minimal, focused changes tied to the request
-- Match existing project conventions in CLAUDE.md and analysis_options.yaml
+- Match existing project conventions in AGENTS.md and analysis_options.yaml
 - Do not modify unrelated files

@@ -102,9 +102,20 @@ adb devices   # should list the Windows emulator
 flutter devices
 ```
 
+## AI agent setup
+
+This repository uses an agent-agnostic layout so Claude Code, Cursor, and other tools share one
+configuration without duplication. Canonical files (edit these):
+
+- `AGENTS.md` — agent instructions (`CLAUDE.md` is a symlink for Claude Code)
+- `.agents/skills/` — reusable agent skills (`.claude/skills` is a symlink)
+- `.mcp.json` — MCP server config (`.cursor/mcp.json` is a symlink)
+
+See `agent-agnostic-plan.md` for the full layout and extension conventions.
+
 ## Claude Code / Android MCP Setup
 
-The project ships with an Android MCP server (`.mcp.json`) that lets Claude Code take
+The project ships with an Android MCP server (`.mcp.json`) that lets AI agents take
 screenshots, interact with the emulator, and run ADB commands via
 [`@mobilenext/mobile-mcp`](https://github.com/mobile-next/mobile-mcp).
 
@@ -114,7 +125,7 @@ screenshots, interact with the emulator, and run ADB commands via
 - **ANDROID_HOME** pointing to your Android SDK (e.g. `export ANDROID_HOME=~/Android/Sdk`)
 - An Android emulator or device visible to ADB
 
-The script at `.claude/android-mcp.sh` resolves `ANDROID_HOME` from your environment
+The script at `tool/agents/android-mcp.sh` resolves `ANDROID_HOME` from your environment
 (defaulting to `~/Android/Sdk` if unset) and loads nvm automatically if `npx` is not on
 your PATH. No hardcoded paths — it works on any machine.
 

@@ -114,8 +114,8 @@ check MUST be fixed before merge — never bypassed.
 This constitution supersedes all other development guidance. When conflicts arise between this
 document and any other guide (comments, READMEs, ad-hoc instructions), this constitution wins.
 
-`CLAUDE.md` provides runtime guidance for the AI coding agent and MUST remain consistent with this
-constitution — if they diverge, update `CLAUDE.md` to align.
+`AGENTS.md` provides runtime guidance for AI coding agents and MUST remain consistent with this
+constitution — if they diverge, update `AGENTS.md` to align.
 
 **Amendment procedure**:
 - MAJOR bump: removal or redefinition of a principle; requires explicit team approval and a
