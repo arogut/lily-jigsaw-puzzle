@@ -46,16 +46,56 @@ These rules apply to every task. For full detail, use the skills listed below.
 - **Test new code:** New classes, functions, and widgets need tests in `test/` mirroring `lib/`.
 - **Lints:** Zero warnings from `analysis_options.yaml` — never suppress without a comment explaining why.
 
-## Skills
+## Skills and commands
 
-Skills live in `.agents/skills/`. They load on demand — read the relevant skill when the task matches its description.
+Both live under `.agents/` and are shared across tools via symlinks. Use **skills** and **commands**
+for different jobs — they complement each other; neither replaces the other.
 
-| Skill | When to use |
+### Skills (`.agents/skills/<name>/SKILL.md`)
+
+The agent can **discover and load automatically** when the task matches the skill's `description`.
+Skills can include supporting files in their directory.
+
+| Use a skill when… | Examples in this repo |
 |---|---|
-| `coding-discipline` | Planning, scope control, goal-driven execution |
-| `flutter-standards` | Writing or reviewing Dart/Flutter code, widgets, tests |
-| `pr-workflow` | Committing, pushing, opening PRs, fixing CI |
-| `speckit-*` | Spec-driven feature workflow (specify, plan, implement, …) |
+| Guidance should apply proactively during matching work | `flutter-standards`, `coding-discipline` |
+| The workflow has multiple files or templates | `speckit-*`, `requesting-code-review` |
+| You want the agent to decide when expert context is needed | `pr-workflow` |
+
+Optional frontmatter:
+
+- `disable-model-invocation: true` — only run when you invoke it (Claude Code; behaves like a
+  manual command while staying in the skills tree)
+- `user-invocable: false` — hide from the `/` picker but still allow auto-discovery
+
+### Commands (`.agents/commands/<name>.md`)
+
+You invoke explicitly with **`/<name>`**. The agent does **not** auto-load command content — useful
+when you want deliberate, user-triggered workflows.
+
+| Use a command when… | Examples |
+|---|---|
+| You always want to trigger the workflow yourself | `/code-review` |
+| The prompt is a single file with no supporting assets | One markdown file is enough |
+| You want a stable, discoverable entry in the `/` menu | Team rituals, routers, one-shot actions |
+
+Subdirectories namespace commands: `.agents/commands/test/integration.md` → `/test:integration`.
+
+### Avoid name collisions
+
+Do not use the same name for a skill directory and a command file — in Claude Code the skill wins.
+Pick one home per workflow.
+
+### Subagents (`.agents/agents/<name>.md`)
+
+Subagents run in an isolated context via the Task tool or `/name`. Adapter directories (symlinks):
+`.claude/agents`, `.cursor/agents` → `.agents/agents`.
+
+| Subagent | When to use |
+|---|---|
+| `code-reviewer` | Review a git diff before PR; pairs with `requesting-code-review` skill and `/code-review` command |
+
+Shared review criteria (local subagent + CI workflow): `.agents/review/criteria.md`.
 
 ## Agent configuration
 
@@ -66,13 +106,22 @@ files only — adapter paths are symlinks and must not be edited directly.
 |---|---|
 | `AGENTS.md` | `CLAUDE.md` → `AGENTS.md` |
 | `.agents/skills/` | `.claude/skills` → `.agents/skills` |
+| `.agents/commands/` | `.claude/commands`, `.cursor/commands` → `.agents/commands` |
+| `.agents/agents/` | `.claude/agents`, `.cursor/agents` → `.agents/agents` |
 | `.mcp.json` | `.cursor/mcp.json` → `.mcp.json` |
+
+Cursor reads `.agents/skills/` natively; Claude Code and Cursor reach commands, agents, and MCP
+via the adapter symlinks above.
+
+Spec Kit: both `claude` and `cursor-agent` integrations are installed (`.specify/integration.json`);
+default CLI integration is `claude`. Skills and agent-context target canonical `.agents/` paths.
 
 **Adding config:**
 
 - Instructions → `AGENTS.md` (keep it lean; extract situational guidance into skills)
-- Skills → `.agents/skills/<name>/SKILL.md` (prefer skills over slash commands; use
-  `disable-model-invocation: true` in frontmatter if a skill should only run when invoked)
+- Skills → `.agents/skills/<name>/SKILL.md`
+- Commands → `.agents/commands/<name>.md`
+- Subagents → `.agents/agents/<name>.md`
 - MCP servers → `.mcp.json` only (never commit secrets; use env var references)
 - Tool-specific settings → vendor directory (e.g. `.claude/settings.json` for Claude permissions)
 

@@ -3,6 +3,7 @@
   "version": "0.10.0",
   "installed_at": "2026-07-12T20:26:41.978657+00:00",
   "files": {
+    ".agents/skills/speckit-agent-context-update/SKILL.md": "23817e2f24485afff17d785849cbd4c121adffa2ce4d6d2da5f597a5d1c88847",
     ".agents/skills/speckit-analyze/SKILL.md": "2eef0fbff6cad15c9d4714d8986192387811c971a82a1135ab0404f3db0c5e90",
     ".agents/skills/speckit-clarify/SKILL.md": "eb8907c57e9af2c54952370a45e3fb66cb21a64dc7b3d361615bab914c13becf",
     ".agents/skills/speckit-constitution/SKILL.md": "c1a044aba243ca6aff627fb5e4404feb6f1108d4f7dd174631bee3ae477d6c15",

@@ -114,25 +114,54 @@ Edit **canonical** files only. Adapter paths are symlinks — do not edit them d
 | Canonical (edit these) | Adapter (symlink) |
 |---|---|
 | `AGENTS.md` | `CLAUDE.md` → `AGENTS.md` |
-| `.agents/skills/` | `.claude/skills` → `.agents/skills` |
+| `.agents/skills/` | `.claude/skills` → `.agents/skills` (Cursor reads `.agents/skills/` natively) |
+| `.agents/commands/` | `.claude/commands`, `.cursor/commands` → `.agents/commands` |
+| `.agents/agents/` | `.claude/agents`, `.cursor/agents` → `.agents/agents` |
 | `.mcp.json` | `.cursor/mcp.json` → `.mcp.json` |
 | `tool/agents/` | Tool-neutral helper scripts (e.g. MCP wrappers) |
 
 Tool-specific config that has no shared format stays in the vendor directory — for example
 `.claude/settings.json` (Claude permission allowlists) and `.github/cursor/` (CI runners).
 
+Cursor reads `.agents/skills/` natively. Commands, subagents, and MCP use adapter symlinks under
+`.cursor/` and `.claude/`. Spec Kit lists both `claude` and `cursor-agent` integrations
+(`.specify/integration.json`); default CLI integration is `claude`.
+
+### Skills vs commands
+
+Both are first-class. They live under `.agents/` and reach Claude Code and Cursor through symlinks.
+
+| | Skills (`.agents/skills/<name>/`) | Commands (`.agents/commands/<name>.md`) |
+|---|---|---|
+| **Triggered by** | Agent auto-loads when task matches `description`; also invokable via `/name` | You invoke explicitly via `/name` |
+| **Best for** | Context the agent should apply proactively; multi-file playbooks | Deliberate one-shot workflows; stable `/` menu entries |
+| **Supporting files** | Yes — keep templates/scripts alongside `SKILL.md` | Single markdown file (use subdirs for namespacing) |
+| **Examples here** | `flutter-standards`, `requesting-code-review`, `speckit-*` | `/code-review` |
+
+### Code review (local + CI)
+
+- **Subagent:** `.agents/agents/code-reviewer.md` — readonly reviewer for git diffs (works with
+  [superpowers](https://github.com/obra/superpowers) `requesting-code-review` skill)
+- **Command:** `/code-review` — explicit trigger that dispatches the subagent
+- **Criteria:** `.agents/review/criteria.md` — shared checklist used by the subagent and by
+  `.github/workflows/cursor-code-review.yml` on every PR
+
+Do not reuse the same name for a skill directory and a command file (Claude Code gives the skill
+precedence). For manual-only workflows you can use either a command or a skill with
+`disable-model-invocation: true` in frontmatter — pick one per workflow.
+
 ### Extending the setup
 
-- **New skill** → `.agents/skills/<name>/SKILL.md`. Available to Cursor natively and to Claude
-  Code via the `.claude/skills` symlink.
-- **New slash command** → prefer a skill instead. Add `disable-model-invocation: true` in the
-  skill frontmatter if it should only run when explicitly invoked.
+- **New skill** → `.agents/skills/<name>/SKILL.md`
+- **New command** → `.agents/commands/<name>.md` (subdirs for namespaced commands, e.g.
+  `test/integration.md` → `/test:integration`)
+- **New subagent** → `.agents/agents/<name>.md`
 - **New MCP server** → add to `.mcp.json` only. Never commit API keys; use `${env:VAR}` references
   or local override files.
 - **New always-on instruction** → add to `AGENTS.md` if it applies to every task; otherwise
-  create a skill with a description that triggers on demand.
-- **New agent tool** → if it reads `AGENTS.md` / `.agents/skills/` natively, nothing to do;
-  otherwise add a one-line symlink or import from the tool's expected path to the canonical file.
+  create a skill (auto-discovery) or a command (manual trigger).
+- **New agent tool** → if it reads `AGENTS.md`, `.agents/skills/`, or `.agents/commands/` natively,
+  nothing to do; otherwise add a symlink from the tool's expected path to the canonical directory.
 
 > **Windows note:** symlinks require Developer Mode or `git config core.symlinks true`. On WSL2/Linux
 > this works out of the box. If a Windows-native checkout cannot use symlinks, replace the
