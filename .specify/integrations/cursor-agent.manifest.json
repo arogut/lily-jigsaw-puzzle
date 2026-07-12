@@ -1,7 +1,7 @@
 {
-  "integration": "claude",
+  "integration": "cursor-agent",
   "version": "0.10.0",
-  "installed_at": "2026-06-09T21:00:13.165704+00:00",
+  "installed_at": "2026-07-12T20:26:41.978657+00:00",
   "files": {
     ".agents/skills/speckit-agent-context-update/SKILL.md": "23817e2f24485afff17d785849cbd4c121adffa2ce4d6d2da5f597a5d1c88847",
     ".agents/skills/speckit-analyze/SKILL.md": "2eef0fbff6cad15c9d4714d8986192387811c971a82a1135ab0404f3db0c5e90",

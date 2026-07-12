@@ -18,8 +18,11 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# Cursor IDE
-.cursor/
+# Cursor IDE: ignore local state, keep shared project config
+.cursor/*
+!.cursor/mcp.json
+!.cursor/commands
+!.cursor/agents
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line

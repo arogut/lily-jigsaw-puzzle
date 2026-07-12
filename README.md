@@ -102,9 +102,74 @@ adb devices   # should list the Windows emulator
 flutter devices
 ```
 
+## AI agent setup
+
+This repository uses an agent-agnostic layout so Claude Code, Cursor, and other tools share one
+configuration without duplication.
+
+### Layout
+
+Edit **canonical** files only. Adapter paths are symlinks — do not edit them directly.
+
+| Canonical (edit these) | Adapter (symlink) |
+|---|---|
+| `AGENTS.md` | `CLAUDE.md` → `AGENTS.md` |
+| `.agents/skills/` | `.claude/skills` → `.agents/skills` (Cursor reads `.agents/skills/` natively) |
+| `.agents/commands/` | `.claude/commands`, `.cursor/commands` → `.agents/commands` |
+| `.agents/agents/` | `.claude/agents`, `.cursor/agents` → `.agents/agents` |
+| `.mcp.json` | `.cursor/mcp.json` → `.mcp.json` |
+| `tool/agents/` | Tool-neutral helper scripts (e.g. MCP wrappers) |
+
+Tool-specific config that has no shared format stays in the vendor directory — for example
+`.claude/settings.json` (Claude permission allowlists) and `.github/cursor/` (CI runners).
+
+Cursor reads `.agents/skills/` natively. Commands, subagents, and MCP use adapter symlinks under
+`.cursor/` and `.claude/`. Spec Kit lists both `claude` and `cursor-agent` integrations
+(`.specify/integration.json`); default CLI integration is `cursor-agent`.
+
+### Skills vs commands
+
+Both are first-class. They live under `.agents/` and reach Claude Code and Cursor through symlinks.
+
+| | Skills (`.agents/skills/<name>/`) | Commands (`.agents/commands/<name>.md`) |
+|---|---|---|
+| **Triggered by** | Agent auto-loads when task matches `description`; also invokable via `/name` | You invoke explicitly via `/name` |
+| **Best for** | Context the agent should apply proactively; multi-file playbooks | Deliberate one-shot workflows; stable `/` menu entries |
+| **Supporting files** | Yes — keep templates/scripts alongside `SKILL.md` | Single markdown file (use subdirs for namespacing) |
+| **Examples here** | `flutter-standards`, `requesting-code-review`, `speckit-*` | `/code-review` |
+
+### Code review (local + CI)
+
+- **Subagent:** `.agents/agents/code-reviewer.md` — readonly reviewer for git diffs (works with
+  [superpowers](https://github.com/obra/superpowers) `requesting-code-review` skill)
+- **Command:** `/code-review` — explicit trigger that dispatches the subagent
+- **Criteria:** `.agents/review/criteria.md` — shared checklist used by the subagent and by
+  `.github/workflows/cursor-code-review.yml` on every PR
+
+Do not reuse the same name for a skill directory and a command file (Claude Code gives the skill
+precedence). For manual-only workflows you can use either a command or a skill with
+`disable-model-invocation: true` in frontmatter — pick one per workflow.
+
+### Extending the setup
+
+- **New skill** → `.agents/skills/<name>/SKILL.md`
+- **New command** → `.agents/commands/<name>.md` (subdirs for namespaced commands, e.g.
+  `test/integration.md` → `/test:integration`)
+- **New subagent** → `.agents/agents/<name>.md`
+- **New MCP server** → add to `.mcp.json` only. Never commit API keys; use `${env:VAR}` references
+  or local override files.
+- **New always-on instruction** → add to `AGENTS.md` if it applies to every task; otherwise
+  create a skill (auto-discovery) or a command (manual trigger).
+- **New agent tool** → if it reads `AGENTS.md`, `.agents/skills/`, or `.agents/commands/` natively,
+  nothing to do; otherwise add a symlink from the tool's expected path to the canonical directory.
+
+> **Windows note:** symlinks require Developer Mode or `git config core.symlinks true`. On WSL2/Linux
+> this works out of the box. If a Windows-native checkout cannot use symlinks, replace the
+> `CLAUDE.md` symlink with a real file containing `@AGENTS.md` on its own line.
+
 ## Claude Code / Android MCP Setup
 
-The project ships with an Android MCP server (`.mcp.json`) that lets Claude Code take
+The project ships with an Android MCP server (`.mcp.json`) that lets AI agents take
 screenshots, interact with the emulator, and run ADB commands via
 [`@mobilenext/mobile-mcp`](https://github.com/mobile-next/mobile-mcp).
 
@@ -114,7 +179,7 @@ screenshots, interact with the emulator, and run ADB commands via
 - **ANDROID_HOME** pointing to your Android SDK (e.g. `export ANDROID_HOME=~/Android/Sdk`)
 - An Android emulator or device visible to ADB
 
-The script at `.claude/android-mcp.sh` resolves `ANDROID_HOME` from your environment
+The script at `tool/agents/android-mcp.sh` resolves `ANDROID_HOME` from your environment
 (defaulting to `~/Android/Sdk` if unset) and loads nvm automatically if `npx` is not on
 your PATH. No hardcoded paths — it works on any machine.
 

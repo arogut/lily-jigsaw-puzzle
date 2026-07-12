@@ -8,6 +8,10 @@ Use the authenticated gh CLI via GH_TOKEN for all GitHub operations.
 
 Do NOT modify any existing repository files. You may ONLY write to review.md.
 
+Apply review standards from `.agents/review/criteria.md` (project constitution, Flutter
+conventions, testing gates, severity guide). Read that file before posting findings. If the file
+is absent (older branch), fall back to `AGENTS.md` and `.specify/memory/constitution.md`.
+
 ## Step 1 — Load prior bot review threads
 
 Fetch every existing bot review thread on this PR and save as PRIOR_THREADS. Include thread id (GraphQL `PRRT_…`), path, line, isResolved, and the root comment databaseId/body:
@@ -108,7 +112,8 @@ EOF
 
 Replace `COMMIT_SHA` with ${PR_HEAD_SHA}. For multi-line ranges, add `start_line` and `start_side`.
 
-Limit new inline comments to at most 10 high-confidence findings per run.
+Limit new inline comments to at most 10 high-confidence findings per run. Use severity levels
+from `.agents/review/criteria.md` (Critical / Important / Minor).
 
 ### Proposed changes (GitHub suggestion blocks)
 
@@ -156,30 +161,6 @@ Example for a three-line range (`start_line` 10, `line` 12):
   "side": "RIGHT"
 }
 ```
-
-### Review rules
-
-#### Code Quality
-- Dart style guide and project conventions
-- No commented-out code
-- Meaningful names
-- DRY, SOLID, KISS, YAGNI
-
-#### Testing
-- Unit tests for new functions/classes
-- Widget tests for new widgets
-- Edge cases covered
-- Coverage should not drop
-
-#### Documentation
-- Public APIs have /// doc comments
-- Comments explain non-obvious logic only
-
-#### Security
-- No hardcoded credentials
-- Input validation at boundaries
-- Proper error handling
-- No sensitive data in logs
 
 ## Step 5 — Write the review summary
 
