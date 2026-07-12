@@ -125,7 +125,7 @@ Tool-specific config that has no shared format stays in the vendor directory —
 
 Cursor reads `.agents/skills/` natively. Commands, subagents, and MCP use adapter symlinks under
 `.cursor/` and `.claude/`. Spec Kit lists both `claude` and `cursor-agent` integrations
-(`.specify/integration.json`); default CLI integration is `claude`.
+(`.specify/integration.json`); default CLI integration is `cursor-agent`.
 
 ### Skills vs commands
 

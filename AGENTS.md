@@ -114,7 +114,7 @@ Cursor reads `.agents/skills/` natively; Claude Code and Cursor reach commands, 
 via the adapter symlinks above.
 
 Spec Kit: both `claude` and `cursor-agent` integrations are installed (`.specify/integration.json`);
-default CLI integration is `claude`. Skills and agent-context target canonical `.agents/` paths.
+default CLI integration is `cursor-agent`. Skills and agent-context target canonical `.agents/` paths.
 
 **Adding config:**
 
