@@ -71,7 +71,7 @@ Each celebration style is immediately recognisable as different from the others 
 **Acceptance Scenarios**:
 
 1. **Given** style A (confetti) plays, **When** a child observes the animation phase, **Then** they see coloured paper-like shapes raining down and hear an upbeat fanfare.
-2. **Given** style B (balloons) plays, **When** a child observes the animation phase, **Then** they see balloon-shaped particles floating upward and hear a cheerful pop-and-bounce sound.
+2. **Given** style B (balloons) plays, **When** a child observes the animation phase, **Then** they see balloon-shaped particles floating upward with a gentle left/right meander and hear a cheerful pop-and-bounce sound.
 3. **Given** style C (fireworks) plays, **When** a child observes the animation phase, **Then** they see burst-shaped explosions of colour and hear a dramatic bang-and-sparkle fanfare.
 4. **Given** any style's animation has finished or been skipped, **When** the win overlay appears, **Then** it covers the completed puzzle with the fixed win card design (party-popper 🎉, original pastel palette) — **not** themed to the active celebration style.
 5. **Given** the animation phase is playing, **When** the player taps anywhere on screen, **Then** the animation stops immediately and the win overlay appears.
