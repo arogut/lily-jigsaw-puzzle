@@ -511,6 +511,7 @@ class _GameScreenState extends State<GameScreen>
 
     final now = DateTime.now();
     final dailyCount = await _dailyCompletionTracker.consumeNext(now);
+    if (!mounted) return;
     final style = CelebrationSelector.styleFor(now, dailyCount);
 
     unawaited(SoundService().playWinFanfare(style));

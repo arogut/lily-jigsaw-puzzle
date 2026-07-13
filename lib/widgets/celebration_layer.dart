@@ -39,7 +39,7 @@ class CelebrationLayer extends StatefulWidget {
 class _CelebrationLayerState extends State<CelebrationLayer>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final List<dynamic> _particles;
+  late final CustomPainter _painter;
   bool _finished = false;
 
   @override
@@ -51,7 +51,7 @@ class _CelebrationLayerState extends State<CelebrationLayer>
     );
     _controller.addStatusListener(_onStatusChanged);
     unawaited(_controller.forward());
-    _particles = _generateParticles();
+    _painter = _buildPainter();
   }
 
   void _onStatusChanged(AnimationStatus status) {
@@ -66,32 +66,23 @@ class _CelebrationLayerState extends State<CelebrationLayer>
     onAnimationComplete();
   }
 
-  List<dynamic> _generateParticles() {
+  CustomPainter _buildPainter() {
     final count = widget.intensity.particleCount;
     return switch (widget.style) {
-      CelebrationStyleId.confetti => generateConfettiParticles(count),
-      CelebrationStyleId.balloons => generateBalloonParticles(count),
-      CelebrationStyleId.fireworks => generateFireworksParticles(count),
-      CelebrationStyleId.milestone => generateMilestoneParticles(count),
-    };
-  }
-
-  CustomPainter _buildPainter() {
-    return switch (widget.style) {
       CelebrationStyleId.confetti => ConfettiPainter(
-          particles: _particles.cast<ConfettiParticle>(),
+          particles: generateConfettiParticles(count),
           animation: _controller,
         ),
       CelebrationStyleId.balloons => BalloonPainter(
-          particles: _particles.cast<BalloonParticle>(),
+          particles: generateBalloonParticles(count),
           animation: _controller,
         ),
       CelebrationStyleId.fireworks => FireworksPainter(
-          particles: _particles.cast<FireworksParticle>(),
+          particles: generateFireworksParticles(count),
           animation: _controller,
         ),
       CelebrationStyleId.milestone => MilestonePainter(
-          particles: _particles.cast<MilestoneParticle>(),
+          particles: generateMilestoneParticles(count),
           animation: _controller,
         ),
     };
@@ -116,7 +107,7 @@ class _CelebrationLayerState extends State<CelebrationLayer>
       behavior: HitTestBehavior.opaque,
       onTap: _handleSkip,
       child: CustomPaint(
-        painter: _buildPainter(),
+        painter: _painter,
         size: Size.infinite,
       ),
     );
