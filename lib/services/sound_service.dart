@@ -42,7 +42,7 @@ class SoundService {
     final asset = _activeFanfareAsset;
     _activeFanfareAsset = null;
     if (asset == null) return;
-    unawaited(_stopPlayer(asset));
+    await _stopPlayer(asset);
   }
 
   Future<void> _stopPlayer(String asset) async {
