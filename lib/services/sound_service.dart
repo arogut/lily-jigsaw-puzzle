@@ -23,10 +23,28 @@ class SoundService {
   Future<void> playWrong() => _play('sounds/wrong.wav');
 
   /// Plays the win fanfare for [style], looping until [stopWinFanfare].
+  ///
+  /// Returns once fanfare playback is scheduled; does not wait for the native
+  /// audio platform to finish starting the loop.
   Future<void> playWinFanfare(CelebrationStyleId style) async {
     await stopWinFanfare();
     final asset = style.audioAsset;
     _activeFanfareAsset = asset;
+    unawaited(_startLoopingFanfare(asset));
+  }
+
+  /// Stops the active win fanfare immediately.
+  ///
+  /// Clears active state synchronously. The underlying [AudioPlayer.stop] call
+  /// is fire-and-forgotten because it may never complete in widget tests.
+  Future<void> stopWinFanfare() async {
+    final asset = _activeFanfareAsset;
+    _activeFanfareAsset = null;
+    if (asset == null) return;
+    unawaited(_stopPlayer(asset));
+  }
+
+  Future<void> _startLoopingFanfare(String asset) async {
     try {
       final player = _playerFor(asset);
       await player.setReleaseMode(ReleaseMode.loop);
@@ -35,14 +53,6 @@ class SoundService {
     } on Object {
       // Audio may be unavailable; visuals continue without sound.
     }
-  }
-
-  /// Stops the active win fanfare immediately.
-  Future<void> stopWinFanfare() async {
-    final asset = _activeFanfareAsset;
-    _activeFanfareAsset = null;
-    if (asset == null) return;
-    await _stopPlayer(asset);
   }
 
   Future<void> _stopPlayer(String asset) async {

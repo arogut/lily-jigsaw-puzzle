@@ -34,6 +34,12 @@ void main() {
       await service.stopWinFanfare();
     });
 
+    test('stopWinFanfare returns promptly without blocking on audio stop', () async {
+      final service = SoundService();
+      await service.playWinFanfare(CelebrationStyleId.confetti);
+      await expectLater(service.stopWinFanfare(), completes);
+    });
+
     test('playWinFanfare completes without rethrowing when audio fails', () async {
       await expectLater(
         SoundService().playWinFanfare(CelebrationStyleId.confetti),

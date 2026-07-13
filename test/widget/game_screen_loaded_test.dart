@@ -419,7 +419,7 @@ void main() {
     expect(find.text('1 / 1'), findsOneWidget, reason: 'piece should snap to target');
     expect(find.byType(CelebrationLayer), findsOneWidget);
     expect(find.byType(WinOverlay), findsNothing);
-    await SoundService().stopWinFanfare();
+    unawaited(SoundService().stopWinFanfare());
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -444,7 +444,7 @@ void main() {
 
     expect(find.byType(WinOverlay), findsOneWidget);
     expect(find.byType(CelebrationLayer), findsNothing);
-    await SoundService().stopWinFanfare();
+    unawaited(SoundService().stopWinFanfare());
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -470,7 +470,7 @@ void main() {
 
     expect(find.byType(WinOverlay), findsOneWidget);
     expect(find.byType(CelebrationLayer), findsNothing);
-    await SoundService().stopWinFanfare();
+    unawaited(SoundService().stopWinFanfare());
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -929,7 +929,7 @@ void main() {
     expect(prefs.getInt('streak_current'), 1,
         reason: 'winning a puzzle must persist streak_current = 1');
 
-    await SoundService().stopWinFanfare();
+    unawaited(SoundService().stopWinFanfare());
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -954,7 +954,7 @@ void main() {
     expect(find.textContaining('Day Streak'), findsOneWidget,
         reason: 'win overlay must display the current streak after completion');
 
-    await SoundService().stopWinFanfare();
+    unawaited(SoundService().stopWinFanfare());
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -979,7 +979,7 @@ void main() {
     await tester.tap(find.text('New Puzzle'));
     await tester.pump();
     expect(find.byType(Scaffold), findsOneWidget);
-    await SoundService().stopWinFanfare();
+    unawaited(SoundService().stopWinFanfare());
     await tester.binding.setSurfaceSize(null);
   });
 }
