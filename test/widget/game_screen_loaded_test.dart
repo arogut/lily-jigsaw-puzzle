@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:convert' show utf8;
 import 'dart:ui' as ui;
 
@@ -9,6 +10,8 @@ import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_screen.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
+import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
+import 'package:lily_jigsaw_puzzle/widgets/celebration_layer.dart';
 import 'package:lily_jigsaw_puzzle/widgets/win_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,6 +59,12 @@ Future<void> _placeLastPiece(WidgetTester tester) async {
     await gesture.moveBy(const Offset(-10, 0));
   }
   await gesture.up();
+}
+
+/// Skips the animation phase by tapping the celebration layer.
+Future<void> _skipToOverlay(WidgetTester tester) async {
+  await tester.tapAt(const Offset(400, 300));
+  await tester.pump();
 }
 
 /// Pumps the game screen through image-load → game-init → scatter.
@@ -121,6 +130,7 @@ void main() {
   });
 
   tearDown(() {
+    unawaited(SoundService().stopWinFanfare());
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', null);
     rootBundle.clear();
@@ -390,7 +400,8 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
-  testWidgets('placing last piece wins the game and shows win overlay', (tester) async {
+  testWidgets('placing last piece wins the game and shows celebration animation first',
+      (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(_wrap(GameScreen(
       selectedImage: _testImage,
@@ -401,20 +412,65 @@ void main() {
     await tester.pump();
     await _pumpUntilPlaying(tester);
 
-    // Drag the 1×1 piece to its target via small steps (see _placeLastPiece).
     await _placeLastPiece(tester);
-    // Pump once: rebuilds the widget tree (TrayLabel → "1 / 1") and fires
-    // the first tick of the confetti controller (establishing _startTime).
+    await tester.pump();
     await tester.pump();
 
     expect(find.text('1 / 1'), findsOneWidget, reason: 'piece should snap to target');
+    expect(find.byType(CelebrationLayer), findsOneWidget);
+    expect(find.byType(WinOverlay), findsNothing);
+    await SoundService().stopWinFanfare();
+    await tester.binding.setSurfaceSize(null);
+  });
 
-    // Advance past the 5 s confetti duration so the .then() callback fires
-    // and sets _showWinOverlay = true, then pump once more to rebuild.
-    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
+  testWidgets('skip during animation shows overlay without simultaneous layer',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    await _placeLastPiece(tester);
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(CelebrationLayer), findsOneWidget);
+
+    await _skipToOverlay(tester);
+
+    expect(find.byType(WinOverlay), findsOneWidget);
+    expect(find.byType(CelebrationLayer), findsNothing);
+    await SoundService().stopWinFanfare();
+    await tester.binding.setSurfaceSize(null);
+  });
+
+  testWidgets('animation completion shows overlay without simultaneous layer',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    await tester.pumpWidget(_wrap(GameScreen(
+      selectedImage: _testImage,
+      gridSize: 1,
+      difficultyStars: 1,
+      hintSettings: _makeHintSettings(),
+    )));
+    await tester.pump();
+    await _pumpUntilPlaying(tester);
+
+    await _placeLastPiece(tester);
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(CelebrationLayer), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 6));
     await tester.pump();
 
     expect(find.byType(WinOverlay), findsOneWidget);
+    expect(find.byType(CelebrationLayer), findsNothing);
+    await SoundService().stopWinFanfare();
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -730,11 +786,10 @@ void main() {
     await tester.pump();
     await _pumpUntilPlaying(tester);
 
-    // Win the game first.
     await _placeLastPiece(tester);
-    await tester.pump(); // rebuild + first confetti tick
-    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
     await tester.pump();
+    await tester.pump();
+    await _skipToOverlay(tester);
     expect(find.byType(WinOverlay), findsOneWidget);
 
     // Tap Play Again → _restartGame() clears _gameState → loading indicator.
@@ -866,7 +921,6 @@ void main() {
 
     await _placeLastPiece(tester);
     await tester.pump();
-    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
     await tester.pump();
 
     // After winning, StreakService.recordPuzzleCompletion() must have been called,
@@ -875,6 +929,7 @@ void main() {
     expect(prefs.getInt('streak_current'), 1,
         reason: 'winning a puzzle must persist streak_current = 1');
 
+    await SoundService().stopWinFanfare();
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -891,14 +946,15 @@ void main() {
 
     await _placeLastPiece(tester);
     await tester.pump();
-    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
     await tester.pump();
+    await _skipToOverlay(tester);
 
     expect(find.byType(WinOverlay), findsOneWidget);
     // After winning, the overlay must show streak information.
     expect(find.textContaining('Day Streak'), findsOneWidget,
         reason: 'win overlay must display the current streak after completion');
 
+    await SoundService().stopWinFanfare();
     await tester.binding.setSurfaceSize(null);
   });
 
@@ -916,13 +972,14 @@ void main() {
 
     await _placeLastPiece(tester);
     await tester.pump();
-    await tester.pump(const Duration(seconds: 5, milliseconds: 100));
     await tester.pump();
+    await _skipToOverlay(tester);
     expect(find.byType(WinOverlay), findsOneWidget);
 
     await tester.tap(find.text('New Puzzle'));
     await tester.pump();
     expect(find.byType(Scaffold), findsOneWidget);
+    await SoundService().stopWinFanfare();
     await tester.binding.setSurfaceSize(null);
   });
 }

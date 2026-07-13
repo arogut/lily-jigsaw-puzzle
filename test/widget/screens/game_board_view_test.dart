@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/models/celebration_style.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
@@ -32,7 +33,7 @@ class _BoardViewHarness extends StatefulWidget {
   const _BoardViewHarness({
     required this.gameState,
     required this.uiImage,
-    this.showWinOverlay = false,
+    this.celebrationPhase,
     this.onBack,
     this.onPlayAgain,
     this.onNewPuzzle,
@@ -45,7 +46,7 @@ class _BoardViewHarness extends StatefulWidget {
 
   final GameState gameState;
   final ui.Image uiImage;
-  final bool showWinOverlay;
+  final CelebrationPhase? celebrationPhase;
   final VoidCallback? onBack;
   final VoidCallback? onPlayAgain;
   final VoidCallback? onNewPuzzle;
@@ -62,7 +63,6 @@ class _BoardViewHarness extends StatefulWidget {
 class _BoardViewHarnessState extends State<_BoardViewHarness>
     with TickerProviderStateMixin {
   late AnimationController _hintController;
-  late AnimationController _confettiController;
   final _paintTick = ValueNotifier<int>(0);
 
   @override
@@ -72,16 +72,11 @@ class _BoardViewHarnessState extends State<_BoardViewHarness>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    _confettiController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    );
   }
 
   @override
   void dispose() {
     _hintController.dispose();
-    _confettiController.dispose();
     _paintTick.dispose();
     super.dispose();
   }
@@ -93,9 +88,8 @@ class _BoardViewHarnessState extends State<_BoardViewHarness>
           uiImage: widget.uiImage,
           paintTick: _paintTick,
           hintController: _hintController,
-          confettiParticles: const [],
-          confettiController: _confettiController,
-          showWinOverlay: widget.showWinOverlay,
+          celebrationPhase: widget.celebrationPhase,
+          onDismissCelebration: () {},
           onBack: widget.onBack ?? () {},
           onPlayAgain: widget.onPlayAgain ?? () {},
           onNewPuzzle: widget.onNewPuzzle ?? () {},
@@ -139,7 +133,7 @@ void main() {
   Future<void> pump(
     WidgetTester tester,
     GameState gs, {
-    bool showWinOverlay = false,
+    CelebrationPhase? celebrationPhase,
     VoidCallback? onBack,
     VoidCallback? onPlayAgain,
     VoidCallback? onNewPuzzle,
@@ -153,7 +147,7 @@ void main() {
     await tester.pumpWidget(_wrap(_BoardViewHarness(
       gameState: gs,
       uiImage: testImage,
-      showWinOverlay: showWinOverlay,
+      celebrationPhase: celebrationPhase,
       onBack: onBack,
       onPlayAgain: onPlayAgain,
       onNewPuzzle: onNewPuzzle,
@@ -191,7 +185,7 @@ void main() {
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('shows WinOverlay when phase is won and showWinOverlay is true',
+    testWidgets('shows WinOverlay when phase is won and celebrationPhase is overlay',
         (tester) async {
       final gs = makePlayingState();
       // Place all pieces except the last one, then drag the last to its target.
@@ -201,12 +195,12 @@ void main() {
       gs.startDrag(0);
       gs.pieces.last.currentPosition = gs.pieces.last.targetPosition;
       gs.endDrag(); // phase transitions to won
-      await pump(tester, gs, showWinOverlay: true);
+      await pump(tester, gs, celebrationPhase: CelebrationPhase.overlay);
       expect(find.byType(WinOverlay), findsOneWidget);
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('does not show WinOverlay when showWinOverlay is false',
+    testWidgets('does not show WinOverlay when celebrationPhase is null',
         (tester) async {
       final gs = makePlayingState();
       await pump(tester, gs);
@@ -329,11 +323,10 @@ void main() {
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('renders confetti painter when phase is won and overlay not shown',
+    testWidgets('does not show WinOverlay when phase is won but overlay hidden',
         (tester) async {
       final gs = makeWonState();
       await pump(tester, gs);
-      // Confetti painter is rendered instead of WinOverlay.
       expect(find.byType(WinOverlay), findsNothing);
       expect(find.byType(GameBoardView), findsOneWidget);
       await tester.binding.setSurfaceSize(null);
@@ -344,7 +337,7 @@ void main() {
       var called = false;
       final gs = makeWonState();
       await pump(tester, gs,
-          showWinOverlay: true, onPlayAgain: () => called = true);
+          celebrationPhase: CelebrationPhase.overlay, onPlayAgain: () => called = true);
       await tester.tap(find.text('Play Again'));
       await tester.pump();
       expect(called, isTrue);
@@ -356,7 +349,7 @@ void main() {
       var called = false;
       final gs = makeWonState();
       await pump(tester, gs,
-          showWinOverlay: true, onNewPuzzle: () => called = true);
+          celebrationPhase: CelebrationPhase.overlay, onNewPuzzle: () => called = true);
       await tester.tap(find.text('New Puzzle'));
       await tester.pump();
       expect(called, isTrue);

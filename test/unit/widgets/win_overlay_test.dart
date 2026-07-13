@@ -13,11 +13,25 @@ Widget _wrap(Widget child) {
   );
 }
 
+Widget _overlay({
+  VoidCallback? onPlayAgain,
+  VoidCallback? onNewPuzzle,
+  VoidCallback? onDismiss,
+  StreakRecord? streakRecord,
+}) {
+  return WinOverlay(
+    onPlayAgain: onPlayAgain ?? () {},
+    onNewPuzzle: onNewPuzzle ?? () {},
+    onDismiss: onDismiss ?? () {},
+    streakRecord: streakRecord,
+  );
+}
+
 void main() {
   group('WinOverlay', () {
     testWidgets('renders play again and new puzzle buttons', (tester) async {
       await tester.pumpWidget(
-        _wrap(WinOverlay(onPlayAgain: () {}, onNewPuzzle: () {})),
+        _wrap(_overlay()),
       );
       await tester.pump();
 
@@ -27,14 +41,12 @@ void main() {
     testWidgets('calls onPlayAgain when play again button tapped', (tester) async {
       var tapped = false;
       await tester.pumpWidget(
-        _wrap(WinOverlay(
+        _wrap(_overlay(
           onPlayAgain: () => tapped = true,
-          onNewPuzzle: () {},
         )),
       );
       await tester.pump();
 
-      // Find and tap the play again button by its icon
       final replayButton = find.byIcon(Icons.replay_rounded);
       expect(replayButton, findsOneWidget);
       await tester.tap(replayButton);
@@ -46,8 +58,7 @@ void main() {
     testWidgets('calls onNewPuzzle when new puzzle button tapped', (tester) async {
       var tapped = false;
       await tester.pumpWidget(
-        _wrap(WinOverlay(
-          onPlayAgain: () {},
+        _wrap(_overlay(
           onNewPuzzle: () => tapped = true,
         )),
       );
@@ -61,18 +72,21 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('shows celebration emoji', (tester) async {
+    testWidgets('shows fixed celebration emoji', (tester) async {
       await tester.pumpWidget(
-        _wrap(WinOverlay(onPlayAgain: () {}, onNewPuzzle: () {})),
+        _wrap(_overlay()),
       );
       await tester.pump();
 
       expect(find.text('🎉'), findsOneWidget);
+      expect(find.text('🎈'), findsNothing);
+      expect(find.text('🎆'), findsNothing);
+      expect(find.text('🏆'), findsNothing);
     });
 
     testWidgets('given_null_streakRecord_when_rendered_then_no_streak_section', (tester) async {
       await tester.pumpWidget(
-        _wrap(WinOverlay(onPlayAgain: () {}, onNewPuzzle: () {})),
+        _wrap(_overlay()),
       );
       await tester.pump();
 
@@ -83,11 +97,7 @@ void main() {
     testWidgets('given_streakRecord_with_zero_streak_when_rendered_then_no_streak_section',
         (tester) async {
       await tester.pumpWidget(
-        _wrap(WinOverlay(
-          onPlayAgain: () {},
-          onNewPuzzle: () {},
-          streakRecord: StreakRecord.initial(),
-        )),
+        _wrap(_overlay(streakRecord: StreakRecord.initial())),
       );
       await tester.pump();
 
@@ -97,9 +107,7 @@ void main() {
 
     testWidgets('given_streak_of_5_when_rendered_then_shows_current_streak', (tester) async {
       await tester.pumpWidget(
-        _wrap(WinOverlay(
-          onPlayAgain: () {},
-          onNewPuzzle: () {},
+        _wrap(_overlay(
           streakRecord: const StreakRecord(
             currentStreak: 5,
             longestStreak: 12,
@@ -117,9 +125,7 @@ void main() {
 
     testWidgets('given_streak_record_when_rendered_then_shows_longest_streak', (tester) async {
       await tester.pumpWidget(
-        _wrap(WinOverlay(
-          onPlayAgain: () {},
-          onNewPuzzle: () {},
+        _wrap(_overlay(
           streakRecord: const StreakRecord(
             currentStreak: 3,
             longestStreak: 10,
@@ -136,9 +142,7 @@ void main() {
     testWidgets('given_streak_of_1_when_rendered_then_streak_section_is_visible',
         (tester) async {
       await tester.pumpWidget(
-        _wrap(WinOverlay(
-          onPlayAgain: () {},
-          onNewPuzzle: () {},
+        _wrap(_overlay(
           streakRecord: const StreakRecord(
             currentStreak: 1,
             longestStreak: 1,
@@ -149,6 +153,19 @@ void main() {
       await tester.pump();
 
       expect(find.textContaining('Day Streak'), findsOneWidget);
+    });
+
+    testWidgets('calls onDismiss when backdrop tapped', (tester) async {
+      var dismissed = false;
+      await tester.pumpWidget(
+        _wrap(_overlay(onDismiss: () => dismissed = true)),
+      );
+      await tester.pump();
+
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pump();
+
+      expect(dismissed, isTrue);
     });
   });
 }

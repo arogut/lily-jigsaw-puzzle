@@ -6,7 +6,9 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 /// Shape of a single confetti particle.
 enum ConfettiShape { star, heart, squiggle }
 
+/// A single confetti particle with position and motion parameters.
 class ConfettiParticle {
+  /// Creates a [ConfettiParticle].
   const ConfettiParticle({
     required this.x,
     required this.speed,
@@ -18,21 +20,41 @@ class ConfettiParticle {
     required this.shape,
   });
 
+  /// Horizontal start position as a fraction of canvas width.
   final double x;
+
+  /// Fall speed multiplier.
   final double speed;
+
+  /// Animation progress at which this particle begins moving.
   final double startDelay;
+
+  /// Particle colour.
   final Color color;
+
+  /// Particle size in logical pixels.
   final double size;
+
+  /// Rotation speed multiplier.
   final double rotSpeed;
+
+  /// Phase offset for horizontal wobble.
   final double wobblePhase;
+
+  /// Visual shape of the particle.
   final ConfettiShape shape;
 }
 
+/// Paints falling confetti particles over the win celebration.
 class ConfettiPainter extends CustomPainter {
+  /// Creates a [ConfettiPainter].
   ConfettiPainter({required this.particles, required this.animation})
       : super(repaint: animation);
 
+  /// Particles to render.
   final List<ConfettiParticle> particles;
+
+  /// Animation driving particle motion.
   final Animation<double> animation;
 
   @override
@@ -114,25 +136,34 @@ class ConfettiPainter extends CustomPainter {
   bool shouldRepaint(ConfettiPainter old) => true;
 }
 
-/// Generates a list of randomised confetti particles using the pastel palette.
-List<ConfettiParticle> generateConfettiParticles(int count) {
-  const colors = [
-    AppColors.pastelPink,
-    AppColors.skyBlue,
-    AppColors.mintGreen,
-    AppColors.sunnyYellow,
-    AppColors.lavender,
-  ];
+/// Default pastel palette for confetti celebrations.
+const List<Color> kConfettiPalette = [
+  AppColors.pastelPink,
+  AppColors.skyBlue,
+  AppColors.mintGreen,
+  AppColors.sunnyYellow,
+  AppColors.lavender,
+];
+
+/// Generates [count] randomised confetti particles.
+List<ConfettiParticle> generateConfettiParticles(
+  int count, {
+  List<Color> palette = kConfettiPalette,
+  Random? rng,
+}) {
+  final random = rng ?? Random();
   const shapes = ConfettiShape.values;
-  final rng = Random();
-  return List.generate(count, (_) => ConfettiParticle(
-        x: rng.nextDouble(),
-        speed: 0.7 + rng.nextDouble() * 0.6,
-        startDelay: rng.nextDouble() * 0.4,
-        color: colors[rng.nextInt(colors.length)],
-        size: 12 + rng.nextDouble() * 14,
-        rotSpeed: (rng.nextDouble() - 0.5) * 4,
-        wobblePhase: rng.nextDouble() * 2 * pi,
-        shape: shapes[rng.nextInt(shapes.length)],
-      ));
+  return List.generate(
+    count,
+    (_) => ConfettiParticle(
+      x: random.nextDouble(),
+      speed: 0.7 + random.nextDouble() * 0.6,
+      startDelay: random.nextDouble() * 0.4,
+      color: palette[random.nextInt(palette.length)],
+      size: 12 + random.nextDouble() * 14,
+      rotSpeed: (random.nextDouble() - 0.5) * 4,
+      wobblePhase: random.nextDouble() * 2 * pi,
+      shape: shapes[random.nextInt(shapes.length)],
+    ),
+  );
 }
