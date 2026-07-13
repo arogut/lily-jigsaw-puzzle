@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lily_jigsaw_puzzle/models/celebration_style.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
 
 void main() {
@@ -10,20 +13,48 @@ void main() {
     });
 
     test('playSnap, playWrong, playWin return futures', () {
-      // Invoke the methods to exercise the delegation lines.
-      // AudioPlayer may fail silently in the test environment — the futures
-      // are intentionally not awaited so platform-channel errors don't fail
-      // the test.
       final snapFuture = SoundService().playSnap();
       final wrongFuture = SoundService().playWrong();
       final winFuture = SoundService().playWin();
       expect(snapFuture, isNotNull);
       expect(wrongFuture, isNotNull);
       expect(winFuture, isNotNull);
-      // Silence any unhandled async errors from AudioPlayer in the test VM
       snapFuture.ignore();
       wrongFuture.ignore();
       winFuture.ignore();
+    });
+
+    test('playWinFanfare loops until stopWinFanfare is called', () async {
+      final service = SoundService();
+      await service.playWinFanfare(CelebrationStyleId.balloons);
+      await service.stopWinFanfare();
+    });
+
+    test('stopWinFanfare is safe when no fanfare is playing', () async {
+      final service = SoundService();
+      await service.stopWinFanfare();
+      await service.stopWinFanfare();
+    });
+
+    test('stopWinFanfare returns promptly without blocking on audio stop', () async {
+      final service = SoundService();
+      await service.playWinFanfare(CelebrationStyleId.confetti);
+      await expectLater(service.stopWinFanfare(), completes);
+    });
+
+    test('playWinFanfare can be stopped before loop start finishes', () async {
+      final service = SoundService();
+      unawaited(service.playWinFanfare(CelebrationStyleId.fireworks));
+      await service.stopWinFanfare();
+      expect(service, isNotNull);
+    });
+
+    test('playWinFanfare completes without rethrowing when audio fails', () async {
+      await expectLater(
+        SoundService().playWinFanfare(CelebrationStyleId.confetti),
+        completes,
+      );
+      await SoundService().stopWinFanfare();
     });
 
     test('playHintAvailable returns a future', () {

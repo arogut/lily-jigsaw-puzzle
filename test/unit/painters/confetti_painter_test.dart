@@ -37,6 +37,28 @@ void main() {
     });
   });
 
+  group('generateConfettiParticles', () {
+    test('returns exactly count particles', () {
+      final particles = generateConfettiParticles(42);
+      expect(particles, hasLength(42));
+    });
+
+    test('uses only ConfettiShape values', () {
+      final particles = generateConfettiParticles(20);
+      for (final particle in particles) {
+        expect(ConfettiShape.values, contains(particle.shape));
+      }
+    });
+
+    test('uses colours from provided palette', () {
+      const palette = [Color(0xFF112233), Color(0xFF445566)];
+      final particles = generateConfettiParticles(10, palette: palette);
+      for (final particle in particles) {
+        expect(palette, contains(particle.color));
+      }
+    });
+  });
+
   group('ConfettiPainter', () {
     test('paints star particle without error at mid-animation', () {
       const animation = AlwaysStoppedAnimation<double>(0.5);

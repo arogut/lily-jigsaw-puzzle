@@ -9,14 +9,17 @@ import 'package:flutter/services.dart';
 import 'package:lily_jigsaw_puzzle/controllers/game_controller.dart';
 import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/core/utils/puzzle_geometry.dart';
+import 'package:lily_jigsaw_puzzle/models/celebration_style.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_image.dart';
 import 'package:lily_jigsaw_puzzle/models/puzzle_piece.dart';
-import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/jigsaw_piece_painter.dart';
 import 'package:lily_jigsaw_puzzle/screens/game_board_view.dart';
+import 'package:lily_jigsaw_puzzle/services/celebration_selector.dart';
+import 'package:lily_jigsaw_puzzle/services/daily_completion_tracker.dart';
 import 'package:lily_jigsaw_puzzle/services/hint_settings_service.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
+import 'package:lily_jigsaw_puzzle/widgets/celebration_layer.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({
@@ -59,9 +62,11 @@ class _GameScreenState extends State<GameScreen>
 
   final _paintTick = ValueNotifier<int>(0);
 
-  late AnimationController _confettiController;
-  List<ConfettiParticle> _confettiParticles = const [];
-  bool _showWinOverlay = false;
+  CelebrationStyleId? _celebrationStyle;
+  CelebrationIntensity? _celebrationIntensity;
+  CelebrationPhase? _celebrationPhase;
+
+  final DailyCompletionTracker _dailyCompletionTracker = DailyCompletionTracker();
 
   late AnimationController _hintController;
 
@@ -99,10 +104,6 @@ class _GameScreenState extends State<GameScreen>
       duration: const Duration(milliseconds: 750),
     );
     _returnController.addListener(_onReturnTick);
-    _confettiController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    );
     _hintController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -302,9 +303,7 @@ class _GameScreenState extends State<GameScreen>
       unawaited(SoundService().playSnap());
       if (gs.phase == GamePhase.won) {
         _controller.cancelHintTimer();
-        unawaited(_recordCompletion());
-        unawaited(SoundService().playWin());
-        _startConfetti();
+        unawaited(_onWin());
       } else {
         _controller.onSuccessfulSnap(gs);
         setState(() {});
@@ -359,6 +358,7 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    unawaited(SoundService().stopWinFanfare());
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _physicsTicker.dispose();
@@ -369,7 +369,6 @@ class _GameScreenState extends State<GameScreen>
     _returnController
       ..removeListener(_onReturnTick)
       ..dispose();
-    _confettiController.dispose();
     _hintController.dispose();
     _hintAvailableController.dispose();
     _hintsExhaustedController.dispose();
@@ -411,13 +410,22 @@ class _GameScreenState extends State<GameScreen>
       uiImage: img,
       paintTick: _paintTick,
       hintController: _hintController,
-      confettiParticles: _confettiParticles,
-      confettiController: _confettiController,
-      showWinOverlay: _showWinOverlay,
+      celebrationLayer: _celebrationPhase == CelebrationPhase.animating &&
+              _celebrationStyle != null &&
+              _celebrationIntensity != null
+          ? CelebrationLayer(
+              style: _celebrationStyle!,
+              intensity: _celebrationIntensity!,
+              onSkip: _onAnimationFinished,
+              onAnimationComplete: _onAnimationFinished,
+            )
+          : null,
+      celebrationPhase: _celebrationPhase,
       streakRecord: _controller.streakRecord,
       onBack: () => Navigator.of(context).popUntil((r) => r.isFirst),
       onPlayAgain: _restartGame,
-      onNewPuzzle: () => Navigator.of(context).popUntil((r) => r.isFirst),
+      onNewPuzzle: _onNewPuzzleFromOverlay,
+      onDismissCelebration: _onDismissCelebration,
       onPanStart: isPlaying ? _onPanStart : null,
       onPanUpdate: isPlaying ? _onPanUpdate : null,
       onPanEnd: isPlaying ? _onPanEnd : null,
@@ -446,13 +454,15 @@ class _GameScreenState extends State<GameScreen>
     _scatterController
       ..removeListener(_onScatterTick)
       ..removeStatusListener(_onScatterStatus);
-    _confettiController.stop();
+    unawaited(SoundService().stopWinFanfare());
     _hintsExhaustedController.reset();
     setState(() {
       _gameState = null;
       _assembledPositions = null;
       _scatterTargets = null;
-      _showWinOverlay = false;
+      _celebrationPhase = null;
+      _celebrationStyle = null;
+      _celebrationIntensity = null;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _initGame();
@@ -490,13 +500,41 @@ class _GameScreenState extends State<GameScreen>
     setState(() {});
   }
 
-  void _startConfetti() {
+  Future<void> _onWin() async {
     _physicsTicker.stop();
-    _confettiParticles = generateConfettiParticles(250);
-    setState(() {});
-    _confettiController.reset();
-    unawaited(_confettiController.forward().then((_) {
-      if (mounted) setState(() => _showWinOverlay = true);
-    }));
+    await _recordCompletion();
+    if (!mounted) return;
+
+    final streak = _controller.streakRecord;
+    final weeks = (streak?.currentStreak ?? 0) ~/ 7;
+    final intensity = CelebrationIntensity.fromStreakWeeks(weeks);
+
+    final now = DateTime.now();
+    final dailyCount = await _dailyCompletionTracker.consumeNext(now);
+    if (!mounted) return;
+    final style = CelebrationSelector.styleFor(now, dailyCount);
+
+    unawaited(SoundService().playWinFanfare(style));
+
+    setState(() {
+      _celebrationPhase = CelebrationPhase.animating;
+      _celebrationStyle = style;
+      _celebrationIntensity = intensity;
+    });
+  }
+
+  void _onAnimationFinished() {
+    if (_celebrationPhase != CelebrationPhase.animating) return;
+    setState(() => _celebrationPhase = CelebrationPhase.overlay);
+  }
+
+  void _onDismissCelebration() {
+    unawaited(SoundService().stopWinFanfare());
+    setState(() => _celebrationPhase = null);
+  }
+
+  void _onNewPuzzleFromOverlay() {
+    unawaited(SoundService().stopWinFanfare());
+    Navigator.of(context).popUntil((r) => r.isFirst);
   }
 }

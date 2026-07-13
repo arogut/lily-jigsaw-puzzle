@@ -49,4 +49,8 @@ flutter:
     - assets/images/puzzle-9.jpg
     - assets/icons/
     - assets/sounds/
+    - assets/sounds/win_confetti.wav
+    - assets/sounds/win_balloons.wav
+    - assets/sounds/win_fireworks.wav
+    - assets/sounds/win_milestone.wav
     - assets/ui/

@@ -6,13 +6,13 @@ import 'package:lily_jigsaw_puzzle/core/app_theme.dart';
 import 'package:lily_jigsaw_puzzle/core/utils/puzzle_geometry.dart';
 import 'package:lily_jigsaw_puzzle/core/widgets/panel_backgrounds.dart';
 import 'package:lily_jigsaw_puzzle/l10n/app_localizations.dart';
+import 'package:lily_jigsaw_puzzle/models/celebration_style.dart';
 import 'package:lily_jigsaw_puzzle/models/game_state.dart';
 import 'package:lily_jigsaw_puzzle/models/hint_slot_state.dart';
 import 'package:lily_jigsaw_puzzle/models/streak_record.dart';
 import 'package:lily_jigsaw_puzzle/painters/all_pieces_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_grid_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/board_shadow_painter.dart';
-import 'package:lily_jigsaw_puzzle/painters/confetti_painter.dart';
 import 'package:lily_jigsaw_puzzle/painters/hint_glow_painter.dart';
 import 'package:lily_jigsaw_puzzle/widgets/game_button.dart';
 import 'package:lily_jigsaw_puzzle/widgets/tray_label.dart';
@@ -31,13 +31,13 @@ class GameBoardView extends StatelessWidget {
     required this.uiImage,
     required this.paintTick,
     required this.hintController,
-    required this.confettiParticles,
-    required this.confettiController,
-    required this.showWinOverlay,
+    required this.celebrationPhase,
+    required this.onDismissCelebration,
     required this.onBack,
     required this.onPlayAgain,
     required this.onNewPuzzle,
     required this.onHint,
+    this.celebrationLayer,
     this.streakRecord,
     this.onPanStart,
     this.onPanUpdate,
@@ -61,14 +61,14 @@ class GameBoardView extends StatelessWidget {
   /// Animation driving the hint-glow pulse effect.
   final Animation<double> hintController;
 
-  /// Particle list fed to [ConfettiPainter] when the puzzle is won.
-  final List<ConfettiParticle> confettiParticles;
+  /// Optional full-screen celebration animation for the animation phase.
+  final Widget? celebrationLayer;
 
-  /// Animation driving the confetti particle simulation.
-  final Animation<double> confettiController;
+  /// Current celebration stage; layer and overlay are never shown together.
+  final CelebrationPhase? celebrationPhase;
 
-  /// When `true`, shows [WinOverlay]; when `false`, shows the confetti layer.
-  final bool showWinOverlay;
+  /// Called when the player taps the win overlay backdrop to dismiss.
+  final VoidCallback onDismissCelebration;
 
   /// Called when the user taps the back button.
   final VoidCallback onBack;
@@ -169,21 +169,16 @@ class GameBoardView extends StatelessWidget {
           ),
         ),
         _buildRightControls(gs, l10n),
-        if (gs.phase == GamePhase.won && !showWinOverlay)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: ConfettiPainter(
-                  particles: confettiParticles,
-                  animation: confettiController,
-                ),
-              ),
-            ),
-          ),
-        if (gs.phase == GamePhase.won && showWinOverlay)
+        if (gs.phase == GamePhase.won &&
+            celebrationPhase == CelebrationPhase.animating &&
+            celebrationLayer != null)
+          Positioned.fill(child: celebrationLayer!),
+        if (gs.phase == GamePhase.won &&
+            celebrationPhase == CelebrationPhase.overlay)
           WinOverlay(
             onPlayAgain: onPlayAgain,
             onNewPuzzle: onNewPuzzle,
+            onDismiss: onDismissCelebration,
             streakRecord: streakRecord,
           ),
       ],

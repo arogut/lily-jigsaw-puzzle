@@ -130,5 +130,5 @@ Environment setup, emulator, and MCP prerequisites: see `README.md`.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/004-daily-puzzle-streak/plan.md
+at specs/005-win-celebration-variety/plan.md
 <!-- SPECKIT END -->
