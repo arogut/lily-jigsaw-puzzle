@@ -14,6 +14,9 @@ class BalloonParticle {
     required this.width,
     required this.height,
     required this.wobblePhase,
+    required this.driftPhase,
+    required this.driftFrequency,
+    required this.driftAmplitude,
   });
 
   /// Horizontal start position as a fraction of canvas width.
@@ -36,6 +39,32 @@ class BalloonParticle {
 
   /// Phase offset for horizontal sway.
   final double wobblePhase;
+
+  /// Phase offset for the slow drift.
+  final double driftPhase;
+
+  /// Frequency multiplier for the slow drift.
+  final double driftFrequency;
+
+  /// Maximum horizontal drift distance in logical pixels.
+  final double driftAmplitude;
+}
+
+Offset? balloonParticlePosition({
+  required BalloonParticle particle,
+  required Size size,
+  required double t,
+}) {
+  if (t < particle.startDelay) return null;
+  final pt = ((t - particle.startDelay) / (1.0 - particle.startDelay))
+      .clamp(0.0, 1.0);
+
+  final wobbleX = sin(pt * 3 * pi + particle.wobblePhase) * 20;
+  final driftX = sin(pt * 2 * pi * particle.driftFrequency + particle.driftPhase) *
+      particle.driftAmplitude;
+  final px = particle.x * size.width + wobbleX + driftX;
+  final py = size.height + 40 - pt * particle.speed * (size.height + 80);
+  return Offset(px, py);
 }
 
 /// Paints upward-floating balloon particles.
@@ -54,11 +83,12 @@ class BalloonPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final t = animation.value;
     for (final p in particles) {
-      if (t < p.startDelay) continue;
+      final pos = balloonParticlePosition(particle: p, size: size, t: t);
+      if (pos == null) continue;
       final pt = ((t - p.startDelay) / (1.0 - p.startDelay)).clamp(0.0, 1.0);
       final alpha = pt > 0.8 ? (1.0 - pt) / 0.2 : 1.0;
-      final px = p.x * size.width + sin(pt * 3 * pi + p.wobblePhase) * 20;
-      final py = size.height + 40 - pt * p.speed * (size.height + 80);
+      final px = pos.dx;
+      final py = pos.dy;
 
       canvas
         ..save()
@@ -115,6 +145,9 @@ List<BalloonParticle> generateBalloonParticles(
       width: 18 + random.nextDouble() * 14,
       height: 22 + random.nextDouble() * 16,
       wobblePhase: random.nextDouble() * 2 * pi,
+      driftPhase: random.nextDouble() * 2 * pi,
+      driftFrequency: 0.4 + random.nextDouble() * 0.6,
+      driftAmplitude: 10 + random.nextDouble() * 18,
     ),
   );
 }
