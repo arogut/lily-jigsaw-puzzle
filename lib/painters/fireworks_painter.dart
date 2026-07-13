@@ -87,15 +87,19 @@ const List<Color> kFireworksPalette = [
   AppColors.lavender,
 ];
 
-/// Generates [count] fireworks burst particles spread across the canvas.
+/// Generates fireworks burst particles scaled from [count].
+///
+/// [count] reflects celebration intensity (particle budget); the number of
+/// bursts is clamped so paint cost stays bounded on tablet.
 List<FireworksParticle> generateFireworksParticles(
   int count, {
   List<Color> palette = kFireworksPalette,
   Random? rng,
 }) {
   final random = rng ?? Random();
+  final burstCount = (count * 0.25).ceil().clamp(3, 8);
   return List.generate(
-    count,
+    burstCount,
     (_) => FireworksParticle(
       centerX: 0.15 + random.nextDouble() * 0.7,
       centerY: 0.1 + random.nextDouble() * 0.5,

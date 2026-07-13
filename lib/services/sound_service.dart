@@ -48,12 +48,27 @@ class SoundService {
     try {
       final player = _playerFor(asset);
       await player.setReleaseMode(ReleaseMode.loop);
+      if (!_isActiveFanfare(asset)) {
+        unawaited(_stopPlayer(asset));
+        return;
+      }
+
       await player.stop();
+      if (!_isActiveFanfare(asset)) {
+        unawaited(_stopPlayer(asset));
+        return;
+      }
+
       await player.play(AssetSource(asset));
+      if (!_isActiveFanfare(asset)) {
+        unawaited(_stopPlayer(asset));
+      }
     } on Object {
       // Audio may be unavailable; visuals continue without sound.
     }
   }
+
+  bool _isActiveFanfare(String asset) => _activeFanfareAsset == asset;
 
   Future<void> _stopPlayer(String asset) async {
     try {

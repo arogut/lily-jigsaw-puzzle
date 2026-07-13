@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lily_jigsaw_puzzle/models/celebration_style.dart';
 import 'package:lily_jigsaw_puzzle/services/sound_service.dart';
@@ -38,6 +40,13 @@ void main() {
       final service = SoundService();
       await service.playWinFanfare(CelebrationStyleId.confetti);
       await expectLater(service.stopWinFanfare(), completes);
+    });
+
+    test('playWinFanfare can be stopped before loop start finishes', () async {
+      final service = SoundService();
+      unawaited(service.playWinFanfare(CelebrationStyleId.fireworks));
+      await service.stopWinFanfare();
+      expect(service, isNotNull);
     });
 
     test('playWinFanfare completes without rethrowing when audio fails', () async {

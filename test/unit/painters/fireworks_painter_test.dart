@@ -6,13 +6,14 @@ import 'package:lily_jigsaw_puzzle/painters/fireworks_painter.dart';
 
 void main() {
   group('generateFireworksParticles', () {
-    test('returns exactly count particles', () {
-      final particles = generateFireworksParticles(12);
-      expect(particles, hasLength(12));
+    test('maps intensity count to a clamped burst budget', () {
+      expect(generateFireworksParticles(80), hasLength(8));
+      expect(generateFireworksParticles(250), hasLength(8));
+      expect(generateFireworksParticles(12), hasLength(3));
     });
 
     test('each particle has centre and positive ray count', () {
-      final particles = generateFireworksParticles(8);
+      final particles = generateFireworksParticles(120);
       for (final particle in particles) {
         expect(particle.centerX, inInclusiveRange(0.0, 1.0));
         expect(particle.centerY, inInclusiveRange(0.0, 1.0));
@@ -23,7 +24,7 @@ void main() {
 
   group('FireworksPainter', () {
     test('paints without error', () {
-      final particles = generateFireworksParticles(10);
+      final particles = generateFireworksParticles(120);
       final painter = FireworksPainter(
         particles: particles,
         animation: const AlwaysStoppedAnimation(0.5),
