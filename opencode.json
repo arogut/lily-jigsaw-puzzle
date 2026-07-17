@@ -11,6 +11,7 @@
   },
   "permission": {
     "bash": {
+      "*": "ask",
       "flutter test*": "allow",
       "flutter analyze*": "allow",
       "flutter build*": "allow",
@@ -21,13 +22,12 @@
       "git status*": "allow",
       "git diff*": "allow",
       "git log*": "allow",
-      "rm -rf*": "deny",
-      "*": "ask"
+      "rm -rf*": "deny"
     },
     "external_directory": {
+      "*": "allow",
       "~/.env": "deny",
-      "**/secrets/**": "deny",
-      "*": "allow"
+      "**/secrets/**": "deny"
     }
   }
 }
