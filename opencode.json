@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"],
+  "shell": "/bin/bash",
+  "mcp": {
+    "android": {
+      "type": "local",
+      "command": ["bash", "tool/agents/android-mcp.sh"],
+      "enabled": true
+    }
+  },
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "flutter test*": "allow",
+      "flutter analyze*": "allow",
+      "flutter build*": "allow",
+      "flutter run*": "allow",
+      "flutter pub get": "allow",
+      "flutter pub add*": "allow",
+      "adb*": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "rm -rf*": "deny"
+    },
+    "external_directory": {
+      "*": "allow",
+      "~/.env": "deny",
+      "**/secrets/**": "deny"
+    }
+  }
+}
