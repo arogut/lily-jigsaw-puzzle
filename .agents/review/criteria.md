@@ -4,6 +4,17 @@ Shared checklist for the `code-reviewer` subagent (local/superpowers) and the
 `.github/workflows/cursor-code-review.yml` CI agent. Keep this file as the single source of
 review standards.
 
+## Review process (two-phase)
+
+Do **not** load the full range diff into context in one shot. That dilutes attention on large
+changes. Always use two phases:
+
+1. **Per-file** — list changed paths, then review each file’s own diff in isolation
+   (`git diff {BASE}..{HEAD} -- <path>`). Note local bugs, style, missing tests for that file.
+2. **Connections** — with per-file notes only (not the full mega-diff), check how changes fit
+   together: call sites, imports/APIs, `lib/` ↔ `test/` pairing, shared types, plan/spec
+   coverage across files.
+
 ## Project standards (always check)
 
 Read before reviewing:

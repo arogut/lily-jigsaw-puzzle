@@ -23,6 +23,12 @@ migrate_working_dir/
 !.cursor/mcp.json
 !.cursor/commands
 !.cursor/agents
+!.cursor/skills
+!.cursor/hooks.json
+!.cursor/hooks/
+!.cursor/hooks/**
+!.cursor/rules/
+!.cursor/rules/**
 
 # opencode: ignore local state, keep shared project config
 .opencode/*

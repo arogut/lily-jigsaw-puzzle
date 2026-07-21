@@ -1,10 +1,12 @@
 ---
 name: speckit-agent-context-update
-description: Refresh the managed Spec Kit section in the coding agent context file
+description: Refresh the managed Spec Kit section in the coding agent context file (AGENTS.md / CLAUDE.md). Use after planning a feature, when the active specs/*/plan.md changes, or when Spec Kit markers are missing or stale.
 compatibility: Requires spec-kit project structure with .specify/ directory
 metadata:
   author: github-spec-kit
   source: agent-context:commands/speckit.agent-context.update.md
+user-invocable: true
+disable-model-invocation: false
 ---
 
 # Update Coding Agent Context
