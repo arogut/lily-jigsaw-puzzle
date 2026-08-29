@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeOut =
         CurvedAnimation(parent: _outController, curve: Curves.easeIn);
 
-    unawaited(_inController.forward());
+    _inController.forward();
 
     // Pre-warm thumbnail edge colours so they are ready when the selection
     // screen appears. Runs in parallel with the splash animation.
@@ -67,13 +67,13 @@ class _SplashScreenState extends State<SplashScreen>
     unawaited(Future.delayed(
       const Duration(milliseconds: AppConstants.splashFadeOutDelayMs),
       () {
-      if (mounted) unawaited(_outController.forward());
+      if (mounted) _outController.forward();
     }));
     unawaited(Future.delayed(
       const Duration(milliseconds: AppConstants.splashNavigateDelayMs),
       () {
       if (!mounted) return;
-      unawaited(Navigator.of(context).pushReplacement(
+      Navigator.of(context).pushReplacement(
         PageRouteBuilder<void>(
           pageBuilder: (context, animation, secondaryAnimation) =>
               ImageSelectionScreen(
@@ -85,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
         ),
-      ));
+      );
     }));
   }
 
@@ -227,7 +227,7 @@ class _LoadingDotsState extends State<_LoadingDots>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    unawaited(_ctrl.repeat());
+    _ctrl.repeat();
   }
 
   @override

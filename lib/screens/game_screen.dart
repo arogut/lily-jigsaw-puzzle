@@ -87,8 +87,9 @@ class _GameScreenState extends State<GameScreen>
       onHintTimerElapsed: () {
         _gameState?.markNextSlotAvailable();
         _controller.onHintSlotAvailable();
-        _hintAvailableController.reset();
-        unawaited(_hintAvailableController.forward());
+        _hintAvailableController
+          ..reset()
+          ..forward();
       },
     )..addListener(() {
         if (mounted) setState(() {});
@@ -108,7 +109,7 @@ class _GameScreenState extends State<GameScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    unawaited(_hintController.repeat());
+    _hintController.repeat();
 
     _hintAvailableController = AnimationController(
       vsync: this,
@@ -192,8 +193,8 @@ class _GameScreenState extends State<GameScreen>
     _scatterController
       ..reset()
       ..addListener(_onScatterTick)
-      ..addStatusListener(_onScatterStatus);
-    unawaited(_scatterController.forward());
+      ..addStatusListener(_onScatterStatus)
+      ..forward();
   }
 
   void _onScatterTick() {
@@ -223,7 +224,7 @@ class _GameScreenState extends State<GameScreen>
   void _onScatterStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
       _lastPhysicsTime = null;
-      if (!_physicsTicker.isActive) unawaited(_physicsTicker.start());
+      if (!_physicsTicker.isActive) _physicsTicker.start();
 
       if (mounted && _gameState != null) {
         _gameState!.beginPlaying();

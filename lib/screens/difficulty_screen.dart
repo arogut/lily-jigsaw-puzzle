@@ -256,14 +256,14 @@ class _DifficultyScreenState extends State<DifficultyScreen> {
   }
 
   void _go(BuildContext context, int gridSize, int difficultyStars) {
-    unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
+    Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => GameScreen(
         selectedImage: widget.selectedImage,
         gridSize: gridSize,
         difficultyStars: difficultyStars,
         hintSettings: widget.hintSettings,
       ),
-    )));
+    ));
   }
 }
 

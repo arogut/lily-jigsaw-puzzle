@@ -158,7 +158,7 @@ class _ImageCardState extends State<_ImageCard>
   }
 
   void _onTap() {
-    unawaited(_ctrl.reverse());
+    _ctrl.reverse();
     unawaited(SoundService().playClick());
     unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => DifficultyScreen(

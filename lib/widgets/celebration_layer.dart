@@ -1,5 +1,3 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:lily_jigsaw_puzzle/models/celebration_style.dart';
 import 'package:lily_jigsaw_puzzle/painters/balloon_painter.dart';
@@ -49,8 +47,9 @@ class _CelebrationLayerState extends State<CelebrationLayer>
       vsync: this,
       duration: widget.intensity.animationDuration,
     );
-    _controller.addStatusListener(_onStatusChanged);
-    unawaited(_controller.forward());
+    _controller
+      ..addStatusListener(_onStatusChanged)
+      ..forward();
     _painter = _buildPainter();
   }
 
