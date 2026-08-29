@@ -87,8 +87,9 @@ class _GameScreenState extends State<GameScreen>
       onHintTimerElapsed: () {
         _gameState?.markNextSlotAvailable();
         _controller.onHintSlotAvailable();
-        _hintAvailableController.reset();
-        _hintAvailableController.forward();
+        _hintAvailableController
+          ..reset()
+          ..forward();
       },
     )..addListener(() {
         if (mounted) setState(() {});
@@ -192,8 +193,8 @@ class _GameScreenState extends State<GameScreen>
     _scatterController
       ..reset()
       ..addListener(_onScatterTick)
-      ..addStatusListener(_onScatterStatus);
-    _scatterController.forward();
+      ..addStatusListener(_onScatterStatus)
+      ..forward();
   }
 
   void _onScatterTick() {

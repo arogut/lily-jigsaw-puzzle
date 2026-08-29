@@ -47,8 +47,9 @@ class _CelebrationLayerState extends State<CelebrationLayer>
       vsync: this,
       duration: widget.intensity.animationDuration,
     );
-    _controller.addStatusListener(_onStatusChanged);
-    _controller.forward();
+    _controller
+      ..addStatusListener(_onStatusChanged)
+      ..forward();
     _painter = _buildPainter();
   }
 
