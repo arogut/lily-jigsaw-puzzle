@@ -8,7 +8,7 @@ A jigsaw puzzle game for children, built with Flutter for Android. Designed to r
 
 ## Requirements
 
-- Flutter 3.41.3
+- Flutter 3.47.1
 - Android SDK (API 35+, build-tools 35.0.0)
 - Java 17+
 
