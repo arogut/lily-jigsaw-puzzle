@@ -8,7 +8,7 @@ Flutter jigsaw puzzle game for Android (tablets, primarily Samsung Galaxy Tab S8
 
 ## Environment
 
-Flutter 3.47.1 at `~/development/flutter`. PATH and ANDROID_HOME are in `~/.bashrc` / `~/.zshrc` — run `source ~/.bashrc` in a new shell.
+Flutter 3.47.2 at `~/development/flutter`. PATH and ANDROID_HOME are in `~/.bashrc` / `~/.zshrc` — run `source ~/.bashrc` in a new shell.
 
 - Flutter SDK: `~/development/flutter`
 - Android SDK: `~/Android/Sdk` (API 36, build-tools 35.0.0)
