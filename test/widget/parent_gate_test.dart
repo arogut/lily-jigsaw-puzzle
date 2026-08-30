@@ -59,11 +59,6 @@ void main() {
     await tester.pumpWidget(_wrap(ParentGate(onUnlocked: () {})));
     await tester.pump();
 
-    final firstQuestion = tester
-        .widgetList<Text>(find.byType(Text))
-        .map((t) => t.data ?? '')
-        .firstWhere((s) => s.contains('+'));
-
     await tester.enterText(find.byType(TextField), '999');
     await tester.tap(find.text('Confirm'));
     await tester.pump();
@@ -74,7 +69,19 @@ void main() {
     await tester.pump();
 
     expect(find.text('Wrong answer!'), findsNothing);
-    expect(find.text(firstQuestion), findsNothing);
     expect(find.byType(TextField), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      isEmpty,
+    );
+    // A new ParentGateValidator is constructed; operands are 1–9 so the
+    // question text may match the previous pair (~1/81) and must not be
+    // asserted as changed.
+    expect(
+      tester
+          .widgetList<Text>(find.byType(Text))
+          .any((t) => (t.data ?? '').contains('+')),
+      isTrue,
+    );
   });
 }
