@@ -105,13 +105,13 @@ files only — adapter paths are symlinks and must not be edited directly.
 | Canonical (edit these) | Adapter (symlink — do not edit) |
 |---|---|
 | `AGENTS.md` | `CLAUDE.md` → `AGENTS.md` |
-| `.agents/skills/` | `.claude/skills` → `.agents/skills` |
+| `.agents/skills/` | `.claude/skills`, `.cursor/skills` → `.agents/skills` |
 | `.agents/commands/` | `.claude/commands`, `.cursor/commands` → `.agents/commands` |
 | `.agents/agents/` | `.claude/agents`, `.cursor/agents` → `.agents/agents` |
 | `.mcp.json` | `.cursor/mcp.json` → `.mcp.json` |
 
-Cursor reads `.agents/skills/` natively; Claude Code and Cursor reach commands, agents, and MCP
-via the adapter symlinks above.
+Edit skills only under `.agents/skills/`. Claude Code and Cursor reach skills, commands, agents,
+and MCP via the adapter symlinks above.
 
 Spec Kit: both `claude` and `cursor-agent` integrations are installed (`.specify/integration.json`);
 default CLI integration is `cursor-agent`. Skills and agent-context target canonical `.agents/` paths.

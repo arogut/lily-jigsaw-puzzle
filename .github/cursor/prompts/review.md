@@ -56,13 +56,36 @@ gh api repos/${REPO}/issues/${PR_NUMBER}/comments \
   --jq '[.[] | select(.user.type == "Bot" or (.performed_via_github_app != null)) | {id, body}]'
 ```
 
-## Step 2 — Fetch and parse the current diff
+## Step 2 — Two-phase review (avoid loading the full diff at once)
+
+Follow `.agents/review/criteria.md` **Review process (two-phase)**. Do not dump the entire PR
+diff into context in one shot.
+
+**2a — Per-file**
 
 ```bash
-gh pr diff ${PR_NUMBER}
+git diff --name-only ${PR_BASE_SHA}..${PR_HEAD_SHA}
 ```
 
-Build a CHANGED_LINES map: for every + line in the diff record its file path and line number. Only + lines are reviewable.
+For each changed path, fetch that file’s diff only:
+
+```bash
+git diff ${PR_BASE_SHA}..${PR_HEAD_SHA} -- <path>
+```
+
+Review the file in isolation and keep short per-file notes (strengths + issues with path:line).
+Do not open the next file’s diff until the current one is done. Do **not** run
+`gh pr diff` / a full-range `git diff` without a path filter.
+
+**2b — Connections**
+
+Using the per-file notes and the file list (not a fresh full-range mega-diff), check cross-file
+links: call sites, imports/APIs, `lib/` ↔ `test/` pairing, shared types, and whether the set of
+files covers the intended behaviour. Re-fetch an individual file diff only when needed to verify
+a cross-file claim.
+
+Build a CHANGED_LINES map from the per-file diffs: for every + line record its file path and line
+number. Only + lines are reviewable.
 
 ## Step 3 — Reconcile prior inline comment threads
 

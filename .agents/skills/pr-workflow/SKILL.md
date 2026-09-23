@@ -1,6 +1,6 @@
 ---
 name: pr-workflow
-description: Pre-push verification, pull request creation, and CI watch loop. Use when committing, pushing, opening a PR, or fixing failing CI checks on a branch.
+description: Pre-push verification and pull request creation. Use when committing, pushing, or opening a PR. Use when the user asks to fix failing CI on a branch.
 ---
 
 # PR workflow
@@ -12,25 +12,17 @@ description: Pre-push verification, pull request creation, and CI watch loop. Us
 3. Verify test coverage has not dropped.
 4. Only open a PR once all of the above pass cleanly.
 
-## After opening a PR — CI watch loop
+## After opening a PR
 
-After creating a PR, poll CI status using `gh` until checks complete:
+Stop once the PR exists and share the URL. Do **not** poll or watch CI.
 
-```bash
-# Wait for all checks to finish (polls every 30s)
-gh pr checks --watch
+A human stays in the loop; if CI fails, they will ask separately to investigate and fix.
 
-# If any check fails, read the logs:
-gh run list --branch <branch> --limit 1
-gh run view <run-id> --log-failed
-```
+When asked to fix CI:
 
-If checks fail:
-
-1. Read the failure output carefully
+1. Read the failure output (`gh pr checks`, `gh run view --log-failed`)
 2. Fix the root cause in the source code
-3. Commit and push the fix to the same branch
-4. Repeat until `gh pr checks --watch` exits with all green
+3. Commit and push to the same branch
 
 ## CI/CD context
 
